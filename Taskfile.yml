@@ -1,0 +1,274 @@
+version: "3"
+silent: true
+
+dotenv: [".env"]
+
+vars:
+  FORMAT: json
+  BINARY_NAME: arcadia
+  DEPLOY_DIR: ./src/i18n/deploy
+  OUT_DIR: ./src/i18n/out
+  DIST_DIR: ./dist
+  #
+  SOURCE_LANG: en-GB
+  SOURCE_ACTIVE: "active.{{.SOURCE_LANG}}.{{.FORMAT}}"
+  SOURCE_ACTIVE_FILE: "{{.OUT_DIR}}/active.{{.SOURCE_LANG}}.{{.FORMAT}}"
+  DEFAULT_ACTIVE: "{{.BINARY_NAME}}.{{.SOURCE_ACTIVE}}"
+  DEFAULT_ACTIVE_FILE: "{{.OUT_DIR}}/{{.DEFAULT_ACTIVE}}"
+  EXTRACT_ACTIVE: "active.{{.SOURCE_LANG}}.{{.FORMAT}}"
+  EXTRACT_NAME: active.{{.SOURCE_LANG}}.{{.FORMAT}}
+  #
+  LANGUAGE_US: en-US
+  US_OUT_DIR: "{{.OUT_DIR}}/{{.LANGUAGE_US}}"
+  ACTIVE_US: "{{.BINARY_NAME}}.active.en-US.{{.FORMAT}}"
+  TRANSLATE_US: "{{.BINARY_NAME}}.translate.en-US.{{.FORMAT}}"
+  TRANSLATE_US_FILE: "{{.US_OUT_DIR}}/{{.TRANSLATE_US}}"
+
+tasks:
+  # === build =================================================
+
+  c:
+    cmds:
+      - task: clean
+
+  clean:
+    cmds:
+      - cmd: rm -rf {{.DIST_DIR}}/*
+
+  build_generic:
+    vars:
+      APPLICATION_ENTRY: ./src/app/main
+      SRC_CODE: ./src
+
+    cmds:
+      - echo "cross compiling from {{OS}} to {{.TARGET_OS}}"
+      - GOOS={{.TARGET_OS}} GOARCH={{.TARGET_ARCH}} go build -o {{.DIST_DIR}}/{{.TARGET_OS}}/{{.BINARY_NAME}}{{.BINARY_EXT}} -v {{.APPLICATION_ENTRY}}
+
+    sources:
+      - ./src/**/*.go
+
+    generates:
+      - "{{.DIST_DIR}}/{{.TARGET_OS}}/{{.BINARY_NAME}}{{.BINARY_EXT}}"
+
+  b:
+    cmds:
+      - task: build-w
+
+  build-w:
+    cmds:
+      - task: build_generic
+        vars: { TARGET_OS: windows, TARGET_ARCH: amd64, BINARY_EXT: .exe }
+
+  build-l:
+    cmds:
+      - task: build_generic
+        vars: { TARGET_OS: linux, TARGET_ARCH: amd64 }
+
+  build-m:
+    cmds:
+      - task: build_generic
+        vars: { TARGET_OS: darwin, TARGET_ARCH: amd64 }
+
+  # === test ==================================================
+
+  t:
+    cmds:
+      - go test ./...
+
+  # === deploy ================================================
+
+  d:
+    cmds:
+      - task: deploy
+
+  # currently, this is hardcoded for windows
+  #
+  deploy:
+    vars:
+      BINARY_EXT: .exe
+      TARGET_OS: windows
+      DEPLOY_BINARY: "{{.DIST_DIR}}/{{.TARGET_OS}}/{{.BINARY_NAME}}{{.BINARY_EXT}}"
+      DEPLOY_US: "{{.DEPLOY_DIR}}/{{.ACTIVE_US}}"
+
+    cmds:
+      - echo "deploying to location (.env) DEPLOY_TO  ==> '$DEPLOY_TO'"
+      - /bin/cp -f {{.DEPLOY_BINARY}} $DEPLOY_TO
+      - /bin/cp -f {{.DEPLOY_DIR}}/{{.ACTIVE_US}} $DEPLOY_TO
+
+    generates:
+      - $DEPLOY_TO/{{.DEPLOY_BINARY}}
+      - $DEPLOY_TO/{{.ACTIVE_US}}
+
+    preconditions:
+      - test $DEPLOY_TO
+      - test -f {{.DEPLOY_BINARY}}
+      - test -f {{.DEPLOY_DIR}}/{{.ACTIVE_US}}
+
+  tbd:
+    cmds:
+      - task: t
+      - task: b
+      - task: d
+
+  # === ginkgo ================================================
+
+  # initialise a test suite for a package. (only 1 per package)
+  boot:
+    cmds:
+      - ginkgo bootstrap
+
+  # run tests suites recursive
+  g:
+    cmds:
+      - ginkgo -r
+
+  # invoke as task gen -- <item>
+  gl:
+    cmds:
+      - ginkgo -r --label-filter={{.CLI_ARGS}}
+
+  # run tests suites recursive with verbose
+  gv:
+    cmds:
+      - ginkgo -r -v
+
+  # generate a test file for the item provided (item_test.go)
+  # invoke as task gen -- <item>
+  gen:
+    cmds:
+      - ginkgo generate {{.CLI_ARGS}}
+
+  dry:
+    cmds:
+      - ginkgo -v --dry-run ./...
+
+  # === watch ================================================
+
+  watchv:
+    cmds:
+      - ginkgo watch -v -r -p ./...
+
+  watch:
+    cmds:
+      - ginkgo watch -r -p ./...
+
+  # === lint =================================================
+
+  lint:
+    cmds:
+      - golangci-lint run
+
+  # === coverage =============================================
+
+  cover:
+    cmds:
+      - goveralls -repotoken {{.COVERALLS_TOKEN}}
+
+  # === i18n =================================================
+
+  clear:
+    cmds:
+      - rm ./{{.OUT_DIR}}/* --recursive
+
+  # extract: scans for i18m messages in source code
+  # - creates  empty out/l10n/arcadia.translate.en-US.json
+  # - extracts messages into out/active.en-GB.json
+  #
+  extract:
+    cmds:
+      - goi18n extract
+        -format {{.FORMAT}}
+        -sourceLanguage {{.SOURCE_LANG}}
+        -outdir {{.OUT_DIR}}
+      - echo "✨ Extract from source language {{.SOURCE_LANG}} => Created:"
+      - echo "---> 📜 {{.OUT_DIR}}/{{.EXTRACT_ACTIVE}}"
+
+  # newt: new translation:
+  #
+  newt:
+    deps: [extract]
+    cmds:
+      - test -d {{.US_OUT_DIR}} || mkdir {{.US_OUT_DIR}}
+      - touch {{.US_OUT_DIR}}/{{.TRANSLATE_US}}
+      - echo "💦 Generate empty translate file for {{.LANGUAGE_US}} => Created:"
+      - echo "---> 📜 {{.US_OUT_DIR}}/{{.TRANSLATE_US}}"
+
+  # merge: derive a translation from the default
+  # we pass the source file (EXTRACT_ACTIVE) as well as the empty
+  # translation file (TRANSLATE_US) into the merge
+  # This creates 2 files per language:
+  #
+  # xx-yy.active.format
+  #         This file contains messages that should be loaded at runtime.
+  #
+  # xx-yy.translate.format
+  #         This file contains messages which should be translated.
+  #
+  # When you merge, you can't control the name of the active/translate files, so
+  # don't rename them, leave as is and do any renaming at the end
+  #
+  merge:
+    cmds:
+      - goi18n merge
+        -format {{.FORMAT}}
+        -sourceLanguage {{.SOURCE_LANG}}
+        -outdir ./{{.OUT_DIR}}
+        "{{.SOURCE_ACTIVE_FILE}}"
+        "{{.TRANSLATE_US_FILE}}"
+      - echo "🌐 running merge with files:"
+      - echo "---> input file📜 {{.SOURCE_ACTIVE}}"
+      - echo "---> input file📜 {{.TRANSLATE_US_FILE}}"
+      - echo "🤖 Generate files for {{.LANGUAGE_US}} => Created:"
+      - echo "---> 📜 active.en-US.{{.FORMAT}} (this contains null doc {})"
+      - echo "---> 📜 translate.en-US.{{.FORMAT}} (creates the pre-translate doc with hashes)"
+
+  # update existing translations
+  # after running this task, the translation file generated will
+  # contain only the new translations. Update the active file,
+  # with the new translations. Also, need to copy the default
+  # file (active.en-GB.json) back into ./i18n/default
+  #
+  # creates ./src/i18n/out/en-US/translate.en-US.json: this is the
+  # file to be translated. This contains hashes and also contains
+  # all messages, not just the ones added.
+  # It is useful to keep all the out file also checked in because, what we
+  # can do is perform the extract, this generates the out/active/active.en-GB.json
+  # file, but it contains all the messages not just the new ones. Because we
+  # have checked it in, we can see the delta. You can just delete the existing
+  # messages which leaves you with just the new ones. Then we can you this to
+  # merge in with the previous active file.
+  #
+  # copy the source active delta file into out/en-US/translate.en-US.json file,
+  # then pass this to your translator. This file will contain the new translated
+  # messages.
+  #
+  # The process of updating existing translation still needs some work as it
+  # is still not understood and the goi18n documentation is severely lacking
+  # when it comes to the process. I will aim to improve this as my understanding
+  # improves after experience.
+  #
+  # For now, the merge of new translations with existing ones should be done
+  # manually.
+  #
+  update:
+    deps: [extract]
+    cmds:
+      - goi18n merge
+        -format {{.FORMAT}}
+        -sourceLanguage {{.SOURCE_LANG}}
+        -outdir {{.US_OUT_DIR}}
+        "{{.SOURCE_ACTIVE_FILE}}"
+        "{{.US_OUT_DIR}}/{{.TRANSLATE_US}}"
+
+  # run this after manual translation has occurred to integrate it
+  # back into the translation file. Unfortunately, this task doesn't
+  # work properly, because it does not include the hashes. Without
+  # this task, the new translations must be manually added to the active
+  # translation file (active.en-US.json).
+  accept:
+    cmds:
+      - goi18n merge
+        -format {{.FORMAT}}
+        -sourceLanguage "en-US"
+        -outdir ./i18n/temp
+        ./{{.OUT_DIR}}/{{.TRANSLATE_US}} {{.DEPLOY_DIR}}/{{.ACTIVE_US}}
