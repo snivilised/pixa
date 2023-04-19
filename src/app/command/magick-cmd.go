@@ -23,32 +23,32 @@ const (
 	ScribbleFormatEn
 )
 
-type WidgetParameterSet struct { // 80 could be 24
+type MagickParameterSet struct {
 	Directory string
 	Format    OutputFormatEnum
 	Concise   bool
 	Pattern   string
 	Threshold uint
 
-	// the following are supporting fields required for widget command
+	// the following are supporting fields required for magick command
 	//
 	OutputFormatEnumInfo *assistant.EnumInfo[OutputFormatEnum]
 	OutputFormatEn       assistant.EnumValue[OutputFormatEnum]
 }
 
-const WidgetPsName = "widget-ps"
+const MagickPsName = "magick-ps"
 
-func buildWidgetCommand(container *assistant.CobraContainer) *cobra.Command {
-	// to test: arcadia widget -d ./some-existing-file -p "P?<date>" -t 30
+func buildMagickCommand(container *assistant.CobraContainer) *cobra.Command {
+	// to test: arcadia magick -d ./some-existing-file -p "P?<date>" -t 30
 	//
-	widgetCommand := &cobra.Command{
-		Use:   "widget",
-		Short: "widget sub command",
-		Long:  "Long description of the widget command",
+	magickCommand := &cobra.Command{
+		Use:   "mag",
+		Short: "mag (magick) sub command",
+		Long:  "Long description of the magick command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var appErr error
 
-			ps := container.MustGetParamSet(WidgetPsName).(*assistant.ParamSet[WidgetParameterSet]) //nolint:errcheck // is Must call
+			ps := container.MustGetParamSet(MagickPsName).(*assistant.ParamSet[MagickParameterSet]) //nolint:errcheck // is Must call
 
 			if err := ps.Validate(); err == nil {
 				native := ps.Native
@@ -59,7 +59,7 @@ func buildWidgetCommand(container *assistant.CobraContainer) *cobra.Command {
 
 				// optionally invoke cross field validation
 				//
-				if xv := ps.CrossValidate(func(ps *WidgetParameterSet) error {
+				if xv := ps.CrossValidate(func(ps *MagickParameterSet) error {
 					condition := (ps.Format == XMLFormatEn)
 					if condition {
 						return nil
@@ -70,7 +70,7 @@ func buildWidgetCommand(container *assistant.CobraContainer) *cobra.Command {
 					cmd.Flags().Visit(func(f *pflag.Flag) {
 						options = append(options, fmt.Sprintf("--%v=%v", f.Name, f.Value))
 					})
-					fmt.Printf("%v %v Running widget, with options: '%v', args: '%v'\n",
+					fmt.Printf("%v %v Running magick, with options: '%v', args: '%v'\n",
 						AppEmoji, ApplicationName, options, args,
 					)
 					// ---> execute application core with the parameter set (native)
@@ -90,7 +90,7 @@ func buildWidgetCommand(container *assistant.CobraContainer) *cobra.Command {
 
 	defaultDirectory := "/foo-bar"
 
-	paramSet := assistant.NewParamSet[WidgetParameterSet](widgetCommand)
+	paramSet := assistant.NewParamSet[MagickParameterSet](magickCommand)
 	paramSet.BindValidatedString(
 		assistant.NewFlagInfo("directory", "d", defaultDirectory),
 		&paramSet.Native.Directory,
@@ -154,7 +154,7 @@ func buildWidgetCommand(container *assistant.CobraContainer) *cobra.Command {
 		},
 	)
 
-	_ = widgetCommand.MarkFlagRequired("pattern")
+	_ = magickCommand.MarkFlagRequired("pattern")
 
 	const (
 		Low  = uint(25)
@@ -168,13 +168,13 @@ func buildWidgetCommand(container *assistant.CobraContainer) *cobra.Command {
 		Low, High,
 	)
 
-	// If you want to disable the widget command but keep it in the project for reference
+	// If you want to disable the magick command but keep it in the project for reference
 	// purposes, then simply comment out the following 2 register calls:
 	// (Warning, this may just create dead code and result in lint failure so tread
 	// carefully.)
 	//
-	container.MustRegisterRootedCommand(widgetCommand)
-	container.MustRegisterParamSet(WidgetPsName, paramSet)
+	container.MustRegisterRootedCommand(magickCommand)
+	container.MustRegisterParamSet(MagickPsName, paramSet)
 
-	return widgetCommand
+	return magickCommand
 }

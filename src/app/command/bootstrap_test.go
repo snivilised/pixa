@@ -30,7 +30,7 @@ var _ = Describe("Bootstrap", Ordered, func() {
 		Expect(utils.FolderExists(l10nPath)).To(BeTrue())
 	})
 
-	Context("given: root defined with widget sub-command", func() {
+	Context("given: root defined with magick sub-command", func() {
 		It("🧪 should: setup command without error", func() {
 			bootstrap := command.Bootstrap{
 				Detector: &DetectorStub{},
