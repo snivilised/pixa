@@ -27,6 +27,8 @@
     "ineffassign",
     "jibberjabber",
     "linters",
+    "lintv",
+    "Magick",
     "nakedret",
     "nolintlint",
     "Pixa",

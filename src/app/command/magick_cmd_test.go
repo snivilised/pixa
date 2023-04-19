@@ -8,7 +8,7 @@ import (
 	"github.com/snivilised/pixa/src/internal/helpers"
 )
 
-var _ = Describe("WidgetCmd", func() {
+var _ = Describe("MagickCmd", func() {
 
 	When("specified flags are valid", func() {
 		It("🧪 should: execute without error", func() {
@@ -16,7 +16,7 @@ var _ = Describe("WidgetCmd", func() {
 				Detector: &DetectorStub{},
 			}
 			tester := helpers.CommandTester{
-				Args: []string{"widget", "-p", "P?<date>", "-t", "42"},
+				Args: []string{"mag", "-p", "P?<date>", "-t", "42"},
 				Root: bootstrap.Root(),
 			}
 			_, err := tester.Execute()
@@ -32,7 +32,7 @@ var _ = Describe("WidgetCmd", func() {
 				Detector: &DetectorStub{},
 			}
 			tester := helpers.CommandTester{
-				Args: []string{"widget", "-p", "P?<date>", "-t", "99"},
+				Args: []string{"mag", "-p", "P?<date>", "-t", "99"},
 				Root: bootstrap.Root(),
 			}
 			_, err := tester.Execute()

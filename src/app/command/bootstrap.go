@@ -58,7 +58,7 @@ func (b *Bootstrap) Root() *cobra.Command {
 	)
 
 	b.buildRootCommand(b.container)
-	buildWidgetCommand(b.container)
+	buildMagickCommand(b.container)
 
 	return b.container.Root()
 }
@@ -171,5 +171,6 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 		return err
 	})
 
+	// TODO: remove this dummy comment
 	container.MustRegisterParamSet(RootPsName, paramSet)
 }
