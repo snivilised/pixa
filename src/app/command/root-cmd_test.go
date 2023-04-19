@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/snivilised/arcadia/src/app/command"
-	"github.com/snivilised/arcadia/src/internal/helpers"
+	"github.com/snivilised/pixa/src/app/command"
+	"github.com/snivilised/pixa/src/internal/helpers"
 	"github.com/snivilised/extendio/xfs/utils"
 )
 

@@ -1,12 +1,12 @@
-# 🦄 arcadia: ___Go template for Cobra based cli applications___
+# 🦄 pixa: ___Go template for Cobra based cli applications___
 
 [![A B](https://img.shields.io/badge/branching-commonflow-informational?style=flat)](https://commonflow.org)
 [![A B](https://img.shields.io/badge/merge-rebase-informational?style=flat)](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)
 [![A B](https://img.shields.io/badge/branch%20history-linear-blue?style=flat)](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule)
-[![Go Reference](https://pkg.go.dev/badge/github.com/snivilised/arcadia.svg)](https://pkg.go.dev/github.com/snivilised/arcadia)
-[![Go report](https://goreportcard.com/badge/github.com/snivilised/arcadia)](https://goreportcard.com/report/github.com/snivilised/arcadia)
-[![Coverage Status](https://coveralls.io/repos/github/snivilised/arcadia/badge.svg?branch=master)](https://coveralls.io/github/snivilised/arcadia?branch=master&kill_cache=1)
-[![Arcadia Continuous Integration](https://github.com/snivilised/arcadia/actions/workflows/ci-workflow.yml/badge.svg)](https://github.com/snivilised/arcadia/actions/workflows/ci-workflow.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/snivilised/pixa.svg)](https://pkg.go.dev/github.com/snivilised/pixa)
+[![Go report](https://goreportcard.com/badge/github.com/snivilised/pixa)](https://goreportcard.com/report/github.com/snivilised/pixa)
+[![Coverage Status](https://coveralls.io/repos/github/snivilised/pixa/badge.svg?branch=master)](https://coveralls.io/github/snivilised/pixa?branch=master&kill_cache=1)
+[![Pixa Continuous Integration](https://github.com/snivilised/pixa/actions/workflows/ci-workflow.yml/badge.svg)](https://github.com/snivilised/pixa/actions/workflows/ci-workflow.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![A B](https://img.shields.io/badge/commit-conventional-commits?style=flat)](https://www.conventionalcommits.org/)
 
@@ -63,7 +63,7 @@ Automated via `automate-checklist.sh` script. When the user instantiates the rep
 
 ##### ✅ Rename import statements
 
-+ `rename import paths`: global search and replace ___snivilised/arcadia___ to ___pandora/maestro___
++ `rename import paths`: global search and replace ___snivilised/pixa___ to ___pandora/maestro___
 
 ##### ✅ Identifiers
 

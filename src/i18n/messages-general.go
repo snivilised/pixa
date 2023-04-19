@@ -5,7 +5,7 @@ import (
 )
 
 type UsingConfigFileTemplData struct {
-	arcadiaTemplData
+	pixaTemplData
 	ConfigFileName string
 }
 

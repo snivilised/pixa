@@ -5,7 +5,7 @@ dotenv: [".env"]
 
 vars:
   FORMAT: json
-  BINARY_NAME: arcadia
+  BINARY_NAME: pixa
   DEPLOY_DIR: ./src/i18n/deploy
   OUT_DIR: ./src/i18n/out
   DIST_DIR: ./dist
@@ -171,7 +171,7 @@ tasks:
       - rm ./{{.OUT_DIR}}/* --recursive
 
   # extract: scans for i18m messages in source code
-  # - creates  empty out/l10n/arcadia.translate.en-US.json
+  # - creates  empty out/l10n/pixa.translate.en-US.json
   # - extracts messages into out/active.en-GB.json
   #
   extract:

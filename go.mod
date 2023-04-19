@@ -1,4 +1,4 @@
-module github.com/snivilised/arcadia
+module github.com/snivilised/pixa
 
 go 1.19
 

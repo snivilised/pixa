@@ -5,7 +5,7 @@ import (
 )
 
 type RootCmdShortDescTemplData struct {
-	arcadiaTemplData
+	pixaTemplData
 }
 
 func (td RootCmdShortDescTemplData) Message() *i18n.Message {
@@ -17,7 +17,7 @@ func (td RootCmdShortDescTemplData) Message() *i18n.Message {
 }
 
 type RootCmdLongDescTemplData struct {
-	arcadiaTemplData
+	pixaTemplData
 }
 
 func (td RootCmdLongDescTemplData) Message() *i18n.Message {
@@ -34,7 +34,7 @@ func (td RootCmdLongDescTemplData) Message() *i18n.Message {
 }
 
 type RootCmdConfigFileUsageTemplData struct {
-	arcadiaTemplData
+	pixaTemplData
 	ConfigFileName string
 }
 
@@ -47,7 +47,7 @@ func (td RootCmdConfigFileUsageTemplData) Message() *i18n.Message {
 }
 
 type RootCmdLangUsageTemplData struct {
-	arcadiaTemplData
+	pixaTemplData
 }
 
 func (td RootCmdLangUsageTemplData) Message() *i18n.Message {
