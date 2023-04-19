@@ -1,4 +1,4 @@
-name: Arcadia Release
+name: Pixa Release
 
 on:
   push:

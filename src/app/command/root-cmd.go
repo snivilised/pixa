@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	AppEmoji        = "🦄"
+	AppEmoji        = "🧙‍♂️"
 	ApplicationName = "pixa"
 	RootPsName      = "root-ps"
 	SourceID        = "github.com/snivilised/pixa"

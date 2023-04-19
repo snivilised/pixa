@@ -3,9 +3,9 @@ package command_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/extendio/xfs/utils"
 
 	"golang.org/x/text/language"
 )

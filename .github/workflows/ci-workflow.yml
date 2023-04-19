@@ -1,4 +1,4 @@
-name: Arcadia Continuous Integration
+name: Pixa Continuous Integration
 on:
   push:
 
