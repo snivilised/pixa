@@ -29,6 +29,7 @@
     "linters",
     "nakedret",
     "nolintlint",
+    "Pixa",
     "prealloc",
     "repotoken",
     "sidewalk",

@@ -4,9 +4,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/extendio/xfs/utils"
 )
 
 var _ = Describe("RootCmd", Ordered, func() {
