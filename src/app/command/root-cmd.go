@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	AppEmoji        = "🧙‍♂️"
+	AppEmoji        = "🧙"
 	ApplicationName = "pixa"
 	RootPsName      = "root-ps"
 	SourceID        = "github.com/snivilised/pixa"
@@ -34,10 +34,4 @@ func Execute(setter ...ExecutionOptionsFn) error {
 	}
 
 	return bootstrap.Root().Execute()
-}
-
-// CLIENT-TODO: define valid properties on the root parameter set
-type RootParameterSet struct {
-	ConfigFile string
-	Language   string
 }

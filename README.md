@@ -1,4 +1,4 @@
-# 🧙‍♂️ pixa: ___directory tree based bulk image processor___
+# 🧙 pixa: ___directory tree based bulk image processor___
 
 [![A B](https://img.shields.io/badge/branching-commonflow-informational?style=flat)](https://commonflow.org)
 [![A B](https://img.shields.io/badge/merge-rebase-informational?style=flat)](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)

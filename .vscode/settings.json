@@ -43,6 +43,7 @@
     "typecheck",
     "unconvert",
     "unparam",
-    "varcheck"
+    "varcheck",
+    "xutils"
   ]
 }
