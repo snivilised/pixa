@@ -3,15 +3,19 @@ package command
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/cubiest/jibberjabber"
 	"github.com/samber/lo"
-	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 
+	"github.com/snivilised/cobrass/src/assistant"
+	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/pixa/src/app/magick"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -40,7 +44,9 @@ type Bootstrap struct {
 // Root builds the command tree and returns the root command, ready
 // to be executed.
 func (b *Bootstrap) Root() *cobra.Command {
-	b.configure()
+	b.configure(func(co *configureOptions) {
+		// ---> co.configFile = "~/pixa.yml"
+	})
 
 	// all these string literals here should be made translate-able
 	//
@@ -59,12 +65,13 @@ func (b *Bootstrap) Root() *cobra.Command {
 
 	b.buildRootCommand(b.container)
 	buildMagickCommand(b.container)
+	buildShrinkCommand(b.container)
 
 	return b.container.Root()
 }
 
 type configureOptions struct {
-	configFile *string
+	configFile string
 }
 
 type ConfigureOptionFn func(*configureOptions)
@@ -73,13 +80,14 @@ func (b *Bootstrap) configure(options ...ConfigureOptionFn) {
 	var configFile string
 
 	o := configureOptions{
-		configFile: &configFile,
+		configFile: configFile,
 	}
 	for _, fo := range options {
 		fo(&o)
 	}
 
 	if configFile != "" {
+		fmt.Printf("💛 setting explicit config path; '%v'\n", configFile)
 		// Use config file from the flag.
 		viper.SetConfigFile(configFile)
 	} else {
@@ -87,13 +95,14 @@ func (b *Bootstrap) configure(options ...ConfigureOptionFn) {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".arcadia" (without extension).
+		fmt.Printf("💚 (nil-config-file) using default config path \n")
+
+		// Search config in home directory with name ".pixa" (without extension).
 		// NB: 'arcadia' should be renamed as appropriate
 		//
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		configName := fmt.Sprintf("%v.yml", ApplicationName)
-		viper.SetConfigName(configName)
+		viper.SetConfigName(ApplicationName)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -103,11 +112,21 @@ func (b *Bootstrap) configure(options ...ConfigureOptionFn) {
 
 	handleLangSetting()
 
+	msg := xi18n.Text(i18n.UsingConfigFileTemplData{
+		ConfigFileName: viper.ConfigFileUsed(),
+	})
+
 	if err != nil {
-		msg := xi18n.Text(i18n.UsingConfigFileTemplData{
-			ConfigFileName: viper.ConfigFileUsed(),
-		})
 		fmt.Fprintln(os.Stderr, msg)
+
+		fmt.Printf("💥 error reading config path: '%v' \n", err)
+	} else {
+		fmt.Printf("🧡 '%v' \n", msg)
+
+		gb := viper.GetString("gaussian-blur")
+		if gb != "" {
+			fmt.Printf("--> 💝 found blur in config: '%v' \n", gb)
+		}
 	}
 }
 
@@ -133,7 +152,12 @@ func handleLangSetting() {
 		uo.Tag = tag
 		uo.From = xi18n.LoadFrom{
 			Sources: xi18n.TranslationFiles{
-				SourceID: xi18n.TranslationSource{Name: ApplicationName},
+				SourceID: xi18n.TranslationSource{
+					Name: ApplicationName,
+				},
+				ci18n.CobrassSourceID: xi18n.TranslationSource{
+					Name: "cobrass",
+				},
 			},
 		}
 	})
@@ -149,28 +173,109 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	//
-	root := container.Root()
-	paramSet := assistant.NewParamSet[RootParameterSet](root)
+	rootCommand := container.Root()
+	paramSet := assistant.NewParamSet[magick.RootParameterSet](rootCommand)
+
+	paramSet.BindBool(&assistant.FlagInfo{
+		Name:               "viper",
+		Usage:              "viper defines whether to use viper configuration",
+		Default:            true,
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.Viper)
 
 	paramSet.BindString(&assistant.FlagInfo{
 		Name: "config",
-		Usage: xi18n.Text(i18n.RootCmdConfigFileUsageTemplData{
-			ConfigFileName: ApplicationName,
-		}),
-		Default:            "",
-		AlternativeFlagSet: root.PersistentFlags(),
+		Usage: i18n.LeadsWith(
+			"config",
+			xi18n.Text(i18n.RootCmdConfigFileUsageTemplData{}),
+		),
+		Default:            "pixa.yml",
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
 	}, &paramSet.Native.ConfigFile)
 
 	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name:               "lang",
-		Usage:              xi18n.Text(i18n.RootCmdLangUsageTemplData{}),
+		Name: "lang",
+		Usage: i18n.LeadsWith(
+			"lang",
+			xi18n.Text(i18n.RootCmdLangUsageTemplData{}),
+		),
 		Default:            xi18n.DefaultLanguage.Get().String(),
-		AlternativeFlagSet: root.PersistentFlags(),
-	}, &paramSet.Native.Language, func(value string) error {
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.Language, func(value string, _ *pflag.Flag) error {
 		_, err := language.Parse(value)
 		return err
 	})
 
-	// TODO: remove this dummy comment
+	// FolderRexEx
+	//
+	paramSet.BindValidatedString(&assistant.FlagInfo{
+		Name: "folder-rx",
+		Usage: i18n.LeadsWith(
+			"folder-rx",
+			xi18n.Text(i18n.RootCmdFolderRexExParamUsageTemplData{}),
+		),
+		Short:              "y",
+		Default:            "",
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.FolderRexEx, func(value string, _ *pflag.Flag) error {
+		_, err := regexp.Compile(value)
+		return err
+	})
+
+	// FolderGlob
+	//
+	paramSet.BindString(&assistant.FlagInfo{
+		Name: "folder-gb",
+		Usage: i18n.LeadsWith(
+			"folder-gb",
+			xi18n.Text(i18n.RootCmdFolderGlobParamUsageTemplData{}),
+		),
+		Short:              "z",
+		Default:            "",
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.FolderGlob)
+
+	// FilesRexEx
+	//
+	paramSet.BindValidatedString(&assistant.FlagInfo{
+		Name: "files-rx",
+		Usage: i18n.LeadsWith(
+			"files-rx",
+			xi18n.Text(i18n.RootCmdFilesRegExParamUsageTemplData{}),
+		),
+		Short:              "X",
+		Default:            "",
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.FilesRexEx, func(value string, _ *pflag.Flag) error {
+		_, err := regexp.Compile(value)
+		return err
+	})
+
+	// FilesGlob
+	//
+	paramSet.BindString(&assistant.FlagInfo{
+		Name: "files-gb",
+		Usage: i18n.LeadsWith(
+			"files-gb",
+			xi18n.Text(i18n.RootCmdFilesGlobParamUsageTemplData{}),
+		),
+		Short:              "G",
+		Default:            "",
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.FilesGlob)
+
+	// Preview
+	//
+	paramSet.BindBool(&assistant.FlagInfo{
+		Name:               "preview",
+		Usage:              "preview shrink op",
+		Short:              "P",
+		Default:            false,
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.Preview)
+
+	rootCommand.MarkFlagsMutuallyExclusive("files-rx", "files-gb")
+	rootCommand.MarkFlagsMutuallyExclusive("folder-rx", "folder-gb")
+
 	container.MustRegisterParamSet(RootPsName, paramSet)
 }
