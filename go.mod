@@ -3,10 +3,10 @@ module github.com/snivilised/pixa
 go 1.19
 
 require (
-	github.com/onsi/ginkgo/v2 v2.9.2
+	github.com/onsi/ginkgo/v2 v2.9.4
 	github.com/onsi/gomega v1.27.6
 	github.com/samber/lo v1.38.1
-	github.com/snivilised/extendio v0.1.16
+	github.com/snivilised/extendio v0.1.20
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	go.uber.org/zap v1.24.0
