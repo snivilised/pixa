@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/snivilised/cobrass/src/assistant"
@@ -95,15 +96,18 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 						fmt.Printf("💠 Blur defined with value: '%v'\n", cmd.Flag("sampling-factor").Value)
 					}
 
+					ps.Native.Directory = args[0]
+					if absolute, absErr := filepath.Abs(args[0]); absErr == nil {
+						ps.Native.Directory = absolute
+					}
+
 					// Get inherited parameters
 					//
 					rps := container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
-					_ = rps
 
 					// ---> execute application core with the parameter set (native)
 					//
-					// appErr = runApplication(native)
-					//
+					appErr = magick.EnterShrink(rps, ps)
 				} else {
 					return xvErr
 				}
@@ -241,8 +245,38 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 		},
 	)
 
+	// 📌A note about cobra args validation: cmd.ValidArgs lets you define
+	// a list of all allowable tokens for positional args. Just define
+	// ValidArgs, eg:
+	// shrinkCommand.ValidArgs = []string{"foo", "bar", "baz"}
+	// and then set the args validation function cmd.Args to cobra.OnlyValidArgs
+	// ie:
+	// shrinkCommand.Args = cobra.OnlyValidArgs
+	// With this in place, the user can only type positional args which are in
+	// the set defined, ie {"foo", "bar", "baz"}.
+	//
+	// Since the shrink command only needs a single 'directory' positional arg,
+	// all we need is to set the exact no of args to 1. We don;t need to define
+	// ValidArgs since there is no closed set directories we can define. ValidArgs
+	// is suitable when all positional args can behave like an enum, where there
+	// is a finite set of valid values.
+	//
 	container.MustRegisterRootedCommand(shrinkCommand)
 	container.MustRegisterParamSet(shrinkPsName, paramSet)
+
+	shrinkCommand.Args = func(cmd *cobra.Command, args []string) error {
+		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+			return err
+		}
+
+		directory := args[0]
+
+		if !utils.Exists(directory) {
+			return xi18n.NewPathNotFoundError("shrink directory", directory)
+		}
+
+		return nil
+	}
 
 	return shrinkCommand
 }

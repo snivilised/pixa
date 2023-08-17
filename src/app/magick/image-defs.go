@@ -92,6 +92,7 @@ type CoreParameters struct {
 type ShrinkParameterSet struct {
 	CoreParameters
 	//
+	Directory  string
 	MirrorPath string
 	ModeEn     assistant.EnumValue[ModeEnum]
 }

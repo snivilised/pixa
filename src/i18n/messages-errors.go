@@ -21,7 +21,7 @@ type FooBarTemplData struct {
 // name of the library implementing this template project.
 func (td FooBarTemplData) Message() *i18n.Message {
 	return &i18n.Message{
-		ID:          "foo-bar.arcadia.nav",
+		ID:          "foo-bar.pixa.nav",
 		Description: "Foo Bar description",
 		Other:       "foo bar failure '{{.Path}}' (reason: {{.Reason}})",
 	}
