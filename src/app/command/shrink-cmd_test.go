@@ -22,9 +22,10 @@ type commandTE struct {
 
 type shrinkTE struct {
 	commandTE
+	directory string
 }
 
-func coreShrinkCmdTest(entry *shrinkTE) {
+func expectValidShrinkCmdInvocation(entry *shrinkTE) {
 	bootstrap := command.Bootstrap{
 		Detector: &DetectorStub{},
 	}
@@ -33,7 +34,9 @@ func coreShrinkCmdTest(entry *shrinkTE) {
 		prog = "shrink"
 	)
 
-	options := append([]string{prog}, []string{
+	// we also prepend the directory name to the command line
+	//
+	options := append([]string{prog, entry.directory}, []string{
 		"--preview", "--mode", "tidy",
 	}...)
 
@@ -85,7 +88,11 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 
 	DescribeTable("ShrinkCmd",
 		func(entry *shrinkTE) {
-			coreShrinkCmdTest(entry)
+			// set directory here, because during discovery phase of unit test ,
+			// l10nPath is not set, so we can't set it inside the Entry
+			//
+			entry.directory = l10nPath
+			expectValidShrinkCmdInvocation(entry)
 		},
 		func(entry *shrinkTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v'", entry.message)
@@ -95,7 +102,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "vanilla with long form options",
 				args: []string{
-					"source.jpg", "--strip", "--interlace", "plane", "--quality", "85", "result.jpg",
+					"--strip", "--interlace", "plane", "--quality", "85",
 				},
 			},
 		}),
@@ -104,7 +111,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "vanilla with short form options",
 				args: []string{
-					"source.jpg", "-s", "-i", "plane", "-q", "85", "result.jpg",
+					"-s", "-i", "plane", "-q", "85",
 				},
 			},
 		}),
@@ -113,7 +120,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "blur with long form options",
 				args: []string{
-					"source.jpg", "result.jpg", "--strip", "--interlace", "plane", "--quality", "85",
+					"--strip", "--interlace", "plane", "--quality", "85",
 					"--gaussian-blur", "0.85",
 				},
 			},
@@ -123,7 +130,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "blur with short form options",
 				args: []string{
-					"source.jpg", "result.jpg", "-s", "-i", "plane", "-q", "85",
+					"-s", "-i", "plane", "-q", "85",
 					"-b", "0.85",
 				},
 			},
@@ -133,7 +140,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "sampling factor with long form options",
 				args: []string{
-					"source.jpg", "result.jpg", "--strip", "--interlace", "plane", "--quality", "85",
+					"--strip", "--interlace", "plane", "--quality", "85",
 					"--sampling-factor", "4:2:0",
 				},
 			},
@@ -143,7 +150,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "sampling factor with short form options",
 				args: []string{
-					"source.jpg", "result.jpg", "-s", "-i", "Plane", "-q", "85",
+					"-s", "-i", "Plane", "-q", "85",
 					"-f", "4:2:0",
 				},
 			},
@@ -153,7 +160,6 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "with long form glob filtering options options",
 				args: []string{
-					"source.jpg", "result.jpg",
 					"--folder-gb", "A*",
 					"--files-gb", "*.jpg",
 				},
@@ -164,7 +170,6 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "with short form regex filtering options options",
 				args: []string{
-					"source.jpg", "result.jpg",
 					"--folder-rx", "^A",
 					"--files-rx", "\\.jpg$",
 				},
@@ -178,16 +183,16 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 	When("with general long form parameters", func() {
 		It("🧪 should: execute successfully", func() {
 			entry := &shrinkTE{
+				directory: l10nPath,
 				commandTE: commandTE{
 					message: "with general long form parameters",
 					args: []string{
-						"source.jpg", "result.jpg",
 						"--mirror-path", l10nPath,
 					},
 				},
 			}
 
-			coreShrinkCmdTest(entry)
+			expectValidShrinkCmdInvocation(entry)
 		})
 	})
 })
