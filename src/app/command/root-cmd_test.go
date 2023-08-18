@@ -26,7 +26,7 @@ var _ = Describe("RootCmd", Ordered, func() {
 			Detector: &DetectorStub{},
 		}
 		tester := helpers.CommandTester{
-			Args: []string{},
+			Args: []string{"./"},
 			Root: bootstrap.Root(),
 		}
 		_, err := tester.Execute()

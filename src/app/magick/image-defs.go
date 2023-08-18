@@ -8,6 +8,7 @@ import (
 type RootParameterSet struct {
 	GeneralParameters
 	FilterParameters
+	Directory  string
 	Viper      bool
 	ConfigFile string
 	Language   string
@@ -92,7 +93,6 @@ type CoreParameters struct {
 type ShrinkParameterSet struct {
 	CoreParameters
 	//
-	Directory  string
 	MirrorPath string
 	ModeEn     assistant.EnumValue[ModeEnum]
 }

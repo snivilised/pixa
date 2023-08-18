@@ -15,6 +15,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/magick"
 	"github.com/snivilised/pixa/src/i18n"
 )
@@ -33,6 +34,20 @@ func (j *Jabber) Scan() language.Tag {
 	return language.MustParse(lang)
 }
 
+func validatePositionalArgs(cmd *cobra.Command, args []string) error {
+	if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+		return err
+	}
+
+	directory := magick.ResolvePath(args[0])
+
+	if !utils.Exists(directory) {
+		return xi18n.NewPathNotFoundError("shrink directory", directory)
+	}
+
+	return nil
+}
+
 // Bootstrap represents construct that performs start up of the cli
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
@@ -48,18 +63,22 @@ func (b *Bootstrap) Root() *cobra.Command {
 		// ---> co.configFile = "~/pixa.yml"
 	})
 
-	// all these string literals here should be made translate-able
-	//
-
 	b.container = assistant.NewCobraContainer(
 		&cobra.Command{
 			Use:     "main",
 			Short:   xi18n.Text(i18n.RootCmdShortDescTemplData{}),
 			Long:    xi18n.Text(i18n.RootCmdLongDescTemplData{}),
 			Version: fmt.Sprintf("'%v'", Version),
-			// Uncomment the following line if your bare application
-			// has an action associated with it:
-			// Run: func(cmd *cobra.Command, args []string) { },
+			RunE: func(cmd *cobra.Command, args []string) error {
+				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
+
+				rps := b.container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
+				rps.Native.Directory = magick.ResolvePath(args[0])
+
+				// ---> execute root core
+				//
+				return magick.EnterRoot(rps)
+			},
 		},
 	)
 
@@ -276,6 +295,8 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 
 	rootCommand.MarkFlagsMutuallyExclusive("files-rx", "files-gb")
 	rootCommand.MarkFlagsMutuallyExclusive("folder-rx", "folder-gb")
+
+	rootCommand.Args = validatePositionalArgs
 
 	container.MustRegisterParamSet(RootPsName, paramSet)
 }
