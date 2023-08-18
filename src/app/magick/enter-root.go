@@ -10,15 +10,14 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
-type ShrinkEntry struct {
+type RootEntry struct {
 	EntryBase
 
-	rps  *assistant.ParamSet[RootParameterSet]
-	ps   *assistant.ParamSet[ShrinkParameterSet]
-	jobs []string
+	rps   *assistant.ParamSet[RootParameterSet]
+	files []string
 }
 
-func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
+func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	o.Notify.OnBegin = func(_ *nav.NavigationState) {
 		fmt.Printf("===> 🛡️ beginning traversal ...\n")
 	}
@@ -28,18 +27,18 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 		)
 	}
 	o.Callback = nav.LabelledTraverseCallback{
-		Label: "Shrink Entry Callback",
+		Label: "Root Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
 			depth := item.Extension.Depth
 			indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
 
 			lo.ForEach(item.Children, func(de fs.DirEntry, index int) {
 				fullPath := filepath.Join(item.Path, de.Name())
-				e.jobs = append(e.jobs, fullPath)
+				e.files = append(e.files, fullPath)
 			})
 
 			fmt.Printf(
-				"---> %v SHRINK-CALLBACK: (depth:%v, files:%v) '%v'\n",
+				"---> %v ROOT-CALLBACK: (depth:%v, files:%v) '%v'\n",
 				indicator,
 				depth, len(item.Children),
 				item.Path,
@@ -53,7 +52,7 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	e.EntryBase.ConfigureOptions(o)
 }
 
-func GetShrinkTraverseOptionsFunc(entry *ShrinkEntry) func(o *nav.TraverseOptions) {
+func GetRootTraverseOptionsFunc(entry *RootEntry) func(o *nav.TraverseOptions) {
 	// make this a generic?
 	//
 	return func(o *nav.TraverseOptions) {
@@ -61,28 +60,26 @@ func GetShrinkTraverseOptionsFunc(entry *ShrinkEntry) func(o *nav.TraverseOption
 	}
 }
 
-func EnterShrink(
+func EnterRoot(
 	rps *assistant.ParamSet[RootParameterSet],
-	ps *assistant.ParamSet[ShrinkParameterSet],
 ) error {
 	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", rps.Native.Directory)
 
-	entry := &ShrinkEntry{
+	entry := &RootEntry{
 		rps: rps,
-		ps:  ps,
 	}
 	session := &nav.PrimarySession{
 		Path:     rps.Native.Directory,
-		OptionFn: GetShrinkTraverseOptionsFunc(entry),
+		OptionFn: GetRootTraverseOptionsFunc(entry),
 	}
 	result, err := session.Init().Run()
 
-	lo.ForEach(entry.jobs, func(j string, _ int) {
-		fmt.Printf("		===> ✨ job: '%v'\n", j)
+	lo.ForEach(entry.files, func(f string, _ int) {
+		fmt.Printf("		===> 🔆 candidate file: '%v'\n", f)
 	})
 
 	no := result.Metrics.Count(nav.MetricNoChildFilesFoundEn)
-	summary := fmt.Sprintf("files: %v, count: %v", len(entry.jobs), no)
+	summary := fmt.Sprintf("files: %v", no)
 	message := lo.Ternary(err == nil,
 		fmt.Sprintf("navigation completed (%v) ✔️", summary),
 		fmt.Sprintf("error occurred during navigation (%v)❌\n", err),

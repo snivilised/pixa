@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/snivilised/cobrass/src/assistant"
@@ -96,14 +95,10 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 						fmt.Printf("💠 Blur defined with value: '%v'\n", cmd.Flag("sampling-factor").Value)
 					}
 
-					ps.Native.Directory = args[0]
-					if absolute, absErr := filepath.Abs(args[0]); absErr == nil {
-						ps.Native.Directory = absolute
-					}
-
 					// Get inherited parameters
 					//
 					rps := container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
+					rps.Native.Directory = magick.ResolvePath(args[0])
 
 					// ---> execute application core with the parameter set (native)
 					//
@@ -264,19 +259,7 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	container.MustRegisterRootedCommand(shrinkCommand)
 	container.MustRegisterParamSet(shrinkPsName, paramSet)
 
-	shrinkCommand.Args = func(cmd *cobra.Command, args []string) error {
-		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-			return err
-		}
-
-		directory := args[0]
-
-		if !utils.Exists(directory) {
-			return xi18n.NewPathNotFoundError("shrink directory", directory)
-		}
-
-		return nil
-	}
+	shrinkCommand.Args = validatePositionalArgs
 
 	return shrinkCommand
 }
