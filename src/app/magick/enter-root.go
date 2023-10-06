@@ -68,11 +68,11 @@ func EnterRoot(
 	entry := &RootEntry{
 		rps: rps,
 	}
-	session := &nav.PrimarySession{
-		Path:     rps.Native.Directory,
-		OptionFn: GetRootTraverseOptionsFunc(entry),
-	}
-	result, err := session.Init().Run()
+
+	result, err := nav.New().Primary(&nav.Prime{
+		Path:      rps.Native.Directory,
+		OptionsFn: GetRootTraverseOptionsFunc(entry),
+	}).Run()
 
 	lo.ForEach(entry.files, func(f string, _ int) {
 		fmt.Printf("		===> 🔆 candidate file: '%v'\n", f)
