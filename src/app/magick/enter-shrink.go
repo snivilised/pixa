@@ -71,11 +71,11 @@ func EnterShrink(
 		rps: rps,
 		ps:  ps,
 	}
-	session := &nav.PrimarySession{
-		Path:     rps.Native.Directory,
-		OptionFn: GetShrinkTraverseOptionsFunc(entry),
-	}
-	result, err := session.Init().Run()
+
+	result, err := nav.New().Primary(&nav.Prime{
+		Path:      rps.Native.Directory,
+		OptionsFn: GetShrinkTraverseOptionsFunc(entry),
+	}).Run()
 
 	lo.ForEach(entry.jobs, func(j string, _ int) {
 		fmt.Printf("		===> ✨ job: '%v'\n", j)
