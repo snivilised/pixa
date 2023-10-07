@@ -38,11 +38,12 @@ var shrinkShortFlags = map[string]string{
 	"quality":         "q",
 	// root:
 	//
-	"preview":     "P",
-	"folder-rx":   "y",
-	"folder-glob": "z",
-	"files-rx":    "X",
-	"files-glob":  "G",
+	"preview":   "P",
+	"now":       "N",
+	"folder-rx": "y",
+	"folder-gb": "z",
+	"files-rx":  "X",
+	"files-gb":  "G",
 }
 
 const shrinkPsName = "shrink-ps"

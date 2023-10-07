@@ -29,6 +29,7 @@
     "jibberjabber",
     "linters",
     "lintv",
+    "lorax",
     "Magick",
     "mohae",
     "nakedret",
@@ -47,6 +48,7 @@
     "unconvert",
     "unparam",
     "varcheck",
+    "wgan",
     "xutils"
   ]
 }

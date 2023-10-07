@@ -6,7 +6,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/onsi/gomega v1.28.0
 	github.com/samber/lo v1.38.1
-	github.com/snivilised/extendio v0.2.0
+	github.com/snivilised/extendio v0.2.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	go.uber.org/zap v1.26.0
