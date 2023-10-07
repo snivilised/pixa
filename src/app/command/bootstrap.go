@@ -293,6 +293,16 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
 	}, &paramSet.Native.Preview)
 
+	// NoW
+	//
+	paramSet.BindInt(&assistant.FlagInfo{
+		Name:               "now",
+		Usage:              "now represents number of workers in pool",
+		Short:              "N",
+		Default:            0,
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.NoW)
+
 	rootCommand.MarkFlagsMutuallyExclusive("files-rx", "files-gb")
 	rootCommand.MarkFlagsMutuallyExclusive("folder-rx", "folder-gb")
 
