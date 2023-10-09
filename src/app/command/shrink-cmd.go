@@ -29,7 +29,7 @@ var shrinkShortFlags = map[string]string{
 	//
 	"mirror-path": "r",
 	"mode":        "m",
-	// core:
+	// third-party:
 	//
 	"gaussian-blur":   "b",
 	"sampling-factor": "f",
@@ -38,17 +38,19 @@ var shrinkShortFlags = map[string]string{
 	"quality":         "q",
 	// root:
 	//
-	"preview":   "P",
-	"now":       "N",
-	"folder-rx": "y",
-	"folder-gb": "z",
-	"files-rx":  "X",
+	"cpu":       "C",
+	"dry-run":   "D",
 	"files-gb":  "G",
+	"files-rx":  "X",
+	"folder-gb": "z",
+	"folder-rx": "y",
+	"now":       "N",
+	"profile":   "P",
 }
 
 const shrinkPsName = "shrink-ps"
 
-func newShrinkFlagInfo[T any](usage string, defaultValue T) *assistant.FlagInfo {
+func newShrinkFlagInfoWithShort[T any](usage string, defaultValue T) *assistant.FlagInfo {
 	name := strings.Split(usage, " ")[0]
 	short := shrinkShortFlags[name]
 
@@ -57,7 +59,7 @@ func newShrinkFlagInfo[T any](usage string, defaultValue T) *assistant.FlagInfo 
 
 type shrinkParameterSetPtr = *assistant.ParamSet[magick.ShrinkParameterSet]
 
-func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
+func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	shrinkCommand := &cobra.Command{
 		Use: "shrink",
 		Short: i18n.LeadsWith(
@@ -67,6 +69,7 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 		Long: xi18n.Text(i18n.ShrinkLongDefinitionTemplData{}),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("		===> 🌷🌷🌷 Shrink Command...\n")
 			var appErr error
 
 			ps := container.MustGetParamSet(shrinkPsName).(shrinkParameterSetPtr) //nolint:errcheck // is Must call
@@ -103,7 +106,7 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 
 					// ---> execute application core with the parameter set (native)
 					//
-					appErr = magick.EnterShrink(rps, ps)
+					appErr = magick.EnterShrink(rps, ps, b.options.Executor, b.options.Config.Viper)
 				} else {
 					return xvErr
 				}
@@ -117,7 +120,52 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 
 	paramSet := assistant.NewParamSet[magick.ShrinkParameterSet](shrinkCommand)
 
-	// Gaussian Blur
+	// --mirror-path(r)
+	//
+	const (
+		defaultMirrorPath = ""
+	)
+
+	paramSet.BindValidatedString(
+		newShrinkFlagInfoWithShort(
+			xi18n.Text(i18n.ShrinkCmdMirrorPathParamUsageTemplData{}),
+			defaultMirrorPath,
+		),
+		&paramSet.Native.MirrorPath, func(s string, f *pflag.Flag) error {
+			if f.Changed && !utils.FolderExists(s) {
+				return i18n.NewMirrorPathDoesNotExistError(s)
+			}
+
+			return nil
+		},
+	)
+
+	// --mode(m)
+	//
+	const (
+		defaultMode = "preserve"
+	)
+
+	paramSet.Native.ModeEn = magick.ModeEnumInfo.NewValue()
+
+	paramSet.BindValidatedEnum(
+		newShrinkFlagInfoWithShort(
+			xi18n.Text(i18n.ShrinkCmdModeParamUsageTemplData{}),
+			defaultMode,
+		),
+		&paramSet.Native.ModeEn.Source,
+		func(value string, f *pflag.Flag) error {
+			if f.Changed && !(magick.ModeEnumInfo.IsValid(value)) {
+				acceptableSet := magick.ModeEnumInfo.AcceptablePrimes()
+
+				return i18n.NewModeError(value, acceptableSet)
+			}
+
+			return nil
+		},
+	)
+
+	// --gaussian-blur(b)
 	//
 	const (
 		defaultBlur = float32(0.05)
@@ -126,7 +174,7 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	)
 
 	paramSet.BindValidatedFloat32Within(
-		newShrinkFlagInfo(
+		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdGaussianBlurParamUsageTemplData{}),
 			defaultBlur,
 		),
@@ -135,14 +183,18 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 		maxBlur,
 	)
 
-	// Sampling Factor
+	// --sampling-factor(f)
 	//
+	const (
+		defaultSamplingFactor = "4:2:0"
+	)
+
 	paramSet.Native.FactorEn = magick.SamplingFactorEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
-		newShrinkFlagInfo(
+		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdSamplingFactorParamUsageTemplData{}),
-			"4:2:0",
+			defaultSamplingFactor,
 		),
 		&paramSet.Native.FactorEn.Source,
 		func(value string, f *pflag.Flag) error {
@@ -155,14 +207,18 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 		},
 	)
 
-	// Interlace
+	// --interlace(i)
 	//
+	const (
+		defaultInterlace = "plane"
+	)
+
 	paramSet.Native.InterlaceEn = magick.InterlaceEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
-		newShrinkFlagInfo(
+		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdInterlaceParamUsageTemplData{}),
-			"plane",
+			defaultInterlace,
 		),
 		&paramSet.Native.InterlaceEn.Source,
 		func(value string, f *pflag.Flag) error {
@@ -176,17 +232,21 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 		},
 	)
 
-	// Strip
+	// --strip(s)
 	//
+	const (
+		defaultStrip = false
+	)
+
 	paramSet.BindBool(
-		newShrinkFlagInfo(
+		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdStripParamUsageTemplData{}),
-			false,
+			defaultStrip,
 		),
 		&paramSet.Native.Strip,
 	)
 
-	// Quality
+	// --quality(q)
 	//
 	const (
 		defaultQuality = int(80)
@@ -195,50 +255,13 @@ func buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	)
 
 	paramSet.BindValidatedIntWithin(
-		newShrinkFlagInfo(
+		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdQualityParamUsageTemplData{}),
 			defaultQuality,
 		),
 		&paramSet.Native.Quality,
 		minQuality,
 		maxQuality,
-	)
-
-	// Mirror Path
-	//
-	paramSet.BindValidatedString(
-		newShrinkFlagInfo(
-			xi18n.Text(i18n.ShrinkCmdMirrorPathParamUsageTemplData{}),
-			"",
-		),
-		&paramSet.Native.MirrorPath, func(s string, f *pflag.Flag) error {
-			if f.Changed && !utils.FolderExists(s) {
-				return i18n.NewMirrorPathDoesNotExistError(s)
-			}
-
-			return nil
-		},
-	)
-
-	// Mode
-	//
-	paramSet.Native.ModeEn = magick.ModeEnumInfo.NewValue()
-
-	paramSet.BindValidatedEnum(
-		newShrinkFlagInfo(
-			xi18n.Text(i18n.ShrinkCmdModeParamUsageTemplData{}),
-			"preserve",
-		),
-		&paramSet.Native.ModeEn.Source,
-		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(magick.ModeEnumInfo.IsValid(value)) {
-				acceptableSet := magick.ModeEnumInfo.AcceptablePrimes()
-
-				return i18n.NewModeError(value, acceptableSet)
-			}
-
-			return nil
-		},
 	)
 
 	// 📌A note about cobra args validation: cmd.ValidArgs lets you define

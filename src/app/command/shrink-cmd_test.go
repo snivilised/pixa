@@ -26,9 +26,7 @@ type shrinkTE struct {
 }
 
 func expectValidShrinkCmdInvocation(entry *shrinkTE) {
-	bootstrap := command.Bootstrap{
-		Detector: &DetectorStub{},
-	}
+	bootstrap := command.Bootstrap{}
 
 	const (
 		prog = "shrink"
@@ -37,12 +35,19 @@ func expectValidShrinkCmdInvocation(entry *shrinkTE) {
 	// we also prepend the directory name to the command line
 	//
 	options := append([]string{prog, entry.directory}, []string{
-		"--preview", "--mode", "tidy",
+		"--dry-run", "--mode", "tidy",
 	}...)
 
 	tester := helpers.CommandTester{
 		Args: append(options, entry.args...),
-		Root: bootstrap.Root(),
+		Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+			co.Detector = &DetectorStub{}
+			co.Executor = &ExecutorStub{
+				Name: "magick",
+			}
+			co.Config.Name = "pixa-test"
+			co.Config.ConfigPath = "../../test/data/configuration"
+		}),
 	}
 
 	_, err := tester.Execute()
@@ -102,7 +107,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "vanilla with long form options",
 				args: []string{
-					"--strip", "--interlace", "plane", "--quality", "85",
+					"--strip", "--interlace", "plane", "--quality", "85", "--cpu",
 				},
 			},
 		}),
@@ -118,7 +123,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 
 		Entry(nil, &shrinkTE{
 			commandTE: commandTE{
-				message: "blur with long form options",
+				message: "gaussian-blur with long form options",
 				args: []string{
 					"--strip", "--interlace", "plane", "--quality", "85",
 					"--gaussian-blur", "0.85",

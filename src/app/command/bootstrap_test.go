@@ -13,6 +13,22 @@ import (
 type DetectorStub struct {
 }
 
+type ExecutorStub struct {
+	Name string
+}
+
+func (e *ExecutorStub) ProgName() string {
+	return e.Name
+}
+
+func (e *ExecutorStub) Look() (string, error) {
+	return "", nil
+}
+
+func (e *ExecutorStub) Execute(_ ...string) error {
+	return nil
+}
+
 func (j *DetectorStub) Scan() language.Tag {
 	return language.BritishEnglish
 }
@@ -32,10 +48,15 @@ var _ = Describe("Bootstrap", Ordered, func() {
 
 	Context("given: root defined with magick sub-command", func() {
 		It("🧪 should: setup command without error", func() {
-			bootstrap := command.Bootstrap{
-				Detector: &DetectorStub{},
-			}
-			rootCmd := bootstrap.Root()
+			bootstrap := command.Bootstrap{}
+			rootCmd := bootstrap.Root(func(co *command.ConfigureOptions) {
+				co.Detector = &DetectorStub{}
+				co.Executor = &ExecutorStub{
+					Name: "magick",
+				}
+				co.Config.Name = "pixa-test"
+				co.Config.ConfigPath = "../../test/data/configuration"
+			})
 			Expect(rootCmd).NotTo(BeNil())
 		})
 	})

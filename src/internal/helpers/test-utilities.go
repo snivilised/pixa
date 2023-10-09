@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"golang.org/x/text/language"
 )
 
 func Path(parent, relative string) string {
@@ -57,4 +59,27 @@ func Log() string {
 	}
 
 	panic("could not get root path")
+}
+
+type DetectorStub struct {
+}
+
+func (j *DetectorStub) Scan() language.Tag {
+	return language.BritishEnglish
+}
+
+type ExecutorStub struct {
+	Name string
+}
+
+func (e *ExecutorStub) ProgName() string {
+	return e.Name
+}
+
+func (e *ExecutorStub) Look() (string, error) {
+	return "", nil
+}
+
+func (e *ExecutorStub) Execute(_ ...string) error {
+	return nil
 }

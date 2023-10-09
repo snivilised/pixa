@@ -23,7 +23,7 @@ type MagickParameterSet struct {
 
 const MagickPsName = "magick-ps"
 
-func buildMagickCommand(container *assistant.CobraContainer) *cobra.Command {
+func (b *Bootstrap) buildMagickCommand(container *assistant.CobraContainer) *cobra.Command {
 	// to test: pixa magick -d ./some-existing-file -p "P?<date>" -t 30
 	//
 	magickCommand := &cobra.Command{
@@ -68,11 +68,6 @@ func buildMagickCommand(container *assistant.CobraContainer) *cobra.Command {
 
 	paramSet := assistant.NewParamSet[MagickParameterSet](magickCommand)
 
-	// If you want to disable the magick command but keep it in the project for reference
-	// purposes, then simply comment out the following 2 register calls:
-	// (Warning, this may just create dead code and result in lint failure so tread
-	// carefully.)
-	//
 	container.MustRegisterRootedCommand(magickCommand)
 	container.MustRegisterParamSet(MagickPsName, paramSet)
 
