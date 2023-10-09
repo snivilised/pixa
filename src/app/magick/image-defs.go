@@ -8,10 +8,9 @@ import (
 type RootParameterSet struct {
 	GeneralParameters
 	FilterParameters
-	Directory  string
-	Viper      bool
-	ConfigFile string
-	Language   string
+	Directory string
+	CPU       bool
+	Language  string
 }
 
 type RootParameterSetPtr = *assistant.ParamSet[RootParameterSet]
@@ -78,6 +77,10 @@ type SamplingParameters struct {
 }
 
 type CoreParameters struct {
+	// need to flatten this structure so its easier to work with dynamically
+	// segmenting like this is problematic and unnecessary
+	// just call them ThirdPartyParameters (and perhaps, do we make them all strings!)
+	//
 	BlurParameters
 	SamplingParameters
 

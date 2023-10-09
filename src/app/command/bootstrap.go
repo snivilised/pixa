@@ -13,6 +13,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/utils"
@@ -48,22 +49,69 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+type ConfigInfo struct {
+	Name       string
+	ConfigType string
+	ConfigPath string
+	Viper      configuration.ViperConfig
+}
+
 // Bootstrap represents construct that performs start up of the cli
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
 type Bootstrap struct {
-	Detector  LocaleDetector
-	container *assistant.CobraContainer
+	Container *assistant.CobraContainer
+	options   ConfigureOptions
 }
+
+type ConfigureOptions struct {
+	Detector LocaleDetector
+	Executor magick.Executor
+	Config   ConfigInfo
+}
+
+type ConfigureOptionFn func(*ConfigureOptions)
 
 // Root builds the command tree and returns the root command, ready
 // to be executed.
-func (b *Bootstrap) Root() *cobra.Command {
-	b.configure(func(co *configureOptions) {
-		// ---> co.configFile = "~/pixa.yml"
-	})
+func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
 
-	b.container = assistant.NewCobraContainer(
+	b.options = ConfigureOptions{
+		Detector: &Jabber{},
+		Executor: &ProgramExecutor{
+			Name: "magick",
+		},
+		Config: ConfigInfo{
+			Name:       ApplicationName,
+			ConfigType: "yaml",
+			ConfigPath: home,
+			Viper:      &configuration.GlobalViperConfig{},
+		},
+	}
+
+	if _, err := b.options.Executor.Look(); err != nil {
+		b.options.Executor = &DummyExecutor{
+			Name: b.options.Executor.ProgName(),
+		}
+	}
+
+	for _, fo := range options {
+		fo(&b.options)
+	}
+
+	b.configure()
+
+	// JUST TEMPORARY: make the executor the dummy for safety
+	//
+	b.options.Executor = &DummyExecutor{
+		Name: "magick",
+	}
+
+	fmt.Printf("===> ⚠️⚠️⚠️ USING DUMMY EXECUTOR !!!!\n")
+
+	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
 			Use:     "main",
 			Short:   xi18n.Text(i18n.RootCmdShortDescTemplData{}),
@@ -72,85 +120,53 @@ func (b *Bootstrap) Root() *cobra.Command {
 			RunE: func(cmd *cobra.Command, args []string) error {
 				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
 
-				rps := b.container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
+				rps := b.Container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
 				rps.Native.Directory = magick.ResolvePath(args[0])
+
+				if rps.Native.CPU {
+					rps.Native.NoW = 0
+				}
 
 				// ---> execute root core
 				//
-				return magick.EnterRoot(rps)
+				return magick.EnterRoot(rps, b.options.Executor, b.options.Config.Viper)
 			},
 		},
 	)
 
-	b.buildRootCommand(b.container)
-	buildMagickCommand(b.container)
-	buildShrinkCommand(b.container)
+	b.buildRootCommand(b.Container)
+	b.buildMagickCommand(b.Container)
+	b.buildShrinkCommand(b.Container)
 
-	return b.container.Root()
+	return b.Container.Root()
 }
 
-type configureOptions struct {
-	configFile string
-}
+func (b *Bootstrap) configure() {
+	vc := b.options.Config.Viper
+	ci := b.options.Config
 
-type ConfigureOptionFn func(*configureOptions)
+	vc.SetConfigName(ci.Name)
+	vc.SetConfigType(ci.ConfigType)
+	vc.AddConfigPath(ci.ConfigPath)
+	vc.AutomaticEnv()
 
-func (b *Bootstrap) configure(options ...ConfigureOptionFn) {
-	var configFile string
+	err := vc.ReadInConfig()
 
-	o := configureOptions{
-		configFile: configFile,
-	}
-	for _, fo := range options {
-		fo(&o)
-	}
-
-	if configFile != "" {
-		fmt.Printf("💛 setting explicit config path; '%v'\n", configFile)
-		// Use config file from the flag.
-		viper.SetConfigFile(configFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		fmt.Printf("💚 (nil-config-file) using default config path \n")
-
-		// Search config in home directory with name ".pixa" (without extension).
-		// NB: 'arcadia' should be renamed as appropriate
-		//
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(ApplicationName)
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	err := viper.ReadInConfig()
-
-	handleLangSetting()
-
-	msg := xi18n.Text(i18n.UsingConfigFileTemplData{
-		ConfigFileName: viper.ConfigFileUsed(),
-	})
+	handleLangSetting(vc)
 
 	if err != nil {
+		msg := xi18n.Text(i18n.UsingConfigFileTemplData{
+			ConfigFileName: vc.ConfigFileUsed(),
+		})
+
 		fmt.Fprintln(os.Stderr, msg)
 
 		fmt.Printf("💥 error reading config path: '%v' \n", err)
-	} else {
-		fmt.Printf("🧡 '%v' \n", msg)
-
-		gb := viper.GetString("gaussian-blur")
-		if gb != "" {
-			fmt.Printf("--> 💝 found blur in config: '%v' \n", gb)
-		}
 	}
 }
 
-func handleLangSetting() {
-	tag := lo.TernaryF(viper.InConfig("lang"),
+func handleLangSetting(config configuration.ViperConfig) {
+	tag := lo.TernaryF(config.InConfig("lang"),
 		func() language.Tag {
 			lang := viper.GetString("lang")
 			parsedTag, err := language.Parse(lang)
@@ -195,66 +211,40 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	rootCommand := container.Root()
 	paramSet := assistant.NewParamSet[magick.RootParameterSet](rootCommand)
 
+	// --cpu(C)
+	//
 	paramSet.BindBool(&assistant.FlagInfo{
-		Name:               "viper",
-		Usage:              "viper defines whether to use viper configuration",
-		Default:            true,
+		Name:               "cpu",
+		Usage:              "cpu sets the number of workers to the number of available processors",
+		Short:              "C",
+		Default:            false,
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.Viper)
+	}, &paramSet.Native.CPU)
 
-	paramSet.BindString(&assistant.FlagInfo{
-		Name: "config",
-		Usage: i18n.LeadsWith(
-			"config",
-			xi18n.Text(i18n.RootCmdConfigFileUsageTemplData{}),
-		),
-		Default:            "pixa.yml",
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.ConfigFile)
-
-	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name: "lang",
-		Usage: i18n.LeadsWith(
-			"lang",
-			xi18n.Text(i18n.RootCmdLangUsageTemplData{}),
-		),
-		Default:            xi18n.DefaultLanguage.Get().String(),
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.Language, func(value string, _ *pflag.Flag) error {
-		_, err := language.Parse(value)
-		return err
-	})
-
-	// FolderRexEx
+	// --dry-run(D)
 	//
-	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name: "folder-rx",
-		Usage: i18n.LeadsWith(
-			"folder-rx",
-			xi18n.Text(i18n.RootCmdFolderRexExParamUsageTemplData{}),
-		),
-		Short:              "y",
-		Default:            "",
+	paramSet.BindBool(&assistant.FlagInfo{
+		Name:               "dry-run",
+		Usage:              "dry-run shrink op",
+		Short:              "D",
+		Default:            false,
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FolderRexEx, func(value string, _ *pflag.Flag) error {
-		_, err := regexp.Compile(value)
-		return err
-	})
+	}, &paramSet.Native.DryRun)
 
-	// FolderGlob
+	// --files-gb(G)
 	//
 	paramSet.BindString(&assistant.FlagInfo{
-		Name: "folder-gb",
+		Name: "files-gb",
 		Usage: i18n.LeadsWith(
-			"folder-gb",
-			xi18n.Text(i18n.RootCmdFolderGlobParamUsageTemplData{}),
+			"files-gb",
+			xi18n.Text(i18n.RootCmdFilesGlobParamUsageTemplData{}),
 		),
-		Short:              "z",
+		Short:              "G",
 		Default:            "",
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FolderGlob)
+	}, &paramSet.Native.FilesGlob)
 
-	// FilesRexEx
+	// --files-rx(X)
 	//
 	paramSet.BindValidatedString(&assistant.FlagInfo{
 		Name: "files-rx",
@@ -270,41 +260,79 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 		return err
 	})
 
-	// FilesGlob
+	// --folder-gb(z)
 	//
 	paramSet.BindString(&assistant.FlagInfo{
-		Name: "files-gb",
+		Name: "folder-gb",
 		Usage: i18n.LeadsWith(
-			"files-gb",
-			xi18n.Text(i18n.RootCmdFilesGlobParamUsageTemplData{}),
+			"folder-gb",
+			xi18n.Text(i18n.RootCmdFolderGlobParamUsageTemplData{}),
 		),
-		Short:              "G",
+		Short:              "z",
 		Default:            "",
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FilesGlob)
+	}, &paramSet.Native.FolderGlob)
 
-	// Preview
+	// --folder-rx(y)
 	//
-	paramSet.BindBool(&assistant.FlagInfo{
-		Name:               "preview",
-		Usage:              "preview shrink op",
-		Short:              "P",
-		Default:            false,
+	paramSet.BindValidatedString(&assistant.FlagInfo{
+		Name: "folder-rx",
+		Usage: i18n.LeadsWith(
+			"folder-rx",
+			xi18n.Text(i18n.RootCmdFolderRexExParamUsageTemplData{}),
+		),
+		Short:              "y",
+		Default:            "",
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.Preview)
+	}, &paramSet.Native.FolderRexEx, func(value string, _ *pflag.Flag) error {
+		_, err := regexp.Compile(value)
+		return err
+	})
 
-	// NoW
+	// --lang
 	//
+	paramSet.BindValidatedString(&assistant.FlagInfo{
+		Name: "lang",
+		Usage: i18n.LeadsWith(
+			"lang",
+			xi18n.Text(i18n.RootCmdLangUsageTemplData{}),
+		),
+		Default:            xi18n.DefaultLanguage.Get().String(),
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.Language, func(value string, _ *pflag.Flag) error {
+		_, err := language.Parse(value)
+		return err
+	})
+
+	// --now(N)
+	//
+	const (
+		defaultNoW = -1
+	)
+
 	paramSet.BindInt(&assistant.FlagInfo{
 		Name:               "now",
 		Usage:              "now represents number of workers in pool",
 		Short:              "N",
-		Default:            0,
+		Default:            defaultNoW,
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
 	}, &paramSet.Native.NoW)
 
+	// --profile(p)
+	//
+	paramSet.BindString(&assistant.FlagInfo{
+		Name:               "profile",
+		Usage:              "profile identifies a named group of flag options loaded from config",
+		Short:              "P",
+		Default:            "",
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	}, &paramSet.Native.Profile)
+
+	// parameter groups
+	//
 	rootCommand.MarkFlagsMutuallyExclusive("files-rx", "files-gb")
 	rootCommand.MarkFlagsMutuallyExclusive("folder-rx", "folder-gb")
+	rootCommand.MarkFlagsMutuallyExclusive("now", "cpu")
 
 	rootCommand.Args = validatePositionalArgs
 

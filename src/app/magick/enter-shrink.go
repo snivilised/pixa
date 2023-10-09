@@ -2,20 +2,18 @@ package magick
 
 import (
 	"fmt"
-	"io/fs"
-	"path/filepath"
 
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
 type ShrinkEntry struct {
 	EntryBase
 
-	rps  *assistant.ParamSet[RootParameterSet]
-	ps   *assistant.ParamSet[ShrinkParameterSet]
-	jobs []string
+	ParamSet *assistant.ParamSet[ShrinkParameterSet]
+	jobs     []string
 }
 
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
@@ -27,67 +25,79 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 			result.Metrics.Count(nav.MetricNoFoldersInvokedEn),
 		)
 	}
-	o.Callback = nav.LabelledTraverseCallback{
+	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
 			depth := item.Extension.Depth
-			indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
-
-			lo.ForEach(item.Children, func(de fs.DirEntry, index int) {
-				fullPath := filepath.Join(item.Path, de.Name())
-				e.jobs = append(e.jobs, fullPath)
-			})
 
 			fmt.Printf(
-				"---> %v SHRINK-CALLBACK: (depth:%v, files:%v) '%v'\n",
-				indicator,
-				depth, len(item.Children),
+				"---> 📜 SHRINK-CALLBACK-FILE: (depth:%v) '%v'\n",
+				depth,
 				item.Path,
 			)
 
-			return nil
+			positional := []string{
+				fmt.Sprintf("'%v'", item.Path),
+			}
+			return e.Program.Execute(e.expand(positional)...)
 		},
 	}
-	o.Store.Subscription = nav.SubscribeFoldersWithFiles
+	o.Store.Subscription = nav.SubscribeFiles
 	o.Store.DoExtend = true
+
 	e.EntryBase.ConfigureOptions(o)
 }
 
-func GetShrinkTraverseOptionsFunc(entry *ShrinkEntry) func(o *nav.TraverseOptions) {
-	// make this a generic?
-	//
-	return func(o *nav.TraverseOptions) {
-		entry.ConfigureOptions(o)
+func (e *ShrinkEntry) run(config configuration.ViperConfig) error {
+	_ = config
+
+	runnerWith := composeWith(e.RootPS)
+	resumption := &nav.Resumption{
+		RestorePath: "/json-path-to-come-from-a-flag-option/restore.json",
+		Restorer: func(o *nav.TraverseOptions, active *nav.ActiveState) {
+			o.Callback = &nav.LabelledTraverseCallback{
+				Label: "Shrink Entry Callback",
+				Fn: func(item *nav.TraverseItem) error {
+					depth := item.Extension.Depth
+					indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
+
+					fmt.Printf(
+						"---> %v SHRINK-RESTORE-CALLBACK: (depth:%v) '%v'\n",
+						indicator,
+						depth,
+						item.Path,
+					)
+
+					positional := []string{
+						fmt.Sprintf("'%v'", item.Path),
+					}
+					return e.Program.Execute(e.expand(positional)...)
+				},
+			}
+		},
+		Strategy: nav.ResumeStrategySpawnEn, // to come from an arg
 	}
+
+	return e.navigate(GetTraverseOptionsFunc(e), runnerWith, resumption)
 }
 
 func EnterShrink(
 	rps *assistant.ParamSet[RootParameterSet],
 	ps *assistant.ParamSet[ShrinkParameterSet],
+	program Executor,
+	config configuration.ViperConfig,
 ) error {
 	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", rps.Native.Directory)
 
 	entry := &ShrinkEntry{
-		rps: rps,
-		ps:  ps,
+		EntryBase: EntryBase{
+			RootPS:  rps,
+			Program: program,
+			Config:  config,
+		},
+		ParamSet: ps,
 	}
+	entry.evaluate()
 
-	result, err := nav.New().Primary(&nav.Prime{
-		Path:      rps.Native.Directory,
-		OptionsFn: GetShrinkTraverseOptionsFunc(entry),
-	}).Run()
-
-	lo.ForEach(entry.jobs, func(j string, _ int) {
-		fmt.Printf("		===> ✨ job: '%v'\n", j)
-	})
-
-	no := result.Metrics.Count(nav.MetricNoChildFilesFoundEn)
-	summary := fmt.Sprintf("files: %v, count: %v", len(entry.jobs), no)
-	message := lo.Ternary(err == nil,
-		fmt.Sprintf("navigation completed (%v) ✔️", summary),
-		fmt.Sprintf("error occurred during navigation (%v)❌\n", err),
-	)
-	fmt.Println(message)
-
-	return err
+	return entry.run(config)
 }

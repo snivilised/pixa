@@ -52,12 +52,12 @@ var _ = Describe("MagickCmd", Ordered, func() {
 
 	When("specified flags are valid", func() {
 		It("🧪 should: execute without error", func() {
-			bootstrap := command.Bootstrap{
-				Detector: &DetectorStub{},
-			}
+			bootstrap := command.Bootstrap{}
 			tester := helpers.CommandTester{
 				Args: []string{"mag"},
-				Root: bootstrap.Root(),
+				Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+					co.Detector = &DetectorStub{}
+				}),
 			}
 			_, err := tester.Execute()
 			Expect(err).Error().To(BeNil(),

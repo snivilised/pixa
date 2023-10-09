@@ -1,0 +1,23 @@
+profiles:
+  blur:
+    ["--dry-run", "--strip", "--interlace", "plane", "--gaussian-blur", "0.05"]
+  sf:
+    [
+      "--dry-run",
+      "--strip",
+      "--interlace",
+      "plane",
+      "--sampling-factor",
+      "4:2:0",
+    ]
+  adaptive:
+    [
+      "--dry-run",
+      "--strip",
+      "--interlace",
+      "plane",
+      "--gaussian-blur",
+      "0.05",
+      "--adaptive-resize",
+      "60",
+    ]

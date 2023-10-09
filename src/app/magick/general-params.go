@@ -1,8 +1,9 @@
 package magick
 
 type GeneralParameters struct {
-	Preview bool
+	DryRun  bool
 	NoW     int
+	Profile string
 }
 
 type FilterParameters struct {
