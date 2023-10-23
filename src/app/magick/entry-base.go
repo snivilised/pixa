@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/samber/lo"
-	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/lorax/boost"
@@ -17,10 +17,10 @@ import (
 type afterFunc func(*nav.TraverseResult, error)
 
 type EntryBase struct {
-	RootPS          *assistant.ParamSet[RootParameterSet]
-	Program         Executor
-	Config          configuration.ViperConfig
-	thirdPartyFlags []string
+	Inputs       *RootCommandInputs
+	Program      Executor
+	Config       configuration.ViperConfig
+	ThirdPartyCL cobrass.ThirdPartyCommandLine
 }
 
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
@@ -29,22 +29,22 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	// filter.
 	//
 	switch {
-	case e.RootPS.Native.FilesGlob != "":
+	case e.Inputs.ParamSet.Native.FilesGlob != "":
 		o.Store.FilterDefs = &nav.FilterDefinitions{
 			Node: nav.FilterDef{
 				Type:        nav.FilterTypeGlobEn,
-				Description: fmt.Sprintf("--files-gb(G): '%v'", e.RootPS.Native.FilesGlob),
-				Pattern:     e.RootPS.Native.FilesGlob,
+				Description: fmt.Sprintf("--files-gb(G): '%v'", e.Inputs.ParamSet.Native.FilesGlob),
+				Pattern:     e.Inputs.ParamSet.Native.FilesGlob,
 				Scope:       nav.ScopeLeafEn,
 			},
 		}
 
-	case e.RootPS.Native.FilesRexEx != "":
+	case e.Inputs.ParamSet.Native.FilesRexEx != "":
 		o.Store.FilterDefs = &nav.FilterDefinitions{
 			Node: nav.FilterDef{
 				Type:        nav.FilterTypeRegexEn,
-				Description: fmt.Sprintf("--files-rx(X): '%v'", e.RootPS.Native.FilesRexEx),
-				Pattern:     e.RootPS.Native.FilesRexEx,
+				Description: fmt.Sprintf("--files-rx(X): '%v'", e.Inputs.ParamSet.Native.FilesRexEx),
+				Pattern:     e.Inputs.ParamSet.Native.FilesRexEx,
 				Scope:       nav.ScopeLeafEn,
 			},
 		}
@@ -52,7 +52,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	default:
 		filterType := nav.FilterTypeRegexEn
 		description := "Default image types supported by pixa"
-		pattern := "\\.(jpe?g|png|gif)$"
+		pattern := "\\.(jpe?g|png)$"
 
 		o.Store.FilterDefs = &nav.FilterDefinitions{
 			Node: nav.FilterDef{
@@ -85,33 +85,12 @@ func ResolvePath(path string) string {
 	return result
 }
 
-func (e *EntryBase) evaluate() {
-	e.thirdPartyFlags = e.readProfile3rdPartyFlags()
-}
+func (e *EntryBase) readProfile3rdPartyFlags() cobrass.ThirdPartyCommandLine {
+	fmt.Printf("------> 💦💦💦 readProfile3rdPartyFlags: '%v'\n", e.Inputs.ParamSet.Native.Profile)
 
-/*
-	func (e *EntryBase) expand(positional []string) []string {
-		flags := append(positional, e.thirdPartyFlags...) //nolint:gocritic // no alternative option
-		others := []string{"--version"}                   // need to extract the appropriate ones from ps
-		flags = append(flags, others...)
-
-		return flags
-	}
-*/
-func (e *EntryBase) expand(positional []string) []string {
-	flags := make([]string, 0, len(positional)+len(e.thirdPartyFlags))
-	flags = append(flags, positional...)
-	flags = append(flags, e.thirdPartyFlags...)
-
-	return flags
-}
-
-func (e *EntryBase) readProfile3rdPartyFlags() []string {
-	fmt.Printf("------> 💦💦💦 readProfile3rdPartyFlags: '%v'\n", e.RootPS.Native.Profile)
-
-	return lo.TernaryF(e.RootPS.Native.Profile != "",
+	return lo.TernaryF(e.Inputs.ParamSet.Native.Profile != "",
 		func() []string {
-			configPath := "profiles." + e.RootPS.Native.Profile
+			configPath := "profiles." + e.Inputs.ParamSet.Native.Profile
 			return e.Config.GetStringSlice(configPath)
 		},
 		func() []string {
@@ -134,14 +113,14 @@ func (e *EntryBase) navigate(
 
 	runnerInfo := &nav.RunnerInfo{
 		PrimeInfo: &nav.Prime{
-			Path:      e.RootPS.Native.Directory,
+			Path:      e.Inputs.ParamSet.Native.Directory,
 			OptionsFn: optionsFn,
 		},
 		ResumeInfo: resumption,
 		AccelerationInfo: &nav.Acceleration{
 			WgAn:        wgan,
 			RoutineName: navigatorRoutineName,
-			NoW:         e.RootPS.Native.NoW,
+			NoW:         e.Inputs.ParamSet.Native.NoW,
 			JobsChOut:   make(boost.JobStream[nav.TraverseItemInput], DefaultJobsChSize),
 		},
 	}
@@ -167,19 +146,4 @@ func (e *EntryBase) navigate(
 	fmt.Println(message)
 
 	return err
-}
-
-func (e *EntryBase) ReadProfile() []string {
-	var c map[string]interface{}
-
-	configPath := "profs." + e.RootPS.Native.Profile
-
-	// ??? func(dc *mapstructure.DecoderConfig) {}
-	if err := e.Config.UnmarshalKey(configPath, &c); err == nil {
-		fmt.Printf("---> 🎆 configProfile: '%+v'\n", c)
-	} else {
-		fmt.Printf("---> 🎆 configProfile FAILED (%v)\n", err)
-	}
-
-	return []string{}
 }

@@ -4,16 +4,16 @@ import (
 	"fmt"
 
 	"github.com/samber/lo"
-	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
+	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
 type ShrinkEntry struct {
 	EntryBase
-
-	ParamSet *assistant.ParamSet[ShrinkParameterSet]
-	jobs     []string
+	Inputs *ShrinkCommandInputs
+	jobs   []string
 }
 
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
@@ -39,7 +39,7 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 			positional := []string{
 				fmt.Sprintf("'%v'", item.Path),
 			}
-			return e.Program.Execute(e.expand(positional)...)
+			return e.Program.Execute(clif.Expand(positional, e.ThirdPartyCL)...)
 		},
 	}
 	o.Store.Subscription = nav.SubscribeFiles
@@ -51,7 +51,13 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 func (e *ShrinkEntry) run(config configuration.ViperConfig) error {
 	_ = config
 
-	runnerWith := composeWith(e.RootPS)
+	e.ThirdPartyCL = cobrass.Evaluate(
+		e.Inputs.ParamSet.Native.ThirdPartySet.Present,
+		e.Inputs.ParamSet.Native.ThirdPartySet.KnownBy,
+		e.readProfile3rdPartyFlags(),
+	)
+
+	runnerWith := composeWith(e.Inputs.RootInputs.ParamSet)
 	resumption := &nav.Resumption{
 		RestorePath: "/json-path-to-come-from-a-flag-option/restore.json",
 		Restorer: func(o *nav.TraverseOptions, active *nav.ActiveState) {
@@ -71,7 +77,8 @@ func (e *ShrinkEntry) run(config configuration.ViperConfig) error {
 					positional := []string{
 						fmt.Sprintf("'%v'", item.Path),
 					}
-					return e.Program.Execute(e.expand(positional)...)
+
+					return e.Program.Execute(clif.Expand(positional, e.ThirdPartyCL)...)
 				},
 			}
 		},
@@ -82,22 +89,20 @@ func (e *ShrinkEntry) run(config configuration.ViperConfig) error {
 }
 
 func EnterShrink(
-	rps *assistant.ParamSet[RootParameterSet],
-	ps *assistant.ParamSet[ShrinkParameterSet],
+	inputs *ShrinkCommandInputs,
 	program Executor,
 	config configuration.ViperConfig,
 ) error {
-	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", rps.Native.Directory)
+	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", inputs.RootInputs.ParamSet.Native.Directory)
 
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
-			RootPS:  rps,
+			Inputs:  inputs.RootInputs,
 			Program: program,
 			Config:  config,
 		},
-		ParamSet: ps,
+		Inputs: inputs,
 	}
-	entry.evaluate()
 
 	return entry.run(config)
 }

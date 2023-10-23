@@ -72,7 +72,7 @@ func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 
 func (e *RootEntry) run() error {
 	files := []string{}
-	runnerWith := composeWith(e.RootPS)
+	runnerWith := composeWith(e.Inputs.ParamSet)
 	resumption := &nav.Resumption{
 		RestorePath: "/json-path-to-come-from-a-flag-option/restore.json",
 		Restorer: func(o *nav.TraverseOptions, active *nav.ActiveState) {
@@ -121,17 +121,15 @@ func composeWith(rps *assistant.ParamSet[RootParameterSet]) nav.CreateNewRunnerW
 }
 
 func EnterRoot(
-	rps *assistant.ParamSet[RootParameterSet],
+	inputs *RootCommandInputs,
 	program Executor,
 	config configuration.ViperConfig,
 ) error {
-	_ = config
-
-	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", rps.Native.Directory)
+	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", inputs.ParamSet.Native.Directory)
 
 	entry := &RootEntry{
 		EntryBase: EntryBase{
-			RootPS:  rps,
+			Inputs:  inputs,
 			Program: program,
 			Config:  config,
 		},

@@ -80,7 +80,7 @@ func (td RootCmdFolderRexExParamUsageTemplData) Message() *i18n.Message {
 	return &i18n.Message{
 		ID:          "root-command-folder-regex.param-usage",
 		Description: "root command folder regex filter (negate-able with leading !)",
-		Other:       "folder-rx folder regular expression filter (negate-able with leading !)",
+		Other:       "folders-rx folder regular expression filter (negate-able with leading !)",
 	}
 }
 
@@ -94,7 +94,7 @@ func (td RootCmdFolderGlobParamUsageTemplData) Message() *i18n.Message {
 	return &i18n.Message{
 		ID:          "root-command-folder-glob.param-usage",
 		Description: "root command folder glob (negate-able with leading !)",
-		Other:       "folder-gb folder glob filter (negate-able with leading !)",
+		Other:       "folders-gb folder glob filter (negate-able with leading !)",
 	}
 }
 

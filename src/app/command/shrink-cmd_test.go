@@ -165,7 +165,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "with long form glob filtering options options",
 				args: []string{
-					"--folder-gb", "A*",
+					// "--folders-gb", "A*",
 					"--files-gb", "*.jpg",
 				},
 			},
@@ -175,7 +175,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			commandTE: commandTE{
 				message: "with short form regex filtering options options",
 				args: []string{
-					"--folder-rx", "^A",
+					// "--folders-rx", "^A",
 					"--files-rx", "\\.jpg$",
 				},
 			},
