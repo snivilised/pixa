@@ -9,9 +9,6 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// CLIENT-TODO: remove this dummy command and replace with application/library
-// relevant alternative(s)
-
 type MagickParameterSet struct {
 	// remove the follow:
 	//
@@ -24,8 +21,6 @@ type MagickParameterSet struct {
 const MagickPsName = "magick-ps"
 
 func (b *Bootstrap) buildMagickCommand(container *assistant.CobraContainer) *cobra.Command {
-	// to test: pixa magick -d ./some-existing-file -p "P?<date>" -t 30
-	//
 	magickCommand := &cobra.Command{
 		Use:   "mag",
 		Short: "mag (magick) sub command",

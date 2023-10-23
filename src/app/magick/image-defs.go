@@ -1,10 +1,11 @@
 package magick
 
 import (
+	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass/src/store"
 )
 
-// CLIENT-TODO: define valid properties on the root parameter set
 type RootParameterSet struct {
 	GeneralParameters
 	FilterParameters
@@ -12,8 +13,6 @@ type RootParameterSet struct {
 	CPU       bool
 	Language  string
 }
-
-type RootParameterSetPtr = *assistant.ParamSet[RootParameterSet]
 
 type InterlaceEnum int
 
@@ -64,38 +63,42 @@ var ModeEnumInfo = assistant.NewEnumInfo(assistant.AcceptableEnumValues[ModeEnum
 	ModePreserveEn: []string{"preserve", "p"},
 })
 
+type ThirdPartySet struct {
+	GaussianBlur     float32
+	SamplingFactorEn assistant.EnumValue[SamplingFactorEnum]
+	InterlaceEn      assistant.EnumValue[InterlaceEnum]
+	Strip            bool
+	Quality          int
+	// Auxiliary
+	//
+	Present cobrass.SpecifiedFlagsCollection
+	KnownBy cobrass.KnownByCollection
+}
+
 // [blur]
 // magick source.jpg -strip -interlace Plane -gaussian-blur 0.05 -quality 85% result.jpg
-type BlurParameters struct {
-	Gaussian float32
-}
-
 // [sampler]
 // magick source.jpg -strip -interlace Plane -sampling-factor 4:2:0 -quality 85% result.jpg
-type SamplingParameters struct {
-	FactorEn assistant.EnumValue[SamplingFactorEnum]
-}
-
-type CoreParameters struct {
-	// need to flatten this structure so its easier to work with dynamically
-	// segmenting like this is problematic and unnecessary
-	// just call them ThirdPartyParameters (and perhaps, do we make them all strings!)
-	//
-	BlurParameters
-	SamplingParameters
-
-	InterlaceEn assistant.EnumValue[InterlaceEnum]
-	//
-	Strip   bool
-	Quality int
-}
-
 // [vanilla]
 // magick source.jpg -strip -interlace Plane -quality 85% result.jpg
 
 type ShrinkParameterSet struct {
-	CoreParameters
+	ThirdPartySet
 	//
 	MirrorPath string
 	ModeEn     assistant.EnumValue[ModeEnum]
+}
+
+type RootCommandInputs struct {
+	ParamSet      *assistant.ParamSet[RootParameterSet]
+	PreviewFam    *assistant.ParamSet[store.PreviewParameterSet]
+	WorkerPoolFam *assistant.ParamSet[store.WorkerPoolParameterSet]
+	FoldersFam    *assistant.ParamSet[store.FoldersFilterParameterSet]
+	ProfileFam    *assistant.ParamSet[store.ProfileParameterSet]
+}
+
+type ShrinkCommandInputs struct {
+	RootInputs *RootCommandInputs
+	ParamSet   *assistant.ParamSet[ShrinkParameterSet]
+	FilesFam   *assistant.ParamSet[store.FilesFilterParameterSet]
 }

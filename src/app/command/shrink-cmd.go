@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/utils"
 
@@ -18,7 +20,9 @@ import (
 // We define all the options here, even the ones inherited from the root
 // command, because doing so allows us to see the whole set of options
 // applicable to the shrink command in a single place and aid the assignment
-// of the short flag names.
+// of the short flag names. This also helps when using families, as it
+// reminds us not to attempt to reuse a short flag that has already been
+// allocated.
 //
 // NB: we use files instead of file, because these filters are compound
 // and we use capitals for the short forms of files filters, to denote
@@ -38,23 +42,32 @@ var shrinkShortFlags = map[string]string{
 	"quality":         "q",
 	// root:
 	//
-	"cpu":       "C",
-	"dry-run":   "D",
-	"files-gb":  "G",
-	"files-rx":  "X",
-	"folder-gb": "z",
-	"folder-rx": "y",
-	"now":       "N",
-	"profile":   "P",
+	"cpu":        "C",
+	"dry-run":    "D", // family: preview
+	"files-gb":   "G",
+	"files-rx":   "X",
+	"folders-gb": "Z",
+	"folders-rx": "Y",
+	"now":        "N",
+	"profile":    "P",
 }
 
-const shrinkPsName = "shrink-ps"
+const (
+	shrinkPsName = "shrink-ps"
+	filesFamName = "files-family"
+)
 
 func newShrinkFlagInfoWithShort[T any](usage string, defaultValue T) *assistant.FlagInfo {
 	name := strings.Split(usage, " ")[0]
 	short := shrinkShortFlags[name]
 
 	return assistant.NewFlagInfo(usage, short, defaultValue)
+}
+
+func isThirdPartyKnown(name string, known cobrass.KnownByCollection) bool {
+	_, found := known[name]
+
+	return found
 }
 
 type shrinkParameterSetPtr = *assistant.ParamSet[magick.ShrinkParameterSet]
@@ -72,20 +85,27 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			fmt.Printf("		===> 🌷🌷🌷 Shrink Command...\n")
 			var appErr error
 
-			ps := container.MustGetParamSet(shrinkPsName).(shrinkParameterSetPtr) //nolint:errcheck // is Must call
+			shrinkPS := container.MustGetParamSet(shrinkPsName).(shrinkParameterSetPtr) //nolint:errcheck // is Must call
 
-			if validationErr := ps.Validate(); validationErr == nil {
+			if validationErr := shrinkPS.Validate(); validationErr == nil {
 				// optionally invoke cross field validation
 				//
-				if xvErr := ps.CrossValidate(func(ps *magick.ShrinkParameterSet) error {
+				if xvErr := shrinkPS.CrossValidate(func(ps *magick.ShrinkParameterSet) error {
 					// cross validation not currently required
 					//
 					return nil
 				}); xvErr == nil {
 					options := []string{}
+					present := make(cobrass.SpecifiedFlagsCollection)
+
 					cmd.Flags().Visit(func(f *pflag.Flag) {
 						options = append(options, fmt.Sprintf("--%v=%v", f.Name, f.Value))
+
+						if isThirdPartyKnown(f.Name, shrinkPS.Native.ThirdPartySet.KnownBy) {
+							present[f.Name] = f.Value.String()
+						}
 					})
+					shrinkPS.Native.ThirdPartySet.Present = present
 
 					fmt.Printf("%v %v Running shrink, with options: '%v', args: '%v'\n",
 						AppEmoji, ApplicationName, options, strings.Join(args, "/"),
@@ -99,14 +119,14 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 						fmt.Printf("💠 Blur defined with value: '%v'\n", cmd.Flag("sampling-factor").Value)
 					}
 
-					// Get inherited parameters
-					//
-					rps := container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
-					rps.Native.Directory = magick.ResolvePath(args[0])
+					inputs := b.getShrinkInputs()
+					inputs.RootInputs.ParamSet.Native.Directory = magick.ResolvePath(args[0])
 
-					// ---> execute application core with the parameter set (native)
-					//
-					appErr = magick.EnterShrink(rps, ps, b.options.Executor, b.options.Config.Viper)
+					appErr = magick.EnterShrink(
+						inputs,
+						b.options.Executor,
+						b.options.Config.Viper,
+					)
 				} else {
 					return xvErr
 				}
@@ -178,7 +198,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			xi18n.Text(i18n.ShrinkCmdGaussianBlurParamUsageTemplData{}),
 			defaultBlur,
 		),
-		&paramSet.Native.Gaussian,
+		&paramSet.Native.ThirdPartySet.GaussianBlur,
 		minBlur,
 		maxBlur,
 	)
@@ -189,14 +209,14 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultSamplingFactor = "4:2:0"
 	)
 
-	paramSet.Native.FactorEn = magick.SamplingFactorEnumInfo.NewValue()
+	paramSet.Native.ThirdPartySet.SamplingFactorEn = magick.SamplingFactorEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdSamplingFactorParamUsageTemplData{}),
 			defaultSamplingFactor,
 		),
-		&paramSet.Native.FactorEn.Source,
+		&paramSet.Native.ThirdPartySet.SamplingFactorEn.Source,
 		func(value string, f *pflag.Flag) error {
 			if f.Changed && !(magick.SamplingFactorEnumInfo.IsValid(value)) {
 				acceptableSet := magick.SamplingFactorEnumInfo.AcceptablePrimes()
@@ -213,14 +233,14 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultInterlace = "plane"
 	)
 
-	paramSet.Native.InterlaceEn = magick.InterlaceEnumInfo.NewValue()
+	paramSet.Native.ThirdPartySet.InterlaceEn = magick.InterlaceEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
 			xi18n.Text(i18n.ShrinkCmdInterlaceParamUsageTemplData{}),
 			defaultInterlace,
 		),
-		&paramSet.Native.InterlaceEn.Source,
+		&paramSet.Native.ThirdPartySet.InterlaceEn.Source,
 		func(value string, f *pflag.Flag) error {
 			if f.Changed && !(magick.InterlaceEnumInfo.IsValid(value)) {
 				acceptableSet := magick.InterlaceEnumInfo.AcceptablePrimes()
@@ -243,7 +263,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			xi18n.Text(i18n.ShrinkCmdStripParamUsageTemplData{}),
 			defaultStrip,
 		),
-		&paramSet.Native.Strip,
+		&paramSet.Native.ThirdPartySet.Strip,
 	)
 
 	// --quality(q)
@@ -259,10 +279,26 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			xi18n.Text(i18n.ShrinkCmdQualityParamUsageTemplData{}),
 			defaultQuality,
 		),
-		&paramSet.Native.Quality,
+		&paramSet.Native.ThirdPartySet.Quality,
 		minQuality,
 		maxQuality,
 	)
+
+	// family: files [--files-gb(G), --files-rx(X)]
+	//
+	// The files filter family is not required on the root, so we define it
+	// here instead.
+	//
+	filesFam := assistant.NewParamSet[store.FilesFilterParameterSet](shrinkCommand)
+	filesFam.Native.BindAll(filesFam)
+
+	paramSet.Native.KnownBy = cobrass.KnownByCollection{
+		"gaussian-blur":   "b",
+		"sampling-factor": "f",
+		"interlace":       "i",
+		"strip":           "s",
+		"quality":         "q",
+	}
 
 	// 📌A note about cobra args validation: cmd.ValidArgs lets you define
 	// a list of all allowable tokens for positional args. Just define
@@ -282,8 +318,21 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	//
 	container.MustRegisterRootedCommand(shrinkCommand)
 	container.MustRegisterParamSet(shrinkPsName, paramSet)
+	container.MustRegisterParamSet(filesFamName, filesFam)
 
 	shrinkCommand.Args = validatePositionalArgs
 
 	return shrinkCommand
+}
+
+func (b *Bootstrap) getShrinkInputs() *magick.ShrinkCommandInputs {
+	return &magick.ShrinkCommandInputs{
+		RootInputs: b.getRootInputs(),
+		ParamSet: b.Container.MustGetParamSet(
+			shrinkPsName,
+		).(*assistant.ParamSet[magick.ShrinkParameterSet]),
+		FilesFam: b.Container.MustGetParamSet(
+			filesFamName,
+		).(*assistant.ParamSet[store.FilesFilterParameterSet]),
+	}
 }

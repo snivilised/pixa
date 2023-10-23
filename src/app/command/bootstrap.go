@@ -3,12 +3,10 @@ package command
 import (
 	"fmt"
 	"os"
-	"regexp"
 
 	"github.com/cubiest/jibberjabber"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 
@@ -120,16 +118,15 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			RunE: func(cmd *cobra.Command, args []string) error {
 				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
 
-				rps := b.Container.MustGetParamSet(RootPsName).(magick.RootParameterSetPtr) //nolint:errcheck // is Must call
-				rps.Native.Directory = magick.ResolvePath(args[0])
-
-				if rps.Native.CPU {
-					rps.Native.NoW = 0
+				inputs := b.getRootInputs()
+				inputs.ParamSet.Native.Directory = magick.ResolvePath(args[0])
+				if inputs.ParamSet.Native.CPU {
+					inputs.ParamSet.Native.NoW = 0
 				}
 
 				// ---> execute root core
 				//
-				return magick.EnterRoot(rps, b.options.Executor, b.options.Config.Viper)
+				return magick.EnterRoot(inputs, b.options.Executor, b.options.Config.Viper)
 			},
 		},
 	)
@@ -201,140 +198,4 @@ func handleLangSetting(config configuration.ViperConfig) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-	//
-	rootCommand := container.Root()
-	paramSet := assistant.NewParamSet[magick.RootParameterSet](rootCommand)
-
-	// --cpu(C)
-	//
-	paramSet.BindBool(&assistant.FlagInfo{
-		Name:               "cpu",
-		Usage:              "cpu sets the number of workers to the number of available processors",
-		Short:              "C",
-		Default:            false,
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.CPU)
-
-	// --dry-run(D)
-	//
-	paramSet.BindBool(&assistant.FlagInfo{
-		Name:               "dry-run",
-		Usage:              "dry-run shrink op",
-		Short:              "D",
-		Default:            false,
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.DryRun)
-
-	// --files-gb(G)
-	//
-	paramSet.BindString(&assistant.FlagInfo{
-		Name: "files-gb",
-		Usage: i18n.LeadsWith(
-			"files-gb",
-			xi18n.Text(i18n.RootCmdFilesGlobParamUsageTemplData{}),
-		),
-		Short:              "G",
-		Default:            "",
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FilesGlob)
-
-	// --files-rx(X)
-	//
-	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name: "files-rx",
-		Usage: i18n.LeadsWith(
-			"files-rx",
-			xi18n.Text(i18n.RootCmdFilesRegExParamUsageTemplData{}),
-		),
-		Short:              "X",
-		Default:            "",
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FilesRexEx, func(value string, _ *pflag.Flag) error {
-		_, err := regexp.Compile(value)
-		return err
-	})
-
-	// --folder-gb(z)
-	//
-	paramSet.BindString(&assistant.FlagInfo{
-		Name: "folder-gb",
-		Usage: i18n.LeadsWith(
-			"folder-gb",
-			xi18n.Text(i18n.RootCmdFolderGlobParamUsageTemplData{}),
-		),
-		Short:              "z",
-		Default:            "",
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FolderGlob)
-
-	// --folder-rx(y)
-	//
-	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name: "folder-rx",
-		Usage: i18n.LeadsWith(
-			"folder-rx",
-			xi18n.Text(i18n.RootCmdFolderRexExParamUsageTemplData{}),
-		),
-		Short:              "y",
-		Default:            "",
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.FolderRexEx, func(value string, _ *pflag.Flag) error {
-		_, err := regexp.Compile(value)
-		return err
-	})
-
-	// --lang
-	//
-	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name: "lang",
-		Usage: i18n.LeadsWith(
-			"lang",
-			xi18n.Text(i18n.RootCmdLangUsageTemplData{}),
-		),
-		Default:            xi18n.DefaultLanguage.Get().String(),
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.Language, func(value string, _ *pflag.Flag) error {
-		_, err := language.Parse(value)
-		return err
-	})
-
-	// --now(N)
-	//
-	const (
-		defaultNoW = -1
-	)
-
-	paramSet.BindInt(&assistant.FlagInfo{
-		Name:               "now",
-		Usage:              "now represents number of workers in pool",
-		Short:              "N",
-		Default:            defaultNoW,
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.NoW)
-
-	// --profile(p)
-	//
-	paramSet.BindString(&assistant.FlagInfo{
-		Name:               "profile",
-		Usage:              "profile identifies a named group of flag options loaded from config",
-		Short:              "P",
-		Default:            "",
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.Profile)
-
-	// parameter groups
-	//
-	rootCommand.MarkFlagsMutuallyExclusive("files-rx", "files-gb")
-	rootCommand.MarkFlagsMutuallyExclusive("folder-rx", "folder-gb")
-	rootCommand.MarkFlagsMutuallyExclusive("now", "cpu")
-
-	rootCommand.Args = validatePositionalArgs
-
-	container.MustRegisterParamSet(RootPsName, paramSet)
 }
