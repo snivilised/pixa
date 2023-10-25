@@ -15,7 +15,7 @@ import (
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/utils"
-	"github.com/snivilised/pixa/src/app/magick"
+	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -38,7 +38,7 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	directory := magick.ResolvePath(args[0])
+	directory := proxy.ResolvePath(args[0])
 
 	if !utils.Exists(directory) {
 		return xi18n.NewPathNotFoundError("shrink directory", directory)
@@ -64,7 +64,7 @@ type Bootstrap struct {
 
 type ConfigureOptions struct {
 	Detector LocaleDetector
-	Executor magick.Executor
+	Executor proxy.Executor
 	Config   ConfigInfo
 }
 
@@ -119,14 +119,14 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
 
 				inputs := b.getRootInputs()
-				inputs.ParamSet.Native.Directory = magick.ResolvePath(args[0])
+				inputs.ParamSet.Native.Directory = proxy.ResolvePath(args[0])
 				if inputs.ParamSet.Native.CPU {
 					inputs.ParamSet.Native.NoW = 0
 				}
 
 				// ---> execute root core
 				//
-				return magick.EnterRoot(inputs, b.options.Executor, b.options.Config.Viper)
+				return proxy.EnterRoot(inputs, b.options.Executor, b.options.Config.Viper)
 			},
 		},
 	)

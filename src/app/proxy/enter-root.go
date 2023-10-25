@@ -1,4 +1,4 @@
-package magick
+package proxy
 
 import (
 	"fmt"

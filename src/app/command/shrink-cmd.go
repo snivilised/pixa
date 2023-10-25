@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/snivilised/pixa/src/app/magick"
+	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -70,7 +70,7 @@ func isThirdPartyKnown(name string, known cobrass.KnownByCollection) bool {
 	return found
 }
 
-type shrinkParameterSetPtr = *assistant.ParamSet[magick.ShrinkParameterSet]
+type shrinkParameterSetPtr = *assistant.ParamSet[proxy.ShrinkParameterSet]
 
 func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	shrinkCommand := &cobra.Command{
@@ -90,7 +90,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			if validationErr := shrinkPS.Validate(); validationErr == nil {
 				// optionally invoke cross field validation
 				//
-				if xvErr := shrinkPS.CrossValidate(func(ps *magick.ShrinkParameterSet) error {
+				if xvErr := shrinkPS.CrossValidate(func(ps *proxy.ShrinkParameterSet) error {
 					// cross validation not currently required
 					//
 					return nil
@@ -120,9 +120,9 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 					}
 
 					inputs := b.getShrinkInputs()
-					inputs.RootInputs.ParamSet.Native.Directory = magick.ResolvePath(args[0])
+					inputs.RootInputs.ParamSet.Native.Directory = proxy.ResolvePath(args[0])
 
-					appErr = magick.EnterShrink(
+					appErr = proxy.EnterShrink(
 						inputs,
 						b.options.Executor,
 						b.options.Config.Viper,
@@ -138,7 +138,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		},
 	}
 
-	paramSet := assistant.NewParamSet[magick.ShrinkParameterSet](shrinkCommand)
+	paramSet := assistant.NewParamSet[proxy.ShrinkParameterSet](shrinkCommand)
 
 	// --mirror-path(r)
 	//
@@ -166,7 +166,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultMode = "preserve"
 	)
 
-	paramSet.Native.ModeEn = magick.ModeEnumInfo.NewValue()
+	paramSet.Native.ModeEn = proxy.ModeEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
@@ -175,8 +175,8 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		),
 		&paramSet.Native.ModeEn.Source,
 		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(magick.ModeEnumInfo.IsValid(value)) {
-				acceptableSet := magick.ModeEnumInfo.AcceptablePrimes()
+			if f.Changed && !(proxy.ModeEnumInfo.IsValid(value)) {
+				acceptableSet := proxy.ModeEnumInfo.AcceptablePrimes()
 
 				return i18n.NewModeError(value, acceptableSet)
 			}
@@ -209,7 +209,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultSamplingFactor = "4:2:0"
 	)
 
-	paramSet.Native.ThirdPartySet.SamplingFactorEn = magick.SamplingFactorEnumInfo.NewValue()
+	paramSet.Native.ThirdPartySet.SamplingFactorEn = proxy.SamplingFactorEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
@@ -218,8 +218,8 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		),
 		&paramSet.Native.ThirdPartySet.SamplingFactorEn.Source,
 		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(magick.SamplingFactorEnumInfo.IsValid(value)) {
-				acceptableSet := magick.SamplingFactorEnumInfo.AcceptablePrimes()
+			if f.Changed && !(proxy.SamplingFactorEnumInfo.IsValid(value)) {
+				acceptableSet := proxy.SamplingFactorEnumInfo.AcceptablePrimes()
 
 				return i18n.NewInvalidSamplingFactorError(value, acceptableSet)
 			}
@@ -233,7 +233,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultInterlace = "plane"
 	)
 
-	paramSet.Native.ThirdPartySet.InterlaceEn = magick.InterlaceEnumInfo.NewValue()
+	paramSet.Native.ThirdPartySet.InterlaceEn = proxy.InterlaceEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
@@ -242,8 +242,8 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		),
 		&paramSet.Native.ThirdPartySet.InterlaceEn.Source,
 		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(magick.InterlaceEnumInfo.IsValid(value)) {
-				acceptableSet := magick.InterlaceEnumInfo.AcceptablePrimes()
+			if f.Changed && !(proxy.InterlaceEnumInfo.IsValid(value)) {
+				acceptableSet := proxy.InterlaceEnumInfo.AcceptablePrimes()
 
 				return i18n.NewInterlaceError(value, acceptableSet)
 			}
@@ -325,12 +325,12 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	return shrinkCommand
 }
 
-func (b *Bootstrap) getShrinkInputs() *magick.ShrinkCommandInputs {
-	return &magick.ShrinkCommandInputs{
+func (b *Bootstrap) getShrinkInputs() *proxy.ShrinkCommandInputs {
+	return &proxy.ShrinkCommandInputs{
 		RootInputs: b.getRootInputs(),
 		ParamSet: b.Container.MustGetParamSet(
 			shrinkPsName,
-		).(*assistant.ParamSet[magick.ShrinkParameterSet]),
+		).(*assistant.ParamSet[proxy.ShrinkParameterSet]),
 		FilesFam: b.Container.MustGetParamSet(
 			filesFamName,
 		).(*assistant.ParamSet[store.FilesFilterParameterSet]),

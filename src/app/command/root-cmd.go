@@ -7,7 +7,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
-	"github.com/snivilised/pixa/src/app/magick"
+	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
 	"github.com/spf13/pflag"
 	"golang.org/x/text/language"
@@ -30,7 +30,7 @@ func Execute() error {
 
 func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	rootCommand := container.Root()
-	paramSet := assistant.NewParamSet[magick.RootParameterSet](rootCommand)
+	paramSet := assistant.NewParamSet[proxy.RootParameterSet](rootCommand)
 
 	// --lang (TODO: should really come from the family store,
 	// as its a generic concept.)
@@ -83,11 +83,11 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	container.MustRegisterParamSet(ProfileFamName, profileFam)
 }
 
-func (b *Bootstrap) getRootInputs() *magick.RootCommandInputs {
-	return &magick.RootCommandInputs{
+func (b *Bootstrap) getRootInputs() *proxy.RootCommandInputs {
+	return &proxy.RootCommandInputs{
 		ParamSet: b.Container.MustGetParamSet(
 			RootPsName,
-		).(*assistant.ParamSet[magick.RootParameterSet]),
+		).(*assistant.ParamSet[proxy.RootParameterSet]),
 		PreviewFam: b.Container.MustGetParamSet(
 			PreviewFamName,
 		).(*assistant.ParamSet[store.PreviewParameterSet]),
