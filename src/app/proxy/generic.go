@@ -1,4 +1,4 @@
-package magick
+package proxy
 
 import (
 	"github.com/snivilised/extendio/xfs/nav"

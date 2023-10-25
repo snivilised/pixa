@@ -1,4 +1,4 @@
-package magick
+package proxy
 
 type GeneralParameters struct {
 	NoW     int

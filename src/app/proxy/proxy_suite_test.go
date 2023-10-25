@@ -1,4 +1,4 @@
-package magick_test
+package proxy_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestMagick(t *testing.T) {
+func TestProxy(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Magick Suite")
+	RunSpecs(t, "Proxy Suite")
 }

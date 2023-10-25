@@ -1,4 +1,4 @@
-package magick_test
+package proxy_test
 
 import (
 	"fmt"
@@ -111,22 +111,6 @@ var _ = Describe("Config", func() {
 				_ = actual
 
 				Expect(1).To(Equal(1))
-				// se := magick.ShrinkEntry{
-				// 	EntryBase: magick.EntryBase{
-				// 		RootPS: assistant.NewParamSet[magick.RootParameterSet](bootstrap.Root()),
-				// 		Program: &helpers.ExecutorStub{
-				// 			Name: comm,
-				// 		},
-				// 		Config: config,
-				// 	},
-				// 	ParamSet: assistant.NewParamSet[magick.ShrinkParameterSet](
-				// 		bootstrap.Container.Command(comm),
-				// 	),
-				// }
-
-				// result := se.ReadProfile()
-				// _ = result
-
 				expectValidShrinkCmdInvocation(entry)
 			} else {
 				actual := entry.actual(entry)
