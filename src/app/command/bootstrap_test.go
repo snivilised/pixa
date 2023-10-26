@@ -49,7 +49,7 @@ var _ = Describe("Bootstrap", Ordered, func() {
 	Context("given: root defined with magick sub-command", func() {
 		It("🧪 should: setup command without error", func() {
 			bootstrap := command.Bootstrap{}
-			rootCmd := bootstrap.Root(func(co *command.ConfigureOptions) {
+			rootCmd := bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 				co.Detector = &DetectorStub{}
 				co.Executor = &ExecutorStub{
 					Name: "magick",

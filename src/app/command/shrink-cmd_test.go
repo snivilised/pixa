@@ -40,7 +40,7 @@ func expectValidShrinkCmdInvocation(entry *shrinkTE) {
 
 	tester := helpers.CommandTester{
 		Args: append(options, entry.args...),
-		Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &DetectorStub{}
 			co.Executor = &ExecutorStub{
 				Name: "magick",

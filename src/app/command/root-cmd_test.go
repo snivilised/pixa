@@ -35,7 +35,7 @@ var _ = Describe("RootCmd", Ordered, func() {
 		bootstrap := command.Bootstrap{}
 		tester = helpers.CommandTester{
 			Args: []string{"./"},
-			Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+			Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 				co.Detector = &DetectorStub{}
 				co.Executor = &ExecutorStub{
 					Name: "magick",
@@ -49,7 +49,7 @@ var _ = Describe("RootCmd", Ordered, func() {
 			bootstrap := command.Bootstrap{}
 			tester = helpers.CommandTester{
 				Args: entry.commandLine,
-				Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &DetectorStub{}
 					co.Executor = &ExecutorStub{
 						Name: "magick",

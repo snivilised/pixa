@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.28.1
+	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.38.1
 	github.com/snivilised/extendio v0.3.0
 	github.com/snivilised/lorax v0.4.1
@@ -22,7 +23,6 @@ require (
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

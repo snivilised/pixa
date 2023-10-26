@@ -124,8 +124,8 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 					appErr = proxy.EnterShrink(
 						inputs,
-						b.options.Executor,
-						b.options.Config.Viper,
+						b.optionsInfo.Executor,
+						b.optionsInfo.Config.Viper,
 					)
 				} else {
 					return xvErr

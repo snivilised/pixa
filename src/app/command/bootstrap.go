@@ -58,17 +58,17 @@ type ConfigInfo struct {
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
 type Bootstrap struct {
-	Container *assistant.CobraContainer
-	options   ConfigureOptions
+	Container   *assistant.CobraContainer
+	optionsInfo ConfigureOptionsInfo
 }
 
-type ConfigureOptions struct {
+type ConfigureOptionsInfo struct {
 	Detector LocaleDetector
 	Executor proxy.Executor
 	Config   ConfigInfo
 }
 
-type ConfigureOptionFn func(*ConfigureOptions)
+type ConfigureOptionFn func(*ConfigureOptionsInfo)
 
 // Root builds the command tree and returns the root command, ready
 // to be executed.
@@ -76,7 +76,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	home, err := os.UserHomeDir()
 	cobra.CheckErr(err)
 
-	b.options = ConfigureOptions{
+	b.optionsInfo = ConfigureOptionsInfo{
 		Detector: &Jabber{},
 		Executor: &ProgramExecutor{
 			Name: "magick",
@@ -89,21 +89,21 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 		},
 	}
 
-	if _, err := b.options.Executor.Look(); err != nil {
-		b.options.Executor = &DummyExecutor{
-			Name: b.options.Executor.ProgName(),
+	if _, err := b.optionsInfo.Executor.Look(); err != nil {
+		b.optionsInfo.Executor = &DummyExecutor{
+			Name: b.optionsInfo.Executor.ProgName(),
 		}
 	}
 
 	for _, fo := range options {
-		fo(&b.options)
+		fo(&b.optionsInfo)
 	}
 
 	b.configure()
 
 	// JUST TEMPORARY: make the executor the dummy for safety
 	//
-	b.options.Executor = &DummyExecutor{
+	b.optionsInfo.Executor = &DummyExecutor{
 		Name: "magick",
 	}
 
@@ -126,7 +126,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 
 				// ---> execute root core
 				//
-				return proxy.EnterRoot(inputs, b.options.Executor, b.options.Config.Viper)
+				return proxy.EnterRoot(inputs, b.optionsInfo.Executor, b.optionsInfo.Config.Viper)
 			},
 		},
 	)
@@ -139,8 +139,8 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 }
 
 func (b *Bootstrap) configure() {
-	vc := b.options.Config.Viper
-	ci := b.options.Config
+	vc := b.optionsInfo.Config.Viper
+	ci := b.optionsInfo.Config
 
 	vc.SetConfigName(ci.Name)
 	vc.SetConfigType(ci.ConfigType)
