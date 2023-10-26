@@ -33,7 +33,7 @@ func expectValidShrinkCmdInvocation(entry *configTE) {
 
 	tester := helpers.CommandTester{
 		Args: append(options, entry.args...),
-		Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &helpers.DetectorStub{}
 			co.Executor = &helpers.ExecutorStub{
 				Name: prog,

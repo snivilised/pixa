@@ -55,7 +55,7 @@ var _ = Describe("MagickCmd", Ordered, func() {
 			bootstrap := command.Bootstrap{}
 			tester := helpers.CommandTester{
 				Args: []string{"mag"},
-				Root: bootstrap.Root(func(co *command.ConfigureOptions) {
+				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &DetectorStub{}
 				}),
 			}

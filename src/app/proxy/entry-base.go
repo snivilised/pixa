@@ -16,14 +16,31 @@ import (
 
 type afterFunc func(*nav.TraverseResult, error)
 
+func summariseAfter(result *nav.TraverseResult, err error) {
+	measure := fmt.Sprintf("started: '%v', elapsed: '%v'",
+		result.Session.StartedAt().Format(time.RFC1123), result.Session.Elapsed(),
+	)
+	files := result.Metrics.Count(nav.MetricNoFilesInvokedEn)
+	folders := result.Metrics.Count(nav.MetricNoFoldersInvokedEn)
+	summary := fmt.Sprintf("files: %v, folders: %v", files, folders)
+	message := lo.Ternary(err == nil,
+		fmt.Sprintf("navigation completed (%v) ✔️ [%v]", summary, measure),
+		fmt.Sprintf("error occurred during navigation (%v)❌ [%v]", err, measure),
+	)
+	fmt.Println(message)
+}
+
 type EntryBase struct {
 	Inputs       *RootCommandInputs
 	Program      Executor
 	Config       configuration.ViperConfig
 	ThirdPartyCL cobrass.ThirdPartyCommandLine
+	Options      *nav.TraverseOptions
 }
 
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
+	e.Options = o
+
 	// TODO: to apply the folder filters in combination with these
 	// file filters, we need to define a custom compound
 	// filter.
@@ -129,21 +146,9 @@ func (e *EntryBase) navigate(
 		nav.IfWithPoolUseContext(with, ctx, cancel)...,
 	)
 
-	if len(after) > 0 {
-		after[0](result, err)
+	for _, fn := range after {
+		fn(result, err)
 	}
-
-	measure := fmt.Sprintf("started: '%v', elapsed: '%v'",
-		result.Session.StartedAt().Format(time.RFC1123), result.Session.Elapsed(),
-	)
-	files := result.Metrics.Count(nav.MetricNoFilesInvokedEn)
-	folders := result.Metrics.Count(nav.MetricNoFoldersInvokedEn)
-	summary := fmt.Sprintf("files: %v, folders: %v", files, folders)
-	message := lo.Ternary(err == nil,
-		fmt.Sprintf("navigation completed (%v) ✔️ [%v]", summary, measure),
-		fmt.Sprintf("error occurred during navigation (%v)❌ [%v]", err, measure),
-	)
-	fmt.Println(message)
 
 	return err
 }

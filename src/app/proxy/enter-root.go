@@ -35,6 +35,25 @@ type RootEntry struct {
 	files []string
 }
 
+func (e *RootEntry) principalFn(item *nav.TraverseItem) error {
+	depth := item.Extension.Depth
+	indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
+
+	for _, entry := range item.Children {
+		fullPath := filepath.Join(item.Path, entry.Name())
+		e.files = append(e.files, fullPath)
+	}
+
+	fmt.Printf(
+		"---> %v ROOT-CALLBACK: (depth:%v, files:%v) '%v'\n",
+		indicator,
+		depth, len(item.Children),
+		item.Path,
+	)
+
+	return e.Program.Execute("--version")
+}
+
 func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	o.Notify.OnBegin = func(_ *nav.NavigationState) {
 		fmt.Printf("===> 🛡️ beginning traversal ...\n")
@@ -46,24 +65,7 @@ func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	}
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Root Entry Callback",
-		Fn: func(item *nav.TraverseItem) error {
-			depth := item.Extension.Depth
-			indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
-
-			for _, entry := range item.Children {
-				fullPath := filepath.Join(item.Path, entry.Name())
-				e.files = append(e.files, fullPath)
-			}
-
-			fmt.Printf(
-				"---> %v ROOT-CALLBACK: (depth:%v, files:%v) '%v'\n",
-				indicator,
-				depth, len(item.Children),
-				item.Path,
-			)
-
-			return e.Program.Execute("--version")
-		},
+		Fn:    e.principalFn,
 	}
 	o.Store.Subscription = nav.SubscribeFoldersWithFiles
 	o.Store.DoExtend = true
@@ -71,35 +73,9 @@ func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 }
 
 func (e *RootEntry) run() error {
-	files := []string{}
 	runnerWith := composeWith(e.Inputs.ParamSet)
-	resumption := &nav.Resumption{
-		RestorePath: "/json-path-to-come-from-a-flag-option/restore.json",
-		Restorer: func(o *nav.TraverseOptions, active *nav.ActiveState) {
-			o.Callback = &nav.LabelledTraverseCallback{
-				Label: "Root Entry Callback",
-				Fn: func(item *nav.TraverseItem) error {
-					depth := item.Extension.Depth
-					indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
 
-					for _, entry := range item.Children {
-						fullPath := filepath.Join(item.Path, entry.Name())
-						files = append(files, fullPath)
-					}
-
-					fmt.Printf(
-						"---> %v ROOT-CALLBACK: (depth:%v, files:%v) '%v'\n",
-						indicator,
-						depth, len(item.Children),
-						item.Path,
-					)
-
-					return nil
-				},
-			}
-		},
-		Strategy: nav.ResumeStrategySpawnEn, // to come from an arg
-	}
+	var nilResumption *nav.Resumption // root does not need to support resume
 
 	after := func(result *nav.TraverseResult, err error) {
 		for _, file := range e.files {
@@ -107,7 +83,21 @@ func (e *RootEntry) run() error {
 		}
 	}
 
-	return e.navigate(GetTraverseOptionsFunc(e), runnerWith, resumption, after)
+	principal := func(o *nav.TraverseOptions) {
+		e.ConfigureOptions(o)
+		o.Callback = &nav.LabelledTraverseCallback{
+			Label: "Root Entry Callback",
+			Fn:    e.principalFn,
+		}
+	}
+
+	return e.navigate(
+		principal,
+		runnerWith,
+		nilResumption,
+		after,
+		summariseAfter,
+	)
 }
 
 func composeWith(rps *assistant.ParamSet[RootParameterSet]) nav.CreateNewRunnerWith {
