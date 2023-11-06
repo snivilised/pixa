@@ -7,8 +7,8 @@ require (
 	github.com/onsi/gomega v1.29.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.38.1
-	github.com/snivilised/extendio v0.3.0
-	github.com/snivilised/lorax v0.4.1
+	github.com/snivilised/extendio v0.3.1
+	github.com/snivilised/lorax v0.4.2
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
 	go.uber.org/zap v1.26.0
@@ -20,7 +20,7 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230406165453-00490a63f317 // indirect
-	github.com/google/uuid v1.3.1 // indirect
+	github.com/google/uuid v1.4.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
