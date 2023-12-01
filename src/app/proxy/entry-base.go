@@ -3,14 +3,14 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/samber/lo"
-	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/lorax/boost"
 )
 
@@ -24,96 +24,126 @@ func summariseAfter(result *nav.TraverseResult, err error) {
 	folders := result.Metrics.Count(nav.MetricNoFoldersInvokedEn)
 	summary := fmt.Sprintf("files: %v, folders: %v", files, folders)
 	message := lo.Ternary(err == nil,
-		fmt.Sprintf("navigation completed (%v) ✔️ [%v]", summary, measure),
-		fmt.Sprintf("error occurred during navigation (%v)❌ [%v]", err, measure),
+		fmt.Sprintf("navigation completed ok (%v) 💝 [%v]", summary, measure),
+		fmt.Sprintf("error occurred during navigation (%v)❤️💔 [%v]", err, measure),
 	)
 	fmt.Println(message)
 }
 
+// EntryBase is the base entry for all commands in pixa
 type EntryBase struct {
-	Inputs       *RootCommandInputs
-	Program      Executor
-	Config       configuration.ViperConfig
-	ThirdPartyCL cobrass.ThirdPartyCommandLine
-	Options      *nav.TraverseOptions
+	// some parts of the struct should go into a TraverseBase (anything to with
+	// navigation such as Options)
+	// with the rest going into cobrass.clif
+	//
+	Inputs      *RootCommandInputs
+	Program     Executor
+	Config      configuration.ViperConfig
+	Options     *nav.TraverseOptions
+	Registry    *RunnerRegistry
+	ProfilesCFG ProfilesConfig
+	SamplerCFG  SamplerConfig
+	Vfs         storage.VirtualFS
 }
 
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	e.Options = o
+	o.Hooks.QueryStatus = func(path string) (os.FileInfo, error) {
+		fi, err := e.Vfs.Lstat(path)
+
+		return fi, err
+	}
+	o.Hooks.ReadDirectory = func(dirname string) ([]fs.DirEntry, error) {
+		contents, err := e.Vfs.ReadDir(dirname)
+		if err != nil {
+			return nil, err
+		}
+
+		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
+			return item.Name() != ".DS_Store"
+		}), nil
+	}
 
 	// TODO: to apply the folder filters in combination with these
 	// file filters, we need to define a custom compound
 	// filter.
 	//
-	switch {
-	case e.Inputs.ParamSet.Native.FilesGlob != "":
-		o.Store.FilterDefs = &nav.FilterDefinitions{
-			Node: nav.FilterDef{
-				Type:        nav.FilterTypeGlobEn,
-				Description: fmt.Sprintf("--files-gb(G): '%v'", e.Inputs.ParamSet.Native.FilesGlob),
-				Pattern:     e.Inputs.ParamSet.Native.FilesGlob,
-				Scope:       nav.ScopeLeafEn,
-			},
-		}
 
-	case e.Inputs.ParamSet.Native.FilesRexEx != "":
-		o.Store.FilterDefs = &nav.FilterDefinitions{
-			Node: nav.FilterDef{
-				Type:        nav.FilterTypeRegexEn,
-				Description: fmt.Sprintf("--files-rx(X): '%v'", e.Inputs.ParamSet.Native.FilesRexEx),
-				Pattern:     e.Inputs.ParamSet.Native.FilesRexEx,
-				Scope:       nav.ScopeLeafEn,
-			},
-		}
+	if o.Store.FilterDefs == nil {
+		switch {
+		case e.Inputs.FoldersFam.Native.FoldersGlob != "":
+			pattern := e.Inputs.FoldersFam.Native.FoldersGlob
+			o.Store.FilterDefs = &nav.FilterDefinitions{
+				Node: nav.FilterDef{
+					Type:        nav.FilterTypeGlobEn,
+					Description: fmt.Sprintf("--folders-gb(Z): '%v'", pattern),
+					Pattern:     pattern,
+					Scope:       nav.ScopeFolderEn,
+				},
+			}
 
-	default:
-		filterType := nav.FilterTypeRegexEn
-		description := "Default image types supported by pixa"
-		pattern := "\\.(jpe?g|png)$"
+		case e.Inputs.FoldersFam.Native.FoldersRexEx != "":
+			pattern := e.Inputs.FoldersFam.Native.FoldersRexEx
+			o.Store.FilterDefs = &nav.FilterDefinitions{
+				Node: nav.FilterDef{
+					Type:        nav.FilterTypeRegexEn,
+					Description: fmt.Sprintf("--folders-rx(Y): '%v'", pattern),
+					Pattern:     pattern,
+					Scope:       nav.ScopeFolderEn,
+				},
+			}
 
-		o.Store.FilterDefs = &nav.FilterDefinitions{
-			Node: nav.FilterDef{
-				Type:        filterType,
-				Description: description,
-				Pattern:     pattern,
-			},
-			Children: nav.CompoundFilterDef{
-				Type:        filterType,
-				Description: description,
-				Pattern:     pattern,
-			},
-		}
-	}
-}
+		default:
+			// TODO: there is still confusion here. Why do we need to set up
+			// a default image filter in base, when base is only interested in folders?
+			// shouldn't this default just be in shrink, which is interested in files.
+			filterType := nav.FilterTypeRegexEn
+			description := "Default image types supported by pixa"
+			pattern := "\\.(jpe?g|png)$"
 
-func ResolvePath(path string) string {
-	result := path
-
-	if result[0] == '~' {
-		if h, err := os.UserHomeDir(); err == nil {
-			result = filepath.Join(h, result[1:])
-		}
-	} else {
-		if absolute, absErr := filepath.Abs(path); absErr == nil {
-			result = absolute
+			o.Store.FilterDefs = &nav.FilterDefinitions{
+				Node: nav.FilterDef{
+					Type:        filterType,
+					Description: description,
+					Pattern:     pattern,
+				},
+				Children: nav.CompoundFilterDef{
+					Type:        filterType,
+					Description: description,
+					Pattern:     pattern,
+				},
+			}
 		}
 	}
 
-	return result
-}
+	// setup sampling (sampling params needs to be defined on a new family in store)
+	// This should not be here; move to root
+	//
+	if e.Inputs.ParamSet.Native.IsSampling {
+		o.Store.Sampling.SampleType = nav.SampleTypeFilterEn
+		o.Store.Sampling.SampleInReverse = e.Inputs.ParamSet.Native.Last
 
-func (e *EntryBase) readProfile3rdPartyFlags() cobrass.ThirdPartyCommandLine {
-	fmt.Printf("------> 💦💦💦 readProfile3rdPartyFlags: '%v'\n", e.Inputs.ParamSet.Native.Profile)
+		if e.Inputs.ParamSet.Native.NoFiles > 0 {
+			o.Store.Sampling.NoOf.Files = e.Inputs.ParamSet.Native.NoFiles
+		}
 
-	return lo.TernaryF(e.Inputs.ParamSet.Native.Profile != "",
-		func() []string {
-			configPath := "profiles." + e.Inputs.ParamSet.Native.Profile
-			return e.Config.GetStringSlice(configPath)
-		},
-		func() []string {
-			return []string{}
-		},
-	)
+		if e.Inputs.ParamSet.Native.NoFolders > 0 {
+			o.Store.Sampling.NoOf.Folders = e.Inputs.ParamSet.Native.NoFolders
+		}
+	}
+
+	// TODO: get the runner type properly, instead of hard coding to Sampler
+	// This should not be here; move to root
+	//
+	if e.Registry == nil {
+		e.Registry = NewRunnerRegistry(&SharedRunnerInfo{
+			Type:     RunnerTypeSamplerEn, // TODO: to come from an arg !!!
+			Options:  e.Options,
+			program:  e.Program,
+			profiles: e.ProfilesCFG,
+			sampler:  e.SamplerCFG,
+		})
+	}
 }
 
 func (e *EntryBase) navigate(
@@ -137,7 +167,7 @@ func (e *EntryBase) navigate(
 		AccelerationInfo: &nav.Acceleration{
 			WgAn:        wgan,
 			RoutineName: navigatorRoutineName,
-			NoW:         e.Inputs.ParamSet.Native.NoW,
+			NoW:         e.Inputs.WorkerPoolFam.Native.NoWorkers,
 			JobsChOut:   make(boost.JobStream[nav.TraverseItemInput], DefaultJobsChSize),
 		},
 	}

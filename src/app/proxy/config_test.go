@@ -2,7 +2,7 @@ package proxy_test
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,18 +11,17 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/helpers"
+	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
-const (
-	relative = "../../test/data/configuration"
-	prog     = "magick"
-)
-
-func expectValidShrinkCmdInvocation(entry *configTE) {
-	bootstrap := command.Bootstrap{}
+func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE) {
+	bootstrap := command.Bootstrap{
+		Vfs: vfs,
+	}
 
 	options := []string{
 		entry.comm, entry.file,
@@ -31,15 +30,17 @@ func expectValidShrinkCmdInvocation(entry *configTE) {
 		"--profile", entry.profile,
 	}
 
+	repo := helpers.Repo(filepath.Join("..", "..", ".."))
+	configPath := filepath.Join(repo, "test", "data", "configuration")
 	tester := helpers.CommandTester{
 		Args: append(options, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &helpers.DetectorStub{}
-			co.Executor = &helpers.ExecutorStub{
-				Name: prog,
+			co.Program = &helpers.ExecutorStub{
+				Name: helpers.ProgName,
 			}
-			co.Config.Name = "pixa-test"
-			co.Config.ConfigPath = "../../test/data/configuration"
+			co.Config.Name = helpers.PixaConfigTestFilename
+			co.Config.ConfigPath = configPath
 		}),
 	}
 
@@ -57,29 +58,34 @@ type configTE struct {
 	assert   func(entry *configTE, actual any)
 }
 
-func reason(field string, expected, actual any) string {
-	return fmt.Sprintf("🔥 expected field '%v' to be '%v', but was '%v'\n",
-		field, expected, actual,
-	)
-}
-
-var _ = Describe("Config", func() {
+var _ = Describe("Config", Ordered, func() {
 	var (
-		config   configuration.ViperConfig
-		l10nPath string
+		repo       string
+		l10nPath   string
+		configPath string
+		config     configuration.ViperConfig
+		nfs        storage.VirtualFS
 	)
+
+	BeforeAll(func() {
+		nfs = storage.UseNativeFS()
+		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+
+		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
+		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
+
+		configPath = filepath.Join(repo, "test", "data", "configuration")
+		Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(nfs))
+	})
 
 	BeforeEach(func() {
 		viper.Reset()
 		config = &configuration.GlobalViperConfig{}
 
-		config.SetConfigType("yml")
-		config.SetConfigName("pixa-test")
+		config.SetConfigType(helpers.PixaConfigType)
+		config.SetConfigName(helpers.PixaConfigTestFilename)
 
-		if _, err := os.Lstat(relative); err != nil {
-			Fail("🔥 can't find config path")
-		}
-		config.AddConfigPath(relative)
+		config.AddConfigPath(configPath)
 		if err := config.ReadInConfig(); err != nil {
 			Fail(fmt.Sprintf("🔥 can't read config (err: '%v')", err))
 		}
@@ -111,7 +117,7 @@ var _ = Describe("Config", func() {
 				_ = actual
 
 				Expect(1).To(Equal(1))
-				expectValidShrinkCmdInvocation(entry)
+				expectValidShrinkCmdInvocation(nfs, entry)
 			} else {
 				actual := entry.actual(entry)
 				entry.assert(entry, actual)
@@ -123,7 +129,7 @@ var _ = Describe("Config", func() {
 			)
 		},
 
-		Entry(nil, &configTE{
+		XEntry(nil, &configTE{
 			message:  "adaptive",
 			comm:     "shrink",
 			file:     "cover.nfr.lana-del-rey.jpg",

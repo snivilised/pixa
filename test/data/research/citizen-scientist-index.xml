@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <directory name="scientist">
+    <directory name="british-ecological-society">
+      <directory name="Conker Tree">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Conker-Tree_s01.jpg"/>
+            <file name="02_Conker-Tree_s01.jpg"/>
+            <file name="03_Conker-Tree_s01.jpg"/>
+            <file name="04_Conker-Tree_s01.jpg"/>
+            <file name="05_Conker-Tree_s01.jpg"/>
+            <file name="06_Conker-Tree_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Conker-Tree_s02.jpg"/>
+            <file name="02_Conker-Tree_s02.jpg"/>
+            <file name="03_Conker-Tree_s02.jpg"/>
+            <file name="04_Conker-Tree_s02.jpg"/>
+            <file name="05_Conker-Tree_s02.jpg"/>
+            <file name="06_Conker-Tree_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="eBird">
+        <directory name="scan-01">
+          <file name="01_eBird_s01.jpg"/>
+          <file name="02_eBird_s01.jpg"/>
+          <file name="03_eBird_s01.jpg"/>
+          <file name="04_eBird_s01.jpg"/>
+          <file name="05_eBird_s01.jpg"/>
+          <file name="06_eBird_s01.jpg"/>
+        </directory>
+        <directory name="scan-02">
+          <file name="01_eBird_s02.jpg"/>
+          <file name="02_eBird_s02.jpg"/>
+          <file name="03_eBird_s02.jpg"/>
+          <file name="04_eBird_s02.jpg"/>
+          <file name="05_eBird_s02.jpg"/>
+          <file name="06_eBird_s02.jpg"/>
+        </directory>
+      </directory>
+      <directory name="Mammal Web">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Mammal-Web_s01.jpg"/>
+            <file name="02_Mammal-Web_s01.jpg"/>
+            <file name="03_Mammal-Web_s01.jpg"/>
+            <file name="04_Mammal-Web_s01.jpg"/>
+            <file name="05_Mammal-Web_s01.jpg"/>
+            <file name="06_Mammal-Web_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Mammal-Web_s02.jpg"/>
+            <file name="02_Mammal-Web_s02.jpg"/>
+            <file name="03_Mammal-Web_s02.jpg"/>
+            <file name="04_Mammal-Web_s02.jpg"/>
+            <file name="05_Mammal-Web_s02.jpg"/>
+            <file name="06_Mammal-Web_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+    </directory>
+    <directory name="nasa">
+      <directory name="exo">
+        <directory name="Backyard Worlds - Planet 9">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="02_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="03_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="04_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="05_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="06_Backyard-Worlds-Planet-9_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="02_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="03_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="04_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="05_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="06_Backyard-Worlds-Planet-9_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Exoplanet Watch">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Exoplanet-Watch_s01.jpg"/>
+              <file name="02_Exoplanet-Watch_s01.jpg"/>
+              <file name="03_Exoplanet-Watch_s01.jpg"/>
+              <file name="04_Exoplanet-Watch_s01.jpg"/>
+              <file name="05_Exoplanet-Watch_s01.jpg"/>
+              <file name="06_Exoplanet-Watch_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Exoplanet-Watch_s02.jpg"/>
+              <file name="02_Exoplanet-Watch_s02.jpg"/>
+              <file name="03_Exoplanet-Watch_s02.jpg"/>
+              <file name="04_Exoplanet-Watch_s02.jpg"/>
+              <file name="05_Exoplanet-Watch_s02.jpg"/>
+              <file name="06_Exoplanet-Watch_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Planet Hunter TESS">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="02_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="03_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="04_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="05_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="06_Planet-Hunter-TESS_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="02_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="03_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="04_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="05_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="06_Planet-Hunter-TESS_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="interstellar">
+        <directory name="Dark Energy Explorers">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Dark-Energy-Explorers_s01.jpg"/>
+              <file name="02_Dark-Energy-Explorers_s01.jpg"/>
+              <file name="03_Dark-Energy-Explorers_s01.jpg"/>
+              <file name="04_Dark-Energy-Explorers_s01.jpg"/>
+              <file name="05_Dark-Energy-Explorers_s01.jpg"/>
+              <file name="06_Dark-Energy-Explorers_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Dark-Energy-Explorers_s02.jpg"/>
+              <file name="02_Dark-Energy-Explorers_s02.jpg"/>
+              <file name="03_Dark-Energy-Explorers_s02.jpg"/>
+              <file name="04_Dark-Energy-Explorers_s02.jpg"/>
+              <file name="05_Dark-Energy-Explorers_s02.jpg"/>
+              <file name="06_Dark-Energy-Explorers_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Heliophysics Audified - Resonances in Plasmas">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Heliophysics-Audified_Resonances-in-Plasmas_s01.jpg"/>
+              <file name="02_Heliophysics-Audified_Resonances-in-Plasmas_s01.jpg"/>
+              <file name="03_Heliophysics-Audified_Resonances-in-Plasmas_s01.jpg"/>
+              <file name="04_Heliophysics-Audified_Resonances-in-Plasmas_s01.jpg"/>
+              <file name="05_Heliophysics-Audified_Resonances-in-Plasmas_s01.jpg"/>
+              <file name="06_Heliophysics-Audified_Resonances-in-Plasmas_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Heliophysics-Audified_Resonances-in-Plasmas_s02.jpg"/>
+              <file name="02_Heliophysics-Audified_Resonances-in-Plasmas_s02.jpg"/>
+              <file name="03_Heliophysics-Audified_Resonances-in-Plasmas_s02.jpg"/>
+              <file name="04_Heliophysics-Audified_Resonances-in-Plasmas_s02.jpg"/>
+              <file name="05_Heliophysics-Audified_Resonances-in-Plasmas_s02.jpg"/>
+              <file name="06_Heliophysics-Audified_Resonances-in-Plasmas_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Redshift Wrangler">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Redshift-Wrangler_s01.jpg"/>
+              <file name="02_Redshift-Wrangler_s01.jpg"/>
+              <file name="03_Redshift-Wrangler_s01.jpg"/>
+              <file name="04_Redshift-Wrangler_s01.jpg"/>
+              <file name="05_Redshift-Wrangler_s01.jpg"/>
+              <file name="06_Redshift-Wrangler_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Redshift-Wrangler_s02.jpg"/>
+              <file name="02_Redshift-Wrangler_s02.jpg"/>
+              <file name="03_Redshift-Wrangler_s02.jpg"/>
+              <file name="04_Redshift-Wrangler_s02.jpg"/>
+              <file name="05_Redshift-Wrangler_s02.jpg"/>
+              <file name="06_Redshift-Wrangler_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="UNITE">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_UNITE_s01.jpg"/>
+              <file name="02_UNITE_s01.jpg"/>
+              <file name="03_UNITE_s01.jpg"/>
+              <file name="04_UNITE_s01.jpg"/>
+              <file name="05_UNITE_s01.jpg"/>
+              <file name="06_UNITE_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_UNITE_s02.jpg"/>
+              <file name="02_UNITE_s02.jpg"/>
+              <file name="03_UNITE_s02.jpg"/>
+              <file name="04_UNITE_s02.jpg"/>
+              <file name="05_UNITE_s02.jpg"/>
+              <file name="06_UNITE_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="seti">
+        <directory name="Are We Alone In The Universe">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Are-We-Alone-In-The-Universe_s01.jpg"/>
+              <file name="02_Are-We-Alone-In-The-Universe_s01.jpg"/>
+              <file name="03_Are-We-Alone-In-The-Universe_s01.jpg"/>
+              <file name="04_Are-We-Alone-In-The-Universe_s01.jpg"/>
+              <file name="05_Are-We-Alone-In-The-Universe_s01.jpg"/>
+              <file name="06_Are-We-Alone-In-The-Universe_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Are-We-Alone-In-The-Universe_s02.jpg"/>
+              <file name="02_Are-We-Alone-In-The-Universe_s02.jpg"/>
+              <file name="03_Are-We-Alone-In-The-Universe_s02.jpg"/>
+              <file name="04_Are-We-Alone-In-The-Universe_s02.jpg"/>
+              <file name="05_Are-We-Alone-In-The-Universe_s02.jpg"/>
+              <file name="06_Are-We-Alone-In-The-Universe_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="solar-system">
+        <directory name="Active Asteroids">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Active-Asteroids_s01.jpg"/>
+              <file name="02_Active-Asteroids_s01.jpg"/>
+              <file name="03_Active-Asteroids_s01.jpg"/>
+              <file name="04_Active-Asteroids_s01.jpg"/>
+              <file name="05_Active-Asteroids_s01.jpg"/>
+              <file name="06_Active-Asteroids_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Active-Asteroids_s02.jpg"/>
+              <file name="02_Active-Asteroids_s02.jpg"/>
+              <file name="03_Active-Asteroids_s02.jpg"/>
+              <file name="04_Active-Asteroids_s02.jpg"/>
+              <file name="05_Active-Asteroids_s02.jpg"/>
+              <file name="06_Active-Asteroids_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Cloud Spotting On Mars">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Cloud-Spotting-On-Mars_s01.jpg"/>
+              <file name="02_Cloud-Spotting-On-Mars_s01.jpg"/>
+              <file name="03_Cloud-Spotting-On-Mars_s01.jpg"/>
+              <file name="04_Cloud-Spotting-On-Mars_s01.jpg"/>
+              <file name="05_Cloud-Spotting-On-Mars_s01.jpg"/>
+              <file name="06_Cloud-Spotting-On-Mars_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Cloud-Spotting-On-Mars_s02.jpg"/>
+              <file name="02_Cloud-Spotting-On-Mars_s02.jpg"/>
+              <file name="03_Cloud-Spotting-On-Mars_s02.jpg"/>
+              <file name="04_Cloud-Spotting-On-Mars_s02.jpg"/>
+              <file name="05_Cloud-Spotting-On-Mars_s02.jpg"/>
+              <file name="06_Cloud-Spotting-On-Mars_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Jovian Vortex Hunter">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Jovian-Vortex-Hunter_s01.jpg"/>
+              <file name="02_Jovian-Vortex-Hunter_s01.jpg"/>
+              <file name="03_Jovian-Vortex-Hunter_s01.jpg"/>
+              <file name="04_Jovian-Vortex-Hunter_s01.jpg"/>
+              <file name="05_Jovian-Vortex-Hunter_s01.jpg"/>
+              <file name="06_Jovian-Vortex-Hunter_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Jovian-Vortex-Hunter_s02.jpg"/>
+              <file name="02_Jovian-Vortex-Hunter_s02.jpg"/>
+              <file name="03_Jovian-Vortex-Hunter_s02.jpg"/>
+              <file name="04_Jovian-Vortex-Hunter_s02.jpg"/>
+              <file name="05_Jovian-Vortex-Hunter_s02.jpg"/>
+              <file name="06_Jovian-Vortex-Hunter_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Juno Cam">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Juno-Cam_s01.jpg"/>
+              <file name="02_Juno-Cam_s01.jpg"/>
+              <file name="03_Juno-Cam_s01.jpg"/>
+              <file name="04_Juno-Cam_s01.jpg"/>
+              <file name="05_Juno-Cam_s01.jpg"/>
+              <file name="06_Juno-Cam_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Juno-Cam_s02.jpg"/>
+              <file name="02_Juno-Cam_s02.jpg"/>
+              <file name="03_Juno-Cam_s02.jpg"/>
+              <file name="04_Juno-Cam_s02.jpg"/>
+              <file name="05_Juno-Cam_s02.jpg"/>
+              <file name="06_Juno-Cam_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Moon Diff">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Moon-Diff_s01.jpg"/>
+              <file name="02_Moon-Diff_s01.jpg"/>
+              <file name="03_Moon-Diff_s01.jpg"/>
+              <file name="04_Moon-Diff_s01.jpg"/>
+              <file name="05_Moon-Diff_s01.jpg"/>
+              <file name="06_Moon-Diff_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Moon-Diff_s02.jpg"/>
+              <file name="02_Moon-Diff_s02.jpg"/>
+              <file name="03_Moon-Diff_s02.jpg"/>
+              <file name="04_Moon-Diff_s02.jpg"/>
+              <file name="05_Moon-Diff_s02.jpg"/>
+              <file name="06_Moon-Diff_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Sungrazer Project">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Sungrazer-Project_s01.jpg"/>
+              <file name="02_Sungrazer-Project_s01.jpg"/>
+              <file name="03_Sungrazer-Project_s01.jpg"/>
+              <file name="04_Sungrazer-Project_s01.jpg"/>
+              <file name="05_Sungrazer-Project_s01.jpg"/>
+              <file name="06_Sungrazer-Project_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Sungrazer-Project_s02.jpg"/>
+              <file name="02_Sungrazer-Project_s02.jpg"/>
+              <file name="03_Sungrazer-Project_s02.jpg"/>
+              <file name="04_Sungrazer-Project_s02.jpg"/>
+              <file name="05_Sungrazer-Project_s02.jpg"/>
+              <file name="06_Sungrazer-Project_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="terrestrial">
+        <directory name="Aurorasauras">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Aurorasauras_s01.jpg"/>
+              <file name="02_Aurorasauras_s01.jpg"/>
+              <file name="03_Aurorasauras_s01.jpg"/>
+              <file name="04_Aurorasauras_s01.jpg"/>
+              <file name="05_Aurorasauras_s01.jpg"/>
+              <file name="06_Aurorasauras_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Aurorasauras_s02.jpg"/>
+              <file name="02_Aurorasauras_s02.jpg"/>
+              <file name="03_Aurorasauras_s02.jpg"/>
+              <file name="04_Aurorasauras_s02.jpg"/>
+              <file name="05_Aurorasauras_s02.jpg"/>
+              <file name="06_Aurorasauras_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Air Quality">
+          <directory name="sessions">
+            <directory name="scan-01">
+            </directory>
+            <directory name="scan-02">
+            </directory>
+          </directory>
+        </directory>
+        <directory name="GLOBE Observer - Clouds, Land Cover, Mosquito Habitats">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s01.jpg"/>
+              <file name="02_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s01.jpg"/>
+              <file name="03_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s01.jpg"/>
+              <file name="04_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s01.jpg"/>
+              <file name="05_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s01.jpg"/>
+              <file name="06_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s02.jpg"/>
+              <file name="02_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s02.jpg"/>
+              <file name="03_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s02.jpg"/>
+              <file name="04_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s02.jpg"/>
+              <file name="05_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s02.jpg"/>
+              <file name="06_GLOBE-Observer_Clouds-Land-Cover-Mosquito-Habitats_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Mountain Rain Or Snow">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Mountain-Rain-Or-Snow_s01.jpg"/>
+              <file name="02_Mountain-Rain-Or-Snow_s01.jpg"/>
+              <file name="03_Mountain-Rain-Or-Snow_s01.jpg"/>
+              <file name="04_Mountain-Rain-Or-Snow_s01.jpg"/>
+              <file name="05_Mountain-Rain-Or-Snow_s01.jpg"/>
+              <file name="06_Mountain-Rain-Or-Snow_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Mountain-Rain-Or-Snow_s02.jpg"/>
+              <file name="02_Mountain-Rain-Or-Snow_s02.jpg"/>
+              <file name="03_Mountain-Rain-Or-Snow_s02.jpg"/>
+              <file name="04_Mountain-Rain-Or-Snow_s02.jpg"/>
+              <file name="05_Mountain-Rain-Or-Snow_s02.jpg"/>
+              <file name="06_Mountain-Rain-Or-Snow_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Spritacular">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Spritacular_s01.jpg"/>
+              <file name="02_Spritacular_s01.jpg"/>
+              <file name="03_Spritacular_s01.jpg"/>
+              <file name="04_Spritacular_s01.jpg"/>
+              <file name="05_Spritacular_s01.jpg"/>
+              <file name="06_Spritacular_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Spritacular_s02.jpg"/>
+              <file name="02_Spritacular_s02.jpg"/>
+              <file name="03_Spritacular_s02.jpg"/>
+              <file name="04_Spritacular_s02.jpg"/>
+              <file name="05_Spritacular_s02.jpg"/>
+              <file name="06_Spritacular_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+    </directory>
+    <directory name="natural-history-museum">
+      <directory name="Confocal Microscopy">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Confocal-Microscopy_s01.jpg"/>
+            <file name="02_Confocal-Microscopy_s01.jpg"/>
+            <file name="03_Confocal-Microscopy_s01.jpg"/>
+            <file name="04_Confocal-Microscopy_s01.jpg"/>
+            <file name="05_Confocal-Microscopy_s01.jpg"/>
+            <file name="06_Confocal-Microscopy_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Confocal-Microscopy_s02.jpg"/>
+            <file name="02_Confocal-Microscopy_s02.jpg"/>
+            <file name="03_Confocal-Microscopy_s02.jpg"/>
+            <file name="04_Confocal-Microscopy_s02.jpg"/>
+            <file name="05_Confocal-Microscopy_s02.jpg"/>
+            <file name="06_Confocal-Microscopy_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="Electron Microscopy">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Electron-Microscopy_s01.jpg"/>
+            <file name="02_Electron-Microscopy_s01.jpg"/>
+            <file name="03_Electron-Microscopy_s01.jpg"/>
+            <file name="04_Electron-Microscopy_s01.jpg"/>
+            <file name="05_Electron-Microscopy_s01.jpg"/>
+            <file name="06_Electron-Microscopy_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Electron-Microscopy_s02.jpg"/>
+            <file name="02_Electron-Microscopy_s02.jpg"/>
+            <file name="03_Electron-Microscopy_s02.jpg"/>
+            <file name="04_Electron-Microscopy_s02.jpg"/>
+            <file name="05_Electron-Microscopy_s02.jpg"/>
+            <file name="06_Electron-Microscopy_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="Electronic And Light Engineering Workshop">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Electronic-And-Light-Engineering-Workshop_s01.jpg"/>
+            <file name="02_Electronic-And-Light-Engineering-Workshop_s01.jpg"/>
+            <file name="03_Electronic-And-Light-Engineering-Workshop_s01.jpg"/>
+            <file name="04_Electronic-And-Light-Engineering-Workshop_s01.jpg"/>
+            <file name="05_Electronic-And-Light-Engineering-Workshop_s01.jpg"/>
+            <file name="06_Electronic-And-Light-Engineering-Workshop_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Electronic-And-Light-Engineering-Workshop_s02.jpg"/>
+            <file name="02_Electronic-And-Light-Engineering-Workshop_s02.jpg"/>
+            <file name="03_Electronic-And-Light-Engineering-Workshop_s02.jpg"/>
+            <file name="04_Electronic-And-Light-Engineering-Workshop_s02.jpg"/>
+            <file name="05_Electronic-And-Light-Engineering-Workshop_s02.jpg"/>
+            <file name="06_Electronic-And-Light-Engineering-Workshop_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="Microanalysis">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Microanalysis_s01.jpg"/>
+            <file name="02_Microanalysis_s01.jpg"/>
+            <file name="03_Microanalysis_s01.jpg"/>
+            <file name="04_Microanalysis_s01.jpg"/>
+            <file name="05_Microanalysis_s01.jpg"/>
+            <file name="06_Microanalysis_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Microanalysis_s02.jpg"/>
+            <file name="02_Microanalysis_s02.jpg"/>
+            <file name="03_Microanalysis_s02.jpg"/>
+            <file name="04_Microanalysis_s02.jpg"/>
+            <file name="05_Microanalysis_s02.jpg"/>
+            <file name="06_Microanalysis_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="Mineral Sample Laboratory">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Mineral-Sample-Laboratory_s01.jpg"/>
+            <file name="02_Mineral-Sample-Laboratory_s01.jpg"/>
+            <file name="03_Mineral-Sample-Laboratory_s01.jpg"/>
+            <file name="04_Mineral-Sample-Laboratory_s01.jpg"/>
+            <file name="05_Mineral-Sample-Laboratory_s01.jpg"/>
+            <file name="06_Mineral-Sample-Laboratory_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Mineral-Sample-Laboratory_s02.jpg"/>
+            <file name="02_Mineral-Sample-Laboratory_s02.jpg"/>
+            <file name="03_Mineral-Sample-Laboratory_s02.jpg"/>
+            <file name="04_Mineral-Sample-Laboratory_s02.jpg"/>
+            <file name="05_Mineral-Sample-Laboratory_s02.jpg"/>
+            <file name="06_Mineral-Sample-Laboratory_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+      <directory name="Light Microscopy">
+        <directory name="sessions">
+          <directory name="scan-01">
+            <file name="01_Light-Microscopy_s01.jpg"/>
+            <file name="02_Light-Microscopy_s01.jpg"/>
+            <file name="03_Light-Microscopy_s01.jpg"/>
+            <file name="04_Light-Microscopy_s01.jpg"/>
+            <file name="05_Light-Microscopy_s01.jpg"/>
+            <file name="06_Light-Microscopy_s01.jpg"/>
+          </directory>
+          <directory name="scan-02">
+            <file name="01_Light-Microscopy_s02.jpg"/>
+            <file name="02_Light-Microscopy_s02.jpg"/>
+            <file name="03_Light-Microscopy_s02.jpg"/>
+            <file name="04_Light-Microscopy_s02.jpg"/>
+            <file name="05_Light-Microscopy_s02.jpg"/>
+            <file name="06_Light-Microscopy_s02.jpg"/>
+          </directory>
+        </directory>
+      </directory>
+    </directory>
+    <directory name="uk-ceh">
+      <directory name="wildlifetrusts">
+        <directory name="iSpy A Hedgehog">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_iSpy-A-Hedgehog_s01.jpg"/>
+              <file name="02_iSpy-A-Hedgehog_s01.jpg"/>
+              <file name="03_iSpy-A-Hedgehog_s01.jpg"/>
+              <file name="04_iSpy-A-Hedgehog_s01.jpg"/>
+              <file name="05_iSpy-A-Hedgehog_s01.jpg"/>
+              <file name="06_iSpy-A-Hedgehog_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_iSpy-A-Hedgehog_s02.jpg"/>
+              <file name="02_iSpy-A-Hedgehog_s02.jpg"/>
+              <file name="03_iSpy-A-Hedgehog_s02.jpg"/>
+              <file name="04_iSpy-A-Hedgehog_s02.jpg"/>
+              <file name="05_iSpy-A-Hedgehog_s02.jpg"/>
+              <file name="06_iSpy-A-Hedgehog_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Reptile Reporting">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Reptile-Reporting_s01.jpg"/>
+              <file name="02_Reptile-Reporting_s01.jpg"/>
+              <file name="03_Reptile-Reporting_s01.jpg"/>
+              <file name="04_Reptile-Reporting_s01.jpg"/>
+              <file name="05_Reptile-Reporting_s01.jpg"/>
+              <file name="06_Reptile-Reporting_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Reptile-Reporting_s02.jpg"/>
+              <file name="02_Reptile-Reporting_s02.jpg"/>
+              <file name="03_Reptile-Reporting_s02.jpg"/>
+              <file name="04_Reptile-Reporting_s02.jpg"/>
+              <file name="05_Reptile-Reporting_s02.jpg"/>
+              <file name="06_Reptile-Reporting_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Secrets Of The Solent">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Secrets-Of-The-Solent_s01.jpg"/>
+              <file name="02_Secrets-Of-The-Solent_s01.jpg"/>
+              <file name="03_Secrets-Of-The-Solent_s01.jpg"/>
+              <file name="04_Secrets-Of-The-Solent_s01.jpg"/>
+              <file name="05_Secrets-Of-The-Solent_s01.jpg"/>
+              <file name="06_Secrets-Of-The-Solent_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Secrets-Of-The-Solent_s02.jpg"/>
+              <file name="02_Secrets-Of-The-Solent_s02.jpg"/>
+              <file name="03_Secrets-Of-The-Solent_s02.jpg"/>
+              <file name="04_Secrets-Of-The-Solent_s02.jpg"/>
+              <file name="05_Secrets-Of-The-Solent_s02.jpg"/>
+              <file name="06_Secrets-Of-The-Solent_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Shoresearch">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Shoresearch_s01.jpg"/>
+              <file name="02_Shoresearch_s01.jpg"/>
+              <file name="03_Shoresearch_s01.jpg"/>
+              <file name="04_Shoresearch_s01.jpg"/>
+              <file name="05_Shoresearch_s01.jpg"/>
+              <file name="06_Shoresearch_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Shoresearch_s02.jpg"/>
+              <file name="02_Shoresearch_s02.jpg"/>
+              <file name="03_Shoresearch_s02.jpg"/>
+              <file name="04_Shoresearch_s02.jpg"/>
+              <file name="05_Shoresearch_s02.jpg"/>
+              <file name="06_Shoresearch_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+    </directory>
+  </directory>
+  <report>
+    <directories>177</directories>
+    <files>656</files>
+  </report>
+</tree>

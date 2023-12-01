@@ -2,22 +2,22 @@ package command_test
 
 import (
 	"fmt"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/helpers"
+	"github.com/snivilised/pixa/src/internal/matchers"
 
-	xi18n "github.com/snivilised/extendio/i18n"
-	"github.com/snivilised/extendio/xfs/utils"
+	"github.com/snivilised/extendio/xfs/storage"
 )
 
 type commandTE struct {
-	message string
-	args    []string
+	message    string
+	args       []string
+	configPath string
 }
 
 type shrinkTE struct {
@@ -25,16 +25,14 @@ type shrinkTE struct {
 	directory string
 }
 
-func expectValidShrinkCmdInvocation(entry *shrinkTE) {
-	bootstrap := command.Bootstrap{}
-
-	const (
-		prog = "shrink"
-	)
+func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE) {
+	bootstrap := command.Bootstrap{
+		Vfs: vfs,
+	}
 
 	// we also prepend the directory name to the command line
 	//
-	options := append([]string{prog, entry.directory}, []string{
+	options := append([]string{helpers.ShrinkCommandName, entry.directory}, []string{
 		"--dry-run", "--mode", "tidy",
 	}...)
 
@@ -42,11 +40,11 @@ func expectValidShrinkCmdInvocation(entry *shrinkTE) {
 		Args: append(options, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &DetectorStub{}
-			co.Executor = &ExecutorStub{
-				Name: "magick",
+			co.Program = &ExecutorStub{
+				Name: helpers.ProgName,
 			}
-			co.Config.Name = "pixa-test"
-			co.Config.ConfigPath = "../../test/data/configuration"
+			co.Config.Name = helpers.PixaConfigTestFilename
+			co.Config.ConfigPath = entry.configPath
 		}),
 	}
 
@@ -58,35 +56,25 @@ func expectValidShrinkCmdInvocation(entry *shrinkTE) {
 
 var _ = Describe("ShrinkCmd", Ordered, func() {
 	var (
-		repo     string
-		l10nPath string
+		repo       string
+		l10nPath   string
+		configPath string
+		nfs        storage.VirtualFS
 	)
 
 	BeforeAll(func() {
-		repo = helpers.Repo("../../..")
-		l10nPath = helpers.Path(repo, "src/test/data/l10n")
-		Expect(utils.FolderExists(l10nPath)).To(BeTrue(),
-			fmt.Sprintf("💥 l10Path: '%v' does not exist", l10nPath),
-		)
+		nfs = storage.UseNativeFS()
+		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+
+		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
+		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
+
+		configPath = filepath.Join(repo, "test", "data", "configuration")
+		Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(nfs))
 	})
 
 	BeforeEach(func() {
-		err := xi18n.Use(func(uo *xi18n.UseOptions) {
-			uo.From = xi18n.LoadFrom{
-				Path: l10nPath,
-				Sources: xi18n.TranslationFiles{
-					i18n.PixaSourceID: xi18n.TranslationSource{
-						Name: "dummy-cobrass",
-					},
-
-					ci18n.CobrassSourceID: xi18n.TranslationSource{
-						Name: "dummy-cobrass",
-					},
-				},
-			}
-		})
-
-		if err != nil {
+		if err := helpers.UseI18n(l10nPath); err != nil {
 			Fail(err.Error())
 		}
 	})
@@ -97,7 +85,8 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			// l10nPath is not set, so we can't set it inside the Entry
 			//
 			entry.directory = l10nPath
-			expectValidShrinkCmdInvocation(entry)
+			entry.configPath = configPath
+			expectValidShrinkCmdInvocation(nfs, entry)
 		},
 		func(entry *shrinkTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v'", entry.message)
@@ -192,12 +181,60 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				commandTE: commandTE{
 					message: "with general long form parameters",
 					args: []string{
-						"--mirror-path", l10nPath,
+						"--output", l10nPath,
 					},
+					configPath: configPath,
 				},
 			}
 
-			expectValidShrinkCmdInvocation(entry)
+			expectValidShrinkCmdInvocation(nfs, entry)
+		})
+
+		It("🧪 should: execute successfully", func() {
+			entry := &shrinkTE{
+				directory: l10nPath,
+				commandTE: commandTE{
+					message: "with general long form parameters",
+					args: []string{
+						"--trash", l10nPath,
+					},
+					configPath: configPath,
+				},
+			}
+
+			expectValidShrinkCmdInvocation(nfs, entry)
+		})
+	})
+
+	When("with general short form parameters", func() {
+		It("🧪 should: execute successfully", func() {
+			entry := &shrinkTE{
+				directory: l10nPath,
+				commandTE: commandTE{
+					message: "with general short form parameters",
+					args: []string{
+						"-o", l10nPath,
+					},
+					configPath: configPath,
+				},
+			}
+
+			expectValidShrinkCmdInvocation(nfs, entry)
+		})
+
+		It("🧪 should: execute successfully", func() {
+			entry := &shrinkTE{
+				directory: l10nPath,
+				commandTE: commandTE{
+					message: "with general short form parameters",
+					args: []string{
+						"-t", l10nPath,
+					},
+					configPath: configPath,
+				},
+			}
+
+			expectValidShrinkCmdInvocation(nfs, entry)
 		})
 	})
 })

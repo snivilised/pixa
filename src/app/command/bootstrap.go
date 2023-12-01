@@ -14,9 +14,11 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
+	"github.com/snivilised/pixa/src/internal/helpers"
 )
 
 type LocaleDetector interface {
@@ -34,11 +36,14 @@ func (j *Jabber) Scan() language.Tag {
 }
 
 func validatePositionalArgs(cmd *cobra.Command, args []string) error {
+	// TODO: actually, it would be better if we can somehow access the vfs
+	// instead of using the util.Exist function
+	//
 	if err := cobra.ExactArgs(1)(cmd, args); err != nil {
 		return err
 	}
 
-	directory := proxy.ResolvePath(args[0])
+	directory := helpers.ResolvePath(args[0])
 
 	if !utils.Exists(directory) {
 		return xi18n.NewPathNotFoundError("shrink directory", directory)
@@ -52,6 +57,7 @@ type ConfigInfo struct {
 	ConfigType string
 	ConfigPath string
 	Viper      configuration.ViperConfig
+	Readers    proxy.ConfigReaders
 }
 
 // Bootstrap represents construct that performs start up of the cli
@@ -59,13 +65,17 @@ type ConfigInfo struct {
 // use of package global variables.
 type Bootstrap struct {
 	Container   *assistant.CobraContainer
-	optionsInfo ConfigureOptionsInfo
+	OptionsInfo ConfigureOptionsInfo
+	ProfilesCFG proxy.ProfilesConfig
+	SamplerCFG  proxy.SamplerConfig
+	Vfs         storage.VirtualFS
 }
 
 type ConfigureOptionsInfo struct {
 	Detector LocaleDetector
-	Executor proxy.Executor
+	Program  proxy.Executor
 	Config   ConfigInfo
+	Viper    configuration.ViperConfig
 }
 
 type ConfigureOptionFn func(*ConfigureOptionsInfo)
@@ -76,9 +86,9 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	home, err := os.UserHomeDir()
 	cobra.CheckErr(err)
 
-	b.optionsInfo = ConfigureOptionsInfo{
+	b.OptionsInfo = ConfigureOptionsInfo{
 		Detector: &Jabber{},
-		Executor: &ProgramExecutor{
+		Program: &ProgramExecutor{ // 💥 TEMPORARILY OVERRIDDEN WITH DUMMY
 			Name: "magick",
 		},
 		Config: ConfigInfo{
@@ -86,28 +96,32 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			ConfigType: "yaml",
 			ConfigPath: home,
 			Viper:      &configuration.GlobalViperConfig{},
+			Readers: proxy.ConfigReaders{
+				Profiles: &proxy.MsProfilesConfigReader{},
+				Sampler:  &proxy.MsSamplerConfigReader{},
+			},
 		},
 	}
 
-	if _, err := b.optionsInfo.Executor.Look(); err != nil {
-		b.optionsInfo.Executor = &DummyExecutor{
-			Name: b.optionsInfo.Executor.ProgName(),
+	if _, err := b.OptionsInfo.Program.Look(); err != nil {
+		b.OptionsInfo.Program = &DummyExecutor{
+			Name: b.OptionsInfo.Program.ProgName(),
 		}
 	}
 
 	for _, fo := range options {
-		fo(&b.optionsInfo)
+		fo(&b.OptionsInfo)
 	}
 
 	b.configure()
 
 	// JUST TEMPORARY: make the executor the dummy for safety
 	//
-	b.optionsInfo.Executor = &DummyExecutor{
+	b.OptionsInfo.Program = &DummyExecutor{
 		Name: "magick",
 	}
 
-	fmt.Printf("===> ⚠️⚠️⚠️ USING DUMMY EXECUTOR !!!!\n")
+	fmt.Printf("===> 💥💥💥 USING DUMMY EXECUTOR !!!!\n")
 
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
@@ -119,14 +133,29 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
 
 				inputs := b.getRootInputs()
-				inputs.ParamSet.Native.Directory = proxy.ResolvePath(args[0])
-				if inputs.ParamSet.Native.CPU {
-					inputs.ParamSet.Native.NoW = 0
+				inputs.ParamSet.Native.Directory = helpers.ResolvePath(args[0])
+
+				if inputs.WorkerPoolFam.Native.CPU {
+					inputs.WorkerPoolFam.Native.NoWorkers = 0
+				}
+
+				if inputs.ProfileFam.Native.Profile != "" {
+					if _, found := b.ProfilesCFG.Profile(inputs.ProfileFam.Native.Profile); !found {
+						return fmt.Errorf(
+							"no such profile: '%v'", inputs.ProfileFam.Native.Profile,
+						)
+					}
+				}
+
+				if scheme := inputs.ProfileFam.Native.Scheme; scheme != "" {
+					if err := b.SamplerCFG.Validate(scheme, b.ProfilesCFG); err != nil {
+						return err
+					}
 				}
 
 				// ---> execute root core
 				//
-				return proxy.EnterRoot(inputs, b.optionsInfo.Executor, b.optionsInfo.Config.Viper)
+				return proxy.EnterRoot(inputs, b.OptionsInfo.Program, b.OptionsInfo.Config.Viper)
 			},
 		},
 	)
@@ -139,8 +168,8 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 }
 
 func (b *Bootstrap) configure() {
-	vc := b.optionsInfo.Config.Viper
-	ci := b.optionsInfo.Config
+	vc := b.OptionsInfo.Config.Viper
+	ci := b.OptionsInfo.Config
 
 	vc.SetConfigName(ci.Name)
 	vc.SetConfigType(ci.ConfigType)
@@ -198,4 +227,11 @@ func handleLangSetting(config configuration.ViperConfig) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func (b *Bootstrap) viper() {
+	// TODO: handle the read errors
+	//
+	b.ProfilesCFG, _ = b.OptionsInfo.Config.Readers.Profiles.Read(b.OptionsInfo.Config.Viper)
+	b.SamplerCFG, _ = b.OptionsInfo.Config.Readers.Sampler.Read(b.OptionsInfo.Config.Viper)
 }

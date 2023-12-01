@@ -50,9 +50,14 @@ tasks:
     generates:
       - "{{.DIST_DIR}}/{{.TARGET_OS}}/{{.BINARY_NAME}}{{.BINARY_EXT}}"
 
-  b:
+  bw:
     cmds:
       - task: build-w
+
+  bm:
+    cmds:
+      - task: build-m
+
 
   build-w:
     cmds:
@@ -77,13 +82,17 @@ tasks:
 
   # === deploy ================================================
 
-  d:
+  dw:
     cmds:
-      - task: deploy
+      - task: deploy-w
+
+  dm:
+    cmds:
+      - task: deploy-m
 
   # currently, this is hardcoded for windows
   #
-  deploy:
+  deploy-w:
     vars:
       BINARY_EXT: .exe
       TARGET_OS: windows
@@ -104,11 +113,40 @@ tasks:
       - test -f {{.DEPLOY_BINARY}}
       - test -f {{.DEPLOY_DIR}}/{{.ACTIVE_US}}
 
-  tbd:
+  # currently, this is hardcoded for mac. these deploy tasks need to be improved
+  # to remove the duplicated code
+  #
+  deploy-m:
+    vars:
+      TARGET_OS: darwin
+      DEPLOY_BINARY: "{{.DIST_DIR}}/{{.TARGET_OS}}/{{.BINARY_NAME}}"
+      DEPLOY_US: "{{.DEPLOY_DIR}}/{{.ACTIVE_US}}"
+
+    cmds:
+      - echo "deploying to location (.env) DEPLOY_TO  ==> '$DEPLOY_TO'"
+      - /bin/cp -f {{.DEPLOY_BINARY}} $DEPLOY_TO
+      - /bin/cp -f {{.DEPLOY_DIR}}/{{.ACTIVE_US}} $DEPLOY_TO
+
+    generates:
+      - $DEPLOY_TO/{{.DEPLOY_BINARY}}
+      - $DEPLOY_TO/{{.ACTIVE_US}}
+
+    preconditions:
+      - test $DEPLOY_TO
+      - test -f {{.DEPLOY_BINARY}}
+      - test -f {{.DEPLOY_DIR}}/{{.ACTIVE_US}}
+
+  tbw:
     cmds:
       - task: t
-      - task: b
-      - task: d
+      - task: bw
+      - task: dw
+
+  tbm:
+    cmds:
+      - task: t
+      - task: bm
+      - task: dm
 
   # === ginkgo ================================================
 
@@ -167,6 +205,12 @@ tasks:
   cover:
     cmds:
       - goveralls -repotoken {{.COVERALLS_TOKEN}}
+
+  # === go generate ==========================================
+
+  co-gen-cfg:
+    cmds:
+      - go generate src/app/proxy
 
   # === i18n =================================================
 

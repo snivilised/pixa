@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/snivilised/cobrass"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
+	"github.com/snivilised/pixa/src/internal/helpers"
 )
 
 // We define all the options here, even the ones inherited from the root
@@ -28,28 +30,38 @@ import (
 // and we use capitals for the short forms of files filters, to denote
 // compound filter. If files filter was not compound, it would be named
 // file and the short forms would be x and g instead of X and G.
-var shrinkShortFlags = map[string]string{
-	// shrink specific:
-	//
-	"mirror-path": "r",
-	"mode":        "m",
-	// third-party:
+
+var thirdPartyFlags = cobrass.KnownByCollection{
+	// third-party: (perhaps third party parameters should not have short codes)
 	//
 	"gaussian-blur":   "b",
 	"sampling-factor": "f",
 	"interlace":       "i",
 	"strip":           "s",
 	"quality":         "q",
-	// root:
+}
+
+var shrinkShortFlags = cobrass.KnownByCollection{
+	// shrink specific:
 	//
-	"cpu":        "C",
+	"output": "o",
+	"trash":  "t",
+	"mode":   "m",
+	// families:
+	//
+	"cpu":        "C", // family: worker-pool
+	"now":        "N", // family: worker-pool
 	"dry-run":    "D", // family: preview
-	"files-gb":   "G",
-	"files-rx":   "X",
-	"folders-gb": "Z",
-	"folders-rx": "Y",
-	"now":        "N",
-	"profile":    "P",
+	"files-gb":   "G", // family: filter
+	"files-rx":   "X", // family: filter
+	"folders-gb": "Z", // family: filter
+	"folders-rx": "Y", // family: filter
+	"profile":    "P", // family: profile
+	"scheme":     "S", // family: profile
+}
+
+func init() {
+	maps.Copy(shrinkShortFlags, thirdPartyFlags)
 }
 
 const (
@@ -62,12 +74,6 @@ func newShrinkFlagInfoWithShort[T any](usage string, defaultValue T) *assistant.
 	short := shrinkShortFlags[name]
 
 	return assistant.NewFlagInfo(usage, short, defaultValue)
-}
-
-func isThirdPartyKnown(name string, known cobrass.KnownByCollection) bool {
-	_, found := known[name]
-
-	return found
 }
 
 type shrinkParameterSetPtr = *assistant.ParamSet[proxy.ShrinkParameterSet]
@@ -95,37 +101,45 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 					//
 					return nil
 				}); xvErr == nil {
-					options := []string{}
-					present := make(cobrass.SpecifiedFlagsCollection)
-
-					cmd.Flags().Visit(func(f *pflag.Flag) {
-						options = append(options, fmt.Sprintf("--%v=%v", f.Name, f.Value))
-
-						if isThirdPartyKnown(f.Name, shrinkPS.Native.ThirdPartySet.KnownBy) {
-							present[f.Name] = f.Value.String()
-						}
-					})
-					shrinkPS.Native.ThirdPartySet.Present = present
-
-					fmt.Printf("%v %v Running shrink, with options: '%v', args: '%v'\n",
-						AppEmoji, ApplicationName, options, strings.Join(args, "/"),
+					flagSet := cmd.Flags()
+					changed := assistant.GetThirdPartyCL(
+						flagSet,
+						shrinkPS.Native.ThirdPartySet.KnownBy,
 					)
 
-					if cmd.Flags().Changed("gaussian-blur") {
-						fmt.Printf("💠 Blur defined with value: '%v'\n", cmd.Flag("gaussian-blur").Value)
-					}
+					// changed is incorrect; it only contains the third party args,
+					// all the native args are being omitted
 
-					if cmd.Flags().Changed("sampling-factor") {
-						fmt.Printf("💠 Blur defined with value: '%v'\n", cmd.Flag("sampling-factor").Value)
-					}
+					shrinkPS.Native.ThirdPartySet.LongChangedCL = changed
+
+					fmt.Printf("%v %v Running shrink, with options: '%v', args: '%v'\n",
+						AppEmoji, ApplicationName, changed, strings.Join(args, "/"),
+					)
 
 					inputs := b.getShrinkInputs()
-					inputs.RootInputs.ParamSet.Native.Directory = proxy.ResolvePath(args[0])
+					inputs.Root.ParamSet.Native.Directory = helpers.ResolvePath(args[0])
+
+					// Apply fallbacks, ie user didn't specify flag on command line
+					// so fallback to one defined in config. This is supposed to
+					// work transparently with Viper, but this doesn't work with
+					// custom locations; ie no-files is defined under sampler, but
+					// viper would expect to see it at the root. Even so, still found
+					// that viper would fail to pick up this value, so implementing
+					// the fall back manually here.
+					//
+					if inputs.Root.ParamSet.Native.IsSampling {
+						if !flagSet.Changed("no-files") && b.SamplerCFG.NoFiles() > 0 {
+							inputs.Root.ParamSet.Native.NoFiles = b.SamplerCFG.NoFiles()
+						}
+					}
 
 					appErr = proxy.EnterShrink(
 						inputs,
-						b.optionsInfo.Executor,
-						b.optionsInfo.Config.Viper,
+						b.OptionsInfo.Program,
+						b.OptionsInfo.Config.Viper,
+						b.ProfilesCFG,
+						b.SamplerCFG,
+						b.Vfs,
 					)
 				} else {
 					return xvErr
@@ -140,20 +154,40 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet := assistant.NewParamSet[proxy.ShrinkParameterSet](shrinkCommand)
 
-	// --mirror-path(r)
+	// --output(o)
 	//
 	const (
-		defaultMirrorPath = ""
+		defaultOutputPath = ""
 	)
 
 	paramSet.BindValidatedString(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdMirrorPathParamUsageTemplData{}),
-			defaultMirrorPath,
+			xi18n.Text(i18n.ShrinkCmdOutputPathParamUsageTemplData{}),
+			defaultOutputPath,
 		),
-		&paramSet.Native.MirrorPath, func(s string, f *pflag.Flag) error {
+		&paramSet.Native.OutputPath, func(s string, f *pflag.Flag) error {
 			if f.Changed && !utils.FolderExists(s) {
-				return i18n.NewMirrorPathDoesNotExistError(s)
+				return i18n.NewOutputPathDoesNotExistError(s)
+			}
+
+			return nil
+		},
+	)
+
+	// --trash(t)
+	//
+	const (
+		defaultTrashPath = ""
+	)
+
+	paramSet.BindValidatedString(
+		newShrinkFlagInfoWithShort(
+			xi18n.Text(i18n.ShrinkCmdTrashPathParamUsageTemplData{}),
+			defaultTrashPath,
+		),
+		&paramSet.Native.TrashPath, func(s string, f *pflag.Flag) error {
+			if f.Changed && !utils.FolderExists(s) {
+				return i18n.NewOutputPathDoesNotExistError(s)
 			}
 
 			return nil
@@ -292,15 +326,11 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	filesFam := assistant.NewParamSet[store.FilesFilterParameterSet](shrinkCommand)
 	filesFam.Native.BindAll(filesFam)
 
-	paramSet.Native.KnownBy = cobrass.KnownByCollection{
-		"gaussian-blur":   "b",
-		"sampling-factor": "f",
-		"interlace":       "i",
-		"strip":           "s",
-		"quality":         "q",
-	}
+	paramSet.Native.KnownBy = thirdPartyFlags
 
-	// 📌A note about cobra args validation: cmd.ValidArgs lets you define
+	b.viper()
+
+	// 📌 A note about cobra args validation: cmd.ValidArgs lets you define
 	// a list of all allowable tokens for positional args. Just define
 	// ValidArgs, eg:
 	// shrinkCommand.ValidArgs = []string{"foo", "bar", "baz"}
@@ -320,14 +350,18 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	container.MustRegisterParamSet(shrinkPsName, paramSet)
 	container.MustRegisterParamSet(filesFamName, filesFam)
 
-	shrinkCommand.Args = validatePositionalArgs
+	// TODO: we might need to code this via an anonymous func, store the vfs on
+	// the bootstrap, then access it from the func, instead of using
+	// validatePositionalArgs
+	//
+	// shrinkCommand.Args = validatePositionalArgs
 
 	return shrinkCommand
 }
 
 func (b *Bootstrap) getShrinkInputs() *proxy.ShrinkCommandInputs {
 	return &proxy.ShrinkCommandInputs{
-		RootInputs: b.getRootInputs(),
+		Root: b.getRootInputs(),
 		ParamSet: b.Container.MustGetParamSet(
 			shrinkPsName,
 		).(*assistant.ParamSet[proxy.ShrinkParameterSet]),

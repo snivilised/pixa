@@ -9,8 +9,6 @@ import (
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
-	"github.com/spf13/pflag"
-	"golang.org/x/text/language"
 )
 
 const (
@@ -32,21 +30,73 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	rootCommand := container.Root()
 	paramSet := assistant.NewParamSet[proxy.RootParameterSet](rootCommand)
 
-	// --lang (TODO: should really come from the family store,
-	// as its a generic concept.)
+	// --sample (pending: sampling-family)
 	//
-	paramSet.BindValidatedString(&assistant.FlagInfo{
-		Name: "lang",
+	paramSet.BindBool(&assistant.FlagInfo{
+		Name: "sample",
 		Usage: i18n.LeadsWith(
-			"lang",
-			xi18n.Text(i18n.RootCmdLangUsageTemplData{}),
+			"sample",
+			xi18n.Text(i18n.RootCmdSampleUsageTemplData{}),
 		),
-		Default:            xi18n.DefaultLanguage.Get().String(),
+		Default:            false,
 		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	}, &paramSet.Native.Language, func(value string, _ *pflag.Flag) error {
-		_, err := language.Parse(value)
-		return err
-	})
+	},
+		&paramSet.Native.IsSampling,
+	)
+
+	const (
+		defFSItems = uint(3)
+		minFSItems = uint(1)
+		maxFSItems = uint(128)
+	)
+
+	// --no-files (pending: sampling-family)
+	//
+	paramSet.BindValidatedUintWithin(
+		&assistant.FlagInfo{
+			Name: "no-files",
+			Usage: i18n.LeadsWith(
+				"no-files",
+				xi18n.Text(i18n.RootCmdNoFilesUsageTemplData{}),
+			),
+			Default:            defFSItems,
+			AlternativeFlagSet: rootCommand.PersistentFlags(),
+		},
+		&paramSet.Native.NoFiles,
+		minFSItems,
+		maxFSItems,
+	)
+
+	// --no-folders (pending: sampling-family)
+	//
+	paramSet.BindValidatedUintWithin(
+		&assistant.FlagInfo{
+			Name: "no-folders",
+			Usage: i18n.LeadsWith(
+				"no-folders",
+				xi18n.Text(i18n.RootCmdNoFoldersUsageTemplData{}),
+			),
+			Default:            defFSItems,
+			AlternativeFlagSet: rootCommand.PersistentFlags(),
+		},
+		&paramSet.Native.NoFolders,
+		minFSItems,
+		maxFSItems,
+	)
+
+	// --last (pending: sampling-family)
+	//
+	paramSet.BindBool(&assistant.FlagInfo{
+		Name: "last",
+		Usage: i18n.LeadsWith(
+			"last",
+			xi18n.Text(i18n.RootCmdLastUsageTemplData{}),
+		),
+		Default:            false,
+		AlternativeFlagSet: rootCommand.PersistentFlags(),
+	},
+		&paramSet.Native.Last,
+	)
 
 	// family: preview [--dry-run(D)]
 	//
@@ -69,12 +119,12 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	foldersFam := assistant.NewParamSet[store.FoldersFilterParameterSet](rootCommand)
 	foldersFam.Native.BindAll(foldersFam)
 
-	// family: profile [--profile(p)]
+	// family: profile [--profile(P), --scheme(S)]
 	//
 	profileFam := assistant.NewParamSet[store.ProfileParameterSet](rootCommand)
 	profileFam.Native.BindAll(profileFam, rootCommand.PersistentFlags())
 
-	rootCommand.Args = validatePositionalArgs
+	// ??? rootCommand.Args = validatePositionalArgs
 
 	container.MustRegisterParamSet(RootPsName, paramSet)
 	container.MustRegisterParamSet(PreviewFamName, previewFam)

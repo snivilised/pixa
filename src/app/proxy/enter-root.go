@@ -5,14 +5,13 @@ import (
 	"path/filepath"
 
 	"github.com/samber/lo"
-	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/lorax/boost"
 )
 
 type configProfile struct {
-	args []string `mapstructure:"string_slice"`
+	args []string
 }
 
 type Executor interface {
@@ -37,7 +36,7 @@ type RootEntry struct {
 
 func (e *RootEntry) principalFn(item *nav.TraverseItem) error {
 	depth := item.Extension.Depth
-	indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
+	indicator := lo.Ternary(len(item.Children) > 0, "🔆", "🌊")
 
 	for _, entry := range item.Children {
 		fullPath := filepath.Join(item.Path, entry.Name())
@@ -68,18 +67,19 @@ func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 		Fn:    e.principalFn,
 	}
 	o.Store.Subscription = nav.SubscribeFoldersWithFiles
-	o.Store.DoExtend = true
 	e.EntryBase.ConfigureOptions(o)
 }
 
 func (e *RootEntry) run() error {
-	runnerWith := composeWith(e.Inputs.ParamSet)
+	runnerWith := composeWith(e.Inputs)
 
-	var nilResumption *nav.Resumption // root does not need to support resume
+	// root does not need to support resume
+	//
+	var nilResumption *nav.Resumption
 
 	after := func(result *nav.TraverseResult, err error) {
 		for _, file := range e.files {
-			fmt.Printf("		===> 🔆 candidate file: '%v'\n", file)
+			fmt.Printf("		===> 📒 candidate file: '%v'\n", file)
 		}
 	}
 
@@ -100,10 +100,10 @@ func (e *RootEntry) run() error {
 	)
 }
 
-func composeWith(rps *assistant.ParamSet[RootParameterSet]) nav.CreateNewRunnerWith {
+func composeWith(inputs *RootCommandInputs) nav.CreateNewRunnerWith {
 	with := nav.RunnerDefault
 
-	if rps.Native.CPU || rps.Native.NoW >= 0 {
+	if inputs.WorkerPoolFam.Native.CPU || inputs.WorkerPoolFam.Native.NoWorkers >= 0 {
 		with |= nav.RunnerWithPool
 	}
 
@@ -115,7 +115,7 @@ func EnterRoot(
 	program Executor,
 	config configuration.ViperConfig,
 ) error {
-	fmt.Printf("---> 🦠🦠🦠 Directory: '%v'\n", inputs.ParamSet.Native.Directory)
+	fmt.Printf("---> 📁📁📁 Directory: '%v'\n", inputs.ParamSet.Native.Directory)
 
 	entry := &RootEntry{
 		EntryBase: EntryBase{

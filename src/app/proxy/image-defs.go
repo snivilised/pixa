@@ -1,17 +1,37 @@
 package proxy
 
 import (
+	"fmt"
+
 	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/cobrass/src/store"
 )
 
-type RootParameterSet struct {
-	GeneralParameters
-	FilterParameters
-	Directory string
-	CPU       bool
-	Language  string
+var booleanValues = []string{"false", "true"}
+
+type RootParameterSet struct { // should contain RootCommandInputs
+	Directory  string
+	IsSampling bool
+	NoFiles    uint
+	NoFolders  uint
+	Last       bool
+}
+
+type (
+	ProfilesFlagOptionAsAnyPair = map[string]any
+	ProfilesConfigMap           map[string]clif.ChangedFlagsMap
+)
+
+func (pc ProfilesConfigMap) Validate(name string) error {
+	if name != "" {
+		if _, found := pc[name]; !found {
+			return fmt.Errorf("no such profile: '%v'", name)
+		}
+	}
+
+	return nil
 }
 
 type InterlaceEnum int
@@ -63,6 +83,17 @@ var ModeEnumInfo = assistant.NewEnumInfo(assistant.AcceptableEnumValues[ModeEnum
 	ModePreserveEn: []string{"preserve", "p"},
 })
 
+// ThirdPartySet represents flags that are only of use to the third party application
+// being invoked (ie magick). These flags are of no significance to pixa, but we have
+// to define them explicitly, because of a deficiency in cobra in the way it handles
+// third party args. The convention in command line interfaces is that the double dash
+// delineates arguments for third parties, and cobra does support this, but what it does
+// not support is to extract and provide some way to access those args. Pixa needs this
+// functionality so it can pass them onto magick. As it stands, we can't access those
+// args (after the --), so we have to define them explicitly, then pass them on. This
+// is less than desirable, because magick has a vast flag set, which in theory would
+// mean re-implementing them all on pixa. We only define the ones relevant to
+// compressing images.
 type ThirdPartySet struct {
 	GaussianBlur     float32
 	SamplingFactorEn assistant.EnumValue[SamplingFactorEnum]
@@ -71,8 +102,8 @@ type ThirdPartySet struct {
 	Quality          int
 	// Auxiliary
 	//
-	Present cobrass.SpecifiedFlagsCollection
-	KnownBy cobrass.KnownByCollection
+	LongChangedCL cobrass.ThirdPartyCommandLine
+	KnownBy       cobrass.KnownByCollection
 }
 
 // [blur]
@@ -85,7 +116,8 @@ type ThirdPartySet struct {
 type ShrinkParameterSet struct {
 	ThirdPartySet
 	//
-	MirrorPath string
+	OutputPath string
+	TrashPath  string
 	ModeEn     assistant.EnumValue[ModeEnum]
 }
 
@@ -98,7 +130,7 @@ type RootCommandInputs struct {
 }
 
 type ShrinkCommandInputs struct {
-	RootInputs *RootCommandInputs
-	ParamSet   *assistant.ParamSet[ShrinkParameterSet]
-	FilesFam   *assistant.ParamSet[store.FilesFilterParameterSet]
+	Root     *RootCommandInputs
+	ParamSet *assistant.ParamSet[ShrinkParameterSet]
+	FilesFam *assistant.ParamSet[store.FilesFilterParameterSet]
 }

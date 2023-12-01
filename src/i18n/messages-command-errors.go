@@ -78,35 +78,35 @@ func NewInterlaceError(value, acceptable string) InvalidInterlaceError {
 	}
 }
 
-// ShrinkCmdMirrorPathDoesNotExistTemplData
+// ShrinkCmdOutputPathDoesNotExistTemplData
 // ❌
-type ShrinkCmdMirrorPathDoesNotExistTemplData struct {
+type ShrinkCmdOutputPathDoesNotExistTemplData struct {
 	pixaTemplData
 	Path string
 }
 
-func (td ShrinkCmdMirrorPathDoesNotExistTemplData) Message() *xi18n.Message {
+func (td ShrinkCmdOutputPathDoesNotExistTemplData) Message() *xi18n.Message {
 	return &xi18n.Message{
-		ID:          "shrink-cmd-mirror-path-does-not-exist.error",
+		ID:          "shrink-cmd-output-path-does-not-exist.error",
 		Description: "shrink command mirror path does not exist validation",
-		Other:       "mirror path: {{.Path}}, does not exist",
+		Other:       "output path: {{.Path}}, does not exist",
 	}
 }
 
 // InvalidInterlaceErrorBehaviourQuery used to query if an error is:
 // "invalid interlace value"
-type MirrorPathDoesNotExistBehaviourQuery interface {
-	MirrorPathValidationFailure() bool
+type OutputPathDoesNotExistBehaviourQuery interface {
+	OutputPathValidationFailure() bool
 }
 
-type MirrorPathDoesNotExistError struct {
+type OutputPathDoesNotExistError struct {
 	xi18n.LocalisableError
 }
 
-func NewMirrorPathDoesNotExistError(path string) InvalidInterlaceError {
+func NewOutputPathDoesNotExistError(path string) InvalidInterlaceError {
 	return InvalidInterlaceError{
 		LocalisableError: xi18n.LocalisableError{
-			Data: ShrinkCmdMirrorPathDoesNotExistTemplData{
+			Data: ShrinkCmdOutputPathDoesNotExistTemplData{
 				Path: path,
 			},
 		},

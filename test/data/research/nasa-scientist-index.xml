@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <directory name="scientist">
+    <directory name="output"/>
+    <directory name="nasa">
+      <directory name="exo">
+        <directory name="Backyard Worlds - Planet 9">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="02_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="03_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="04_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="05_Backyard-Worlds-Planet-9_s01.jpg"/>
+              <file name="06_Backyard-Worlds-Planet-9_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="02_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="03_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="04_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="05_Backyard-Worlds-Planet-9_s02.jpg"/>
+              <file name="06_Backyard-Worlds-Planet-9_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Exoplanet Watch">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Exoplanet-Watch_s01.jpg"/>
+              <file name="02_Exoplanet-Watch_s01.jpg"/>
+              <file name="03_Exoplanet-Watch_s01.jpg"/>
+              <file name="04_Exoplanet-Watch_s01.jpg"/>
+              <file name="05_Exoplanet-Watch_s01.jpg"/>
+              <file name="06_Exoplanet-Watch_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Exoplanet-Watch_s02.jpg"/>
+              <file name="02_Exoplanet-Watch_s02.jpg"/>
+              <file name="03_Exoplanet-Watch_s02.jpg"/>
+              <file name="04_Exoplanet-Watch_s02.jpg"/>
+              <file name="05_Exoplanet-Watch_s02.jpg"/>
+              <file name="06_Exoplanet-Watch_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+        <directory name="Planet Hunter TESS">
+          <directory name="sessions">
+            <directory name="scan-01">
+              <file name="01_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="02_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="03_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="04_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="05_Planet-Hunter-TESS_s01.jpg"/>
+              <file name="06_Planet-Hunter-TESS_s01.jpg"/>
+            </directory>
+            <directory name="scan-02">
+              <file name="01_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="02_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="03_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="04_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="05_Planet-Hunter-TESS_s02.jpg"/>
+              <file name="06_Planet-Hunter-TESS_s02.jpg"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+    </directory>
+  </directory>
+</tree>

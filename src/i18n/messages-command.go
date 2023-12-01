@@ -70,6 +70,62 @@ func (td RootCmdLangUsageTemplData) Message() *i18n.Message {
 	}
 }
 
+// RootCmdSampleUsageTemplData
+// 🧊
+type RootCmdSampleUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td RootCmdSampleUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "root-command-sample.param-usage",
+		Description: "root command sample usage; activates sampling",
+		Other:       "sample is a flag that activates sampling",
+	}
+}
+
+// RootCmdNoFilesUsageTemplData
+// 🧊
+type RootCmdNoFilesUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td RootCmdNoFilesUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "root-command-no-files.param-usage",
+		Description: "root command files usage; no of files in sample set",
+		Other:       "files specifies the number of files to sample",
+	}
+}
+
+// RootCmdNoFoldersUsageTemplData
+// 🧊
+type RootCmdNoFoldersUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td RootCmdNoFoldersUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "root-command-no-folders.param-usage",
+		Description: "root command folders usage; no of folders in sample set",
+		Other:       "folders specifies the number of folders to sample",
+	}
+}
+
+// RootCmdSampleUsageTemplData
+// 🧊
+type RootCmdLastUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td RootCmdLastUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "root-command-last.param-usage",
+		Description: "root command last usage; indicates which n items are to be sampled",
+		Other:       "last is a flag that indicates which n items are to be sampled",
+	}
+}
+
 // RootCmdFolderRexExParamUsageTemplData
 // 🧊
 type RootCmdFolderRexExParamUsageTemplData struct {
@@ -127,6 +183,20 @@ func (td RootCmdFilesGlobParamUsageTemplData) Message() *i18n.Message {
 }
 
 // TODO: add shrink parameter usage here ...
+
+// ShrinkCmdGaussianBlurParamUsageTemplData
+// 🧊
+type ShrinkCmdSchemeParamUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td ShrinkCmdSchemeParamUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "shrink-cmd-scheme.param-usage",
+		Description: "scheme specifies a collection of profiles to run when sampling",
+		Other:       "scheme specifies a collection of profiles to run when sampling",
+	}
+}
 
 // ShrinkCmdGaussianBlurParamUsageTemplData
 // 🧊
@@ -198,17 +268,31 @@ func (td ShrinkCmdQualityParamUsageTemplData) Message() *i18n.Message {
 	}
 }
 
-// ShrinkCmdMirrorPathParamUsageTemplData
+// ShrinkCmdOutputPathParamUsageTemplData
 // 🧊
-type ShrinkCmdMirrorPathParamUsageTemplData struct {
+type ShrinkCmdOutputPathParamUsageTemplData struct {
 	pixaTemplData
 }
 
-func (td ShrinkCmdMirrorPathParamUsageTemplData) Message() *i18n.Message {
+func (td ShrinkCmdOutputPathParamUsageTemplData) Message() *i18n.Message {
 	return &i18n.Message{
-		ID:          "shrink-cmd-mirror-path.param-usage",
-		Description: "shrink mirror path creates a mirror of the source directory tree containing processed images",
-		Other:       "mirror-path creates a mirror of the source directory tree containing processed images",
+		ID:          "shrink-cmd-output-path.param-usage",
+		Description: "shrink output path creates a mirror of the source directory tree containing processed images",
+		Other:       "output creates a mirror of the source directory tree containing processed images",
+	}
+}
+
+// ShrinkCmdTrashPathParamUsageTemplData
+// 🧊
+type ShrinkCmdTrashPathParamUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td ShrinkCmdTrashPathParamUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "shrink-cmd-trash-path.param-usage",
+		Description: "shrink trash path indicates the path where old items are moved to",
+		Other:       "trash indicates where deleted items are moved to",
 	}
 }
 

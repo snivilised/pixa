@@ -1,58 +1,45 @@
 package command_test
 
 import (
-	"fmt"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
-	"github.com/snivilised/extendio/xfs/utils"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/helpers"
+	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
 var _ = Describe("MagickCmd", Ordered, func() {
 	var (
 		repo     string
 		l10nPath string
+		nfs      storage.VirtualFS
 	)
 
 	BeforeAll(func() {
-		repo = helpers.Repo("../../..")
-		l10nPath = helpers.Path(repo, "src/test/data/l10n")
-		Expect(utils.FolderExists(l10nPath)).To(BeTrue(),
-			fmt.Sprintf("💥 l10Path: '%v' does not exist", l10nPath),
-		)
+		nfs = storage.UseNativeFS()
+		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
+		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
 	})
 
 	BeforeEach(func() {
 		xi18n.ResetTx()
-		err := xi18n.Use(func(uo *xi18n.UseOptions) {
-			uo.From = xi18n.LoadFrom{
-				Path: l10nPath,
-				Sources: xi18n.TranslationFiles{
-					i18n.PixaSourceID: xi18n.TranslationSource{
-						Name: "pixa",
-					},
 
-					ci18n.CobrassSourceID: xi18n.TranslationSource{
-						Name: "cobrass",
-					},
-				},
-			}
-		})
-
-		if err != nil {
+		if err := helpers.UseI18n(l10nPath); err != nil {
 			Fail(err.Error())
 		}
 	})
 
 	When("specified flags are valid", func() {
 		It("🧪 should: execute without error", func() {
-			bootstrap := command.Bootstrap{}
+			bootstrap := command.Bootstrap{
+				Vfs: nfs,
+			}
 			tester := helpers.CommandTester{
 				Args: []string{"mag"},
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {

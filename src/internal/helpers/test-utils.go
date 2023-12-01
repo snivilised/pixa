@@ -7,7 +7,18 @@ import (
 	"runtime"
 	"strings"
 
+	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
+	"github.com/snivilised/pixa/src/i18n"
+
+	xi18n "github.com/snivilised/extendio/i18n"
 	"golang.org/x/text/language"
+)
+
+const (
+	PixaConfigTestFilename = "pixa-test"
+	PixaConfigType         = "yml"
+	ShrinkCommandName      = "shrink"
+	ProgName               = "magick"
 )
 
 func Path(parent, relative string) string {
@@ -61,6 +72,23 @@ func Log() string {
 	panic("could not get root path")
 }
 
+func UseI18n(l10nPath string) error {
+	return xi18n.Use(func(uo *xi18n.UseOptions) {
+		uo.From = xi18n.LoadFrom{
+			Path: l10nPath,
+			Sources: xi18n.TranslationFiles{
+				i18n.PixaSourceID: xi18n.TranslationSource{
+					Name: "dummy-cobrass",
+				},
+
+				ci18n.CobrassSourceID: xi18n.TranslationSource{
+					Name: "dummy-cobrass",
+				},
+			},
+		}
+	})
+}
+
 type DetectorStub struct {
 }
 
@@ -82,4 +110,9 @@ func (e *ExecutorStub) Look() (string, error) {
 
 func (e *ExecutorStub) Execute(_ ...string) error {
 	return nil
+}
+
+type DirectoryQuantities struct {
+	Files   uint
+	Folders uint
 }

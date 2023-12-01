@@ -1,10 +1,5 @@
 package proxy
 
-type GeneralParameters struct {
-	NoW     int
-	Profile string
-}
-
 type FilterParameters struct {
 	FolderRexEx string
 	FolderGlob  string
