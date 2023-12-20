@@ -67,7 +67,7 @@ func (tc pfTemplatesCollection) evaluate(
 // EJECT: replicate the source directory struct but eject elsewhere
 // INLINE: create the file at the same location as the original but rename as required
 
-// The runner is aware of the output strategy moving files accordingly,
+// The controller is aware of the output strategy moving files accordingly,
 // using the path-finder to create the paths and the file-manager to interact
 // with the file system, using a vfs.
 
@@ -114,7 +114,7 @@ so we have 3 parameters:
 * --output <path> --trash <path>								[ous=eject; des=eject]
 */
 
-// PathFinder provides the common paths required, but its the runners that know
+// PathFinder provides the common paths required, but its the controller that know
 // the specific paths based around this common framework
 
 type strategies struct {

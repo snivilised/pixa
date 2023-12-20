@@ -92,10 +92,10 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 				fmt.Sprintf("'%v'", item.Path),
 			}
 
-			runner := e.Registry.Get()
-			defer e.Registry.Put(runner)
+			controller := e.Registry.Get()
+			defer e.Registry.Put(controller)
 
-			return runner.OnNewShrinkItem(item, positional)
+			return controller.OnNewShrinkItem(item, positional)
 		},
 	}
 }
@@ -135,8 +135,8 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	e.EntryBase.ConfigureOptions(o)
 
 	finder := e.createFinder()
-	e.Registry = NewRunnerRegistry(&SharedRunnerInfo{
-		Type:     RunnerTypeSamplerEn, // TODO: to come from an arg !!!
+	e.Registry = NewControllerRegistry(&SharedControllerInfo{
+		Type:     ControllerTypeSamplerEn, // TODO: to come from an arg !!!
 		Options:  e.Options,
 		program:  e.Program,
 		profiles: e.ProfilesCFG,
@@ -194,10 +194,10 @@ func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 		fmt.Sprintf("'%v'", item.Path),
 	}
 
-	runner := e.Registry.Get()
-	defer e.Registry.Put(runner)
+	controller := e.Registry.Get()
+	defer e.Registry.Put(controller)
 
-	return runner.OnNewShrinkItem(item, positional)
+	return controller.OnNewShrinkItem(item, positional)
 }
 
 func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {

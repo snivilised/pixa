@@ -4,16 +4,16 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
-type RunnerTypeEnum uint
+type ControllerTypeEnum uint
 
 const (
-	_ RunnerTypeEnum = iota
-	RunnerTypeFullEn
-	RunnerTypeSamplerEn
+	_ ControllerTypeEnum = iota
+	ControllerTypeFullEn
+	ControllerTypeSamplerEn
 )
 
-type SharedRunnerInfo struct {
-	Type        RunnerTypeEnum
+type SharedControllerInfo struct {
+	Type        ControllerTypeEnum
 	Options     *nav.TraverseOptions
 	program     Executor
 	profiles    ProfilesConfig
@@ -24,7 +24,7 @@ type SharedRunnerInfo struct {
 }
 
 // ItemController
-type ItemRunner interface {
+type ItemController interface {
 	OnNewShrinkItem(item *nav.TraverseItem,
 		positional []string,
 	) error

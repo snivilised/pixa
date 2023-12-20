@@ -6,7 +6,7 @@ import (
 
 // Step
 type Step interface {
-	Run(*SharedRunnerInfo) error
+	Run(*SharedControllerInfo) error
 }
 
 // Sequence
@@ -14,10 +14,10 @@ type Sequence []Step
 
 // magickStep knows how to combine parameters together so that the program
 // can be invoked correctly; but it does not know how to compose the input
-// and output file names; this is the responsibility of the runner, which uses
+// and output file names; this is the responsibility of the controller, which uses
 // the path-finder to accomplish that task.
 type magickStep struct {
-	shared       *SharedRunnerInfo
+	shared       *SharedControllerInfo
 	thirdPartyCL clif.ThirdPartyCommandLine
 	scheme       string
 	profile      string
@@ -27,7 +27,7 @@ type magickStep struct {
 }
 
 // Run
-func (s *magickStep) Run(*SharedRunnerInfo) error {
+func (s *magickStep) Run(*SharedControllerInfo) error {
 	positional := []string{s.sourcePath}
 
 	return s.shared.program.Execute(clif.Expand(positional, s.thirdPartyCL, s.outputPath)...)
