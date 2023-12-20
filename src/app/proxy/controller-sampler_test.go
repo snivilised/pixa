@@ -159,7 +159,7 @@ func resetFS(index string, silent bool) (vfs storage.VirtualFS, root string) {
 	return vfs, root
 }
 
-type runnerTE struct {
+type controllerTE struct {
 	given    string
 	should   string
 	args     []string
@@ -169,11 +169,11 @@ type runnerTE struct {
 }
 
 type samplerTE struct {
-	runnerTE
+	controllerTE
 	scheme string
 }
 
-var _ = Describe("SamplerRunner", Ordered, func() {
+var _ = Describe("SamplerController", Ordered, func() {
 	var (
 		repo               string
 		l10nPath           string
@@ -280,7 +280,7 @@ var _ = Describe("SamplerRunner", Ordered, func() {
 		},
 
 		Entry(nil, &samplerTE{
-			runnerTE: runnerTE{
+			controllerTE: controllerTE{
 				given:    "profile",
 				should:   "sample(first) with glob filter using the defined profile",
 				relative: backyardWorldsPlanet9Scan01,
@@ -297,7 +297,7 @@ var _ = Describe("SamplerRunner", Ordered, func() {
 		}),
 
 		Entry(nil, &samplerTE{
-			runnerTE: runnerTE{
+			controllerTE: controllerTE{
 				given:    "profile",
 				should:   "sample(last) with glob filter using the defined profile",
 				relative: backyardWorldsPlanet9Scan01,
@@ -313,7 +313,7 @@ var _ = Describe("SamplerRunner", Ordered, func() {
 		}),
 
 		Entry(nil, &samplerTE{
-			runnerTE: runnerTE{
+			controllerTE: controllerTE{
 				given:    "profile without no-files in args",
 				should:   "sample(first) with glob filter, using no-files from config",
 				relative: backyardWorldsPlanet9Scan01,
@@ -327,7 +327,7 @@ var _ = Describe("SamplerRunner", Ordered, func() {
 		}),
 
 		XEntry(nil, &samplerTE{
-			runnerTE: runnerTE{
+			controllerTE: controllerTE{
 				given:    "profile",
 				should:   "sample with regex filter using the defined profile",
 				relative: backyardWorldsPlanet9Scan01,
@@ -345,7 +345,7 @@ var _ = Describe("SamplerRunner", Ordered, func() {
 		// ===
 
 		Entry(nil, &samplerTE{
-			runnerTE: runnerTE{
+			controllerTE: controllerTE{
 				given:    "scheme",
 				should:   "sample all profiles in the scheme",
 				relative: backyardWorldsPlanet9Scan01,

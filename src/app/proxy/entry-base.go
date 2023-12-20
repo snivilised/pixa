@@ -40,7 +40,7 @@ type EntryBase struct {
 	Program     Executor
 	Config      configuration.ViperConfig
 	Options     *nav.TraverseOptions
-	Registry    *RunnerRegistry
+	Registry    *ControllerRegistry
 	ProfilesCFG ProfilesConfig
 	SamplerCFG  SamplerConfig
 	Vfs         storage.VirtualFS
@@ -132,12 +132,12 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		}
 	}
 
-	// TODO: get the runner type properly, instead of hard coding to Sampler
+	// TODO: get the controller type properly, instead of hard coding to Sampler
 	// This should not be here; move to root
 	//
 	if e.Registry == nil {
-		e.Registry = NewRunnerRegistry(&SharedRunnerInfo{
-			Type:     RunnerTypeSamplerEn, // TODO: to come from an arg !!!
+		e.Registry = NewControllerRegistry(&SharedControllerInfo{
+			Type:     ControllerTypeSamplerEn, // TODO: to come from an arg !!!
 			Options:  e.Options,
 			program:  e.Program,
 			profiles: e.ProfilesCFG,

@@ -13,17 +13,17 @@ import (
 // scheme: adhoc and profile from a scheme
 //
 
-type baseRunner struct { // rename to be a controller instead of a runner
-	shared *SharedRunnerInfo
+type controller struct {
+	shared *SharedControllerInfo
 }
 
-func (r *baseRunner) profileSequence(
+func (c *controller) profileSequence(
 	name, itemPath string,
 ) Sequence {
-	changed := r.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
-	cl := r.composeProfileCL(name, changed)
+	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
+	cl := c.composeProfileCL(name, changed)
 	step := &magickStep{
-		shared:       r.shared,
+		shared:       c.shared,
 		thirdPartyCL: cl,
 		sourcePath:   itemPath,
 		profile:      name,
@@ -34,17 +34,17 @@ func (r *baseRunner) profileSequence(
 	return Sequence{step}
 }
 
-func (r *baseRunner) schemeSequence(
+func (c *controller) schemeSequence(
 	name, itemPath string,
 ) Sequence {
-	changed := r.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
-	schemeCfg, _ := r.shared.sampler.Scheme(name) // scheme already validated
+	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
+	schemeCfg, _ := c.shared.sampler.Scheme(name) // scheme already validated
 	sequence := make(Sequence, 0, len(schemeCfg.Profiles))
 
 	for _, current := range schemeCfg.Profiles {
-		cl := r.composeProfileCL(current, changed)
+		cl := c.composeProfileCL(current, changed)
 		step := &magickStep{
-			shared:       r.shared,
+			shared:       c.shared,
 			thirdPartyCL: cl,
 			sourcePath:   itemPath,
 			scheme:       name,
@@ -59,12 +59,12 @@ func (r *baseRunner) schemeSequence(
 	return sequence
 }
 
-func (r *baseRunner) adhocSequence(
+func (c *controller) adhocSequence(
 	itemPath string,
 ) Sequence {
-	changed := r.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
+	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
 	step := &magickStep{
-		shared:       r.shared,
+		shared:       c.shared,
 		thirdPartyCL: changed,
 		sourcePath:   itemPath,
 		// outputPath: ,
@@ -74,20 +74,20 @@ func (r *baseRunner) adhocSequence(
 	return Sequence{step}
 }
 
-func (r *baseRunner) composeProfileCL(
+func (c *controller) composeProfileCL(
 	profileName string,
 	secondary clif.ThirdPartyCommandLine,
 ) clif.ThirdPartyCommandLine {
-	primary, _ := r.shared.profiles.Profile(profileName) // profile already validated
+	primary, _ := c.shared.profiles.Profile(profileName) // profile already validated
 
 	return cobrass.Evaluate(
 		primary,
-		r.shared.Inputs.ParamSet.Native.ThirdPartySet.KnownBy,
+		c.shared.Inputs.ParamSet.Native.ThirdPartySet.KnownBy,
 		secondary,
 	)
 }
 
-func (r *baseRunner) Run(item *nav.TraverseItem, sequence Sequence) error {
+func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 	var (
 		zero      Step
 		resultErr error
@@ -95,7 +95,7 @@ func (r *baseRunner) Run(item *nav.TraverseItem, sequence Sequence) error {
 
 	iterator := collections.ForwardRunIt[Step, error](sequence, zero)
 	each := func(s Step) error {
-		return s.Run(r.shared)
+		return s.Run(c.shared)
 	}
 	while := func(_ Step, err error) bool {
 		if resultErr == nil {
@@ -115,14 +115,14 @@ func (r *baseRunner) Run(item *nav.TraverseItem, sequence Sequence) error {
 	// Perhaps we have an error policy including one that implements
 	// a retry.
 	//
-	if err := r.shared.fileManager.Setup(item); err != nil {
+	if err := c.shared.fileManager.Setup(item); err != nil {
 		return err
 	}
 
 	iterator.RunAll(each, while)
 
-	return r.shared.fileManager.Tidy()
+	return c.shared.fileManager.Tidy()
 }
 
-func (r *baseRunner) Reset() {
+func (c *controller) Reset() {
 }

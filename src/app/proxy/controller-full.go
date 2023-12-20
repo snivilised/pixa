@@ -5,11 +5,11 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
-type FullRunner struct {
-	baseRunner
+type FullController struct {
+	controller
 }
 
-func (r *FullRunner) OnNewShrinkItem(item *nav.TraverseItem,
+func (c *FullController) OnNewShrinkItem(item *nav.TraverseItem,
 	positional []string,
 	thirdPartyCL cobrass.ThirdPartyCommandLine,
 ) error {
