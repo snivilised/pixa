@@ -8,13 +8,21 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
+type pfPath uint
+
+const (
+	pfPathUndefined pfPath = iota
+	pfPathSetupInlineDestFolder
+	pfPathSetupInlineDestFileOriginalExt
+)
+
 const (
 	inlineDestinationTempl = ""
 )
 
 type (
 	templateSegments      []string
-	pfTemplatesCollection map[string]templateSegments
+	pfTemplatesCollection map[pfPath]templateSegments
 	pfFieldValues         map[string]string
 )
 
@@ -26,13 +34,13 @@ func init() {
 	pfTemplates = pfTemplatesCollection{
 		// we probably have to come up with better key names...
 		//
-		"setup-inline-dest-folder": templateSegments{
+		pfPathSetupInlineDestFolder: templateSegments{
 			"${{OUTPUT-ROOT}}",
 			"${{ITEM-SUB-PATH}}",
 			"${{TRASH-LABEL}}",
 		},
 
-		"setup-inline-dest-file-original-ext": templateSegments{
+		pfPathSetupInlineDestFileOriginalExt: templateSegments{
 			"${{ITEM-NAME-ORIG-EXT}}",
 		},
 	}
@@ -54,11 +62,13 @@ func (tc pfTemplatesCollection) evaluate(
 		quantity = 1
 	)
 
-	return lo.Reduce(placeHolders, func(acc, field string, _ int) string {
+	result := lo.Reduce(placeHolders, func(acc, field string, _ int) string {
 		return strings.Replace(acc, field, values[field], quantity)
 	},
 		sourceTemplate,
 	)
+
+	return filepath.Clean(result)
 }
 
 // INLINE-MODE: EJECT | INLINE (should we call this a strategy?
@@ -220,28 +230,23 @@ func (f *PathFinder) Destination(info *destinationInfo) (destinationFolder, dest
 	)
 
 	destinationFolder = func() string {
-		templateFolderSegments := pfTemplates["setup-inline-dest-folder"]
-		templateFolderPath := pfTemplates.expand(filepath.Join(templateFolderSegments...))
-		folder := pfTemplates.evaluate(templateFolderPath, templateFolderSegments, pfFieldValues{
+		segments := pfTemplates[pfPathSetupInlineDestFolder]
+		path := pfTemplates.expand(filepath.Join(segments...))
+
+		return pfTemplates.evaluate(path, segments, pfFieldValues{
 			"${{OUTPUT-ROOT}}":   to,
 			"${{ITEM-SUB-PATH}}": info.item.Extension.SubPath,
 			"${{TRASH-LABEL}}":   trashLabel,
 		})
-		folder = filepath.Clean(folder)
-
-		return folder
 	}()
 
 	destinationFile = func() string {
-		templateFileSegments := pfTemplates["setup-inline-dest-file-original-ext"]
-		templateFilePath := pfTemplates.expand(filepath.Join(templateFileSegments...))
+		segments := pfTemplates[pfPathSetupInlineDestFileOriginalExt]
+		path := pfTemplates.expand(filepath.Join(segments...))
 
-		file := pfTemplates.evaluate(templateFilePath, templateFileSegments, pfFieldValues{
+		return pfTemplates.evaluate(path, segments, pfFieldValues{
 			"${{ITEM-NAME-ORIG-EXT}}": info.item.Extension.Name,
 		})
-		file = filepath.Clean(file)
-
-		return file
 	}()
 
 	return destinationFolder, destinationFile
