@@ -9,7 +9,6 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
-	"github.com/snivilised/extendio/xfs/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -166,7 +165,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			defaultOutputPath,
 		),
 		&paramSet.Native.OutputPath, func(s string, f *pflag.Flag) error {
-			if f.Changed && !utils.FolderExists(s) {
+			if f.Changed && !b.Vfs.DirectoryExists(s) {
 				return i18n.NewOutputPathDoesNotExistError(s)
 			}
 
@@ -186,7 +185,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			defaultTrashPath,
 		),
 		&paramSet.Native.TrashPath, func(s string, f *pflag.Flag) error {
-			if f.Changed && !utils.FolderExists(s) {
+			if f.Changed && !b.Vfs.DirectoryExists(s) {
 				return i18n.NewOutputPathDoesNotExistError(s)
 			}
 

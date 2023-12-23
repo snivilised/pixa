@@ -13,20 +13,27 @@ func (c *SamplerController) OnNewShrinkItem(item *nav.TraverseItem,
 ) error {
 	_ = positional
 
-	profileName := c.shared.Inputs.Root.ProfileFam.Native.Profile
-	schemeName := c.shared.Inputs.Root.ProfileFam.Native.Scheme
+	// create a master path info here and pass into the sequences
+	// to replace the individual properties on the step
+	//
+	pi := &pathInfo{
+		item:    item,
+		scheme:  c.shared.Inputs.Root.ProfileFam.Native.Scheme,
+		profile: c.shared.Inputs.Root.ProfileFam.Native.Profile,
+		origin:  item.Extension.Parent,
+	}
 
 	var sequence Sequence
 
 	switch {
-	case profileName != "":
-		sequence = c.profileSequence(profileName, item.Path)
+	case pi.profile != "":
+		sequence = c.profileSequence(pi)
 
-	case schemeName != "":
-		sequence = c.schemeSequence(schemeName, item.Path)
+	case pi.scheme != "":
+		sequence = c.schemeSequence(pi)
 
 	default:
-		sequence = c.adhocSequence(item.Path)
+		sequence = c.adhocSequence(pi)
 	}
 
 	return c.Run(item, sequence)

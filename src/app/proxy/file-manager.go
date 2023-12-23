@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
 )
 
@@ -23,12 +22,12 @@ type FileManager struct {
 }
 
 // Setup prepares for operation by moving existing file out of the way,
-// if applicable.
-func (fm *FileManager) Setup(item *nav.TraverseItem) (destination string, err error) {
+// if applicable. Return the path denoting where the input will be moved to.
+func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
 	if !fm.finder.transparentInput {
 		// Any result file must not clash with the input file, so the input
 		// file must stay in place
-		return item.Path, nil
+		return pi.item.Path, nil
 	}
 
 	// https://pkg.go.dev/os#Rename LinkError may result
@@ -37,38 +36,31 @@ func (fm *FileManager) Setup(item *nav.TraverseItem) (destination string, err er
 	// original alone and create other outputs; in this scenario
 	// we don't want to rename/move the source...
 	//
-	from := &pathInfo{
-		item:   item,
-		origin: item.Parent.Path,
-	}
-
-	if folder, file := fm.finder.Destination(from); folder != "" {
+	if folder, file := fm.finder.Destination(pi); folder != "" {
 		if err = fm.vfs.MkdirAll(folder, beezledub); err != nil {
 			return errorDestination, errors.Wrapf(
-				err, "could not create parent setup for '%v'", item.Path,
+				err, "could not create parent setup for '%v'", pi.item.Path,
 			)
 		}
 
-		// THIS DESTINATION IS NOT REPORTED BACK
-		// TO BE USED AS THE INPUT
 		destination = filepath.Join(folder, file)
 
-		if !fm.vfs.FileExists(item.Path) {
+		if !fm.vfs.FileExists(pi.item.Path) {
 			return errorDestination, fmt.Errorf(
-				"source file: '%v' does not exist", item.Path,
+				"source file: '%v' does not exist", pi.item.Path,
 			)
 		}
 
-		if item.Path != destination {
+		if pi.item.Path != destination {
 			if fm.vfs.FileExists(destination) {
 				return errorDestination, fmt.Errorf(
 					"destination file: '%v' already exists", destination,
 				)
 			}
 
-			if err := fm.vfs.Rename(item.Path, destination); err != nil {
+			if err := fm.vfs.Rename(pi.item.Path, destination); err != nil {
 				return errorDestination, errors.Wrapf(
-					err, "could not complete setup for '%v'", item.Path,
+					err, "could not complete setup for '%v'", pi.item.Path,
 				)
 			}
 		}

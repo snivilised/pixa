@@ -100,6 +100,9 @@ func init() {
 			"adaptive-blur": proxy.MsSchemeConfig{
 				Profiles: []string{"adaptive", "blur"},
 			},
+			"singleton": proxy.MsSchemeConfig{
+				Profiles: []string{"adaptive"},
+			},
 		},
 	}
 }
@@ -163,6 +166,8 @@ type controllerTE struct {
 	given        string
 	should       string
 	args         []string
+	outputFlag   string
+	trashFlag    string
 	profile      string
 	relative     string
 	expected     []string
@@ -246,6 +251,16 @@ var _ = Describe("SamplerController", Ordered, func() {
 			}
 			args := options
 			args = append(args, entry.args...)
+			if entry.outputFlag != "" {
+				output := helpers.Path(root, entry.outputFlag)
+				args = append(args, "--output")
+				args = append(args, output)
+			}
+			if entry.trashFlag != "" {
+				trash := helpers.Path(root, entry.trashFlag)
+				args = append(args, "--trash")
+				args = append(args, trash)
+			}
 
 			bootstrap := command.Bootstrap{
 				Vfs: vfs,
@@ -331,6 +346,88 @@ var _ = Describe("SamplerController", Ordered, func() {
 				expected:     backyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "adaptive/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run transparent with scheme with single profile",
+				should:   "sample(first) with glob filter, result file takes place of input",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--files-gb", "*Backyard Worlds*",
+					"--scheme", "singleton",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "singleton/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run non transparent adhoc",
+				should:   "sample(first) with glob filter, input moved to alternative location",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--files-gb", "*Backyard Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				trashFlag:    "discard",
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "discard",
+				supplement:   "ADHOC/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run non transparent with profile",
+				should:   "sample(first) with glob filter, input moved to alternative location",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--files-gb", "*Backyard Worlds*",
+					"--profile", "adaptive",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				trashFlag:    "discard",
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "discard",
+				supplement:   "adaptive/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run non transparent scheme single with profile",
+				should:   "sample(first) with glob filter, input moved to alternative location",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--files-gb", "*Backyard Worlds*",
+					"--scheme", "singleton",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				trashFlag:    "discard",
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "discard",
+				supplement:   "singleton/TRASH",
 				inputs:       backyardWorldsPlanet9Scan01First4,
 			},
 		}),

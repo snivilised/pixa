@@ -102,8 +102,8 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 
 func (e *ShrinkEntry) createFinder() *PathFinder {
 	finder := &PathFinder{
-		Scheme:  e.Inputs.Root.ProfileFam.Native.Scheme,
-		Profile: e.Inputs.Root.ProfileFam.Native.Profile,
+		Scheme:          e.Inputs.Root.ProfileFam.Native.Scheme,
+		ExplicitProfile: e.Inputs.Root.ProfileFam.Native.Profile,
 		behaviours: strategies{
 			output:   &inlineOutputStrategy{},
 			deletion: &inlineDeletionStrategy{},

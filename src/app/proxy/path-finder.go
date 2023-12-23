@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/samber/lo"
-	"github.com/snivilised/extendio/xfs/nav"
 )
 
 type pfPath uint
@@ -197,8 +196,8 @@ type strategies struct {
 }
 
 type PathFinder struct {
-	Scheme  string
-	Profile string
+	Scheme          string
+	ExplicitProfile string
 	// Origin is the parent of the item (item.Parent)
 	//
 	Origin string
@@ -233,43 +232,6 @@ type staticInfo struct {
 	legacyLabel string
 }
 
-type pathInfo struct {
-	item   *nav.TraverseItem
-	origin string // in:item.Parent.Path, ej:eject-path(output???)
-	// statics     *staticInfo
-
-	//
-	// transparent=true should be the default scenario. This means
-	// that any changes that occur leave the file system in a state
-	// where nothing appears to have changed except that files have
-	// been modified, without name changes. This of course doesn't
-	// include items that end up in TRASH and can be manually deleted
-	// by the user. The purpose of this is to by default require
-	// the least amount of post-processing clean-up from the user.
-	//
-	// In sampling mode, transparent may mean something different
-	// because multiple files could be created for each input file.
-	// So, in this scenario, the original file should stay in-tact
-	// and the result(s) should be created into the supplementary
-	// location.
-	//
-	// In full  mode, transparent means the input file is moved
-	// to a trash location. The output takes the name of the original
-	// file, so that by the end of processing, the resultant file
-	// takes the place of the source file, leaving the file system
-	// in a state that was the same before processing occurred.
-	//
-	// So what happens in non transparent scenario? The source file
-	// remains unchanged, so the user has to look at another location
-	// to get the result. It uses the SHRINK label to create the
-	// output filename; but note, we only use the SHRINK label in
-	// scenarios where there is a potential for a filename clash if
-	// the output file is in the same location as the input file
-	// because we want to create the least amount of friction as
-	// possible. This only occurs when in adhoc mode (no profile
-	// or scheme)
-}
-
 // Destination returns the location of what should be used
 // for the specified source path; ie when the program runs, it uses
 // a source file and requires the destination location. The source
@@ -280,7 +242,8 @@ type pathInfo struct {
 // Destination creates a path for the input; should return empty
 // string for the folder, if no move is required (ie transparent)
 // The PathFinder will only call this function when the input
-// is not transparent
+// is not transparent. When the --Trash option is present, it will
+// determine the destination path for the input.
 func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 	// TODO: we still need to get the rest of the mirror sub-path
 	// legacyLabel := "LEGACY"
@@ -320,15 +283,9 @@ func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 	return folder, file
 }
 
-type resultInfo struct {
-	pathInfo
-	scheme  string
-	profile string
-}
-
 // Result creates a path for each result so should be called by the
 // execution step
-func (f *PathFinder) Result(info *resultInfo) (folder, file string) {
+func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 	to := lo.TernaryF(f.Output != "",
 		func() string {
 			return f.Output // eject
@@ -383,13 +340,13 @@ func (f *PathFinder) Result(info *resultInfo) (folder, file string) {
 }
 
 func (f *PathFinder) supplement() string {
-	return lo.TernaryF(f.Scheme == "" && f.Profile == "",
+	return lo.TernaryF(f.Scheme == "" && f.ExplicitProfile == "",
 		func() string {
 			adhocLabel := "ADHOC"
 			return adhocLabel
 		},
 		func() string {
-			return filepath.Join(f.Scheme, f.Profile)
+			return filepath.Join(f.Scheme, f.ExplicitProfile)
 		},
 	)
 }
