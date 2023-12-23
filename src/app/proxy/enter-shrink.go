@@ -108,13 +108,23 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 			output:   &inlineOutputStrategy{},
 			deletion: &inlineDeletionStrategy{},
 		},
+		arity: 1,
+	}
+
+	if finder.Scheme != "" {
+		schemeCFG, _ := e.SamplerCFG.Scheme(finder.Scheme)
+		finder.arity = len(schemeCFG.Profiles)
 	}
 
 	if e.Inputs.ParamSet.Native.OutputPath != "" {
+		finder.Output = e.Inputs.ParamSet.Native.OutputPath
 		finder.behaviours.output = &ejectOutputStrategy{}
+	} else {
+		finder.transparentInput = true
 	}
 
 	if e.Inputs.ParamSet.Native.TrashPath != "" {
+		finder.Trash = e.Inputs.ParamSet.Native.TrashPath
 		finder.behaviours.deletion = &ejectOutputStrategy{}
 	}
 

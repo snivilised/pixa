@@ -15,6 +15,7 @@ import (
 
 type controller struct {
 	shared *SharedControllerInfo
+	local  localControllerInfo
 }
 
 func (c *controller) profileSequence(
@@ -94,8 +95,11 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 	)
 
 	iterator := collections.ForwardRunIt[Step, error](sequence, zero)
-	each := func(s Step) error {
-		return s.Run(c.shared)
+	each := func(step Step) error {
+		return step.Run(&RunStepInfo{
+			Item:   item,
+			Source: c.local.destination,
+		})
 	}
 	while := func(_ Step, err error) bool {
 		if resultErr == nil {
@@ -115,8 +119,8 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 	// Perhaps we have an error policy including one that implements
 	// a retry.
 	//
-	if err := c.shared.fileManager.Setup(item); err != nil {
-		return err
+	if c.local.destination, resultErr = c.shared.fileManager.Setup(item); resultErr != nil {
+		return resultErr
 	}
 
 	iterator.RunAll(each, while)
@@ -125,4 +129,5 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 }
 
 func (c *controller) Reset() {
+	c.local.destination = ""
 }

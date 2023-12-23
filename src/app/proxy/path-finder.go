@@ -12,8 +12,11 @@ type pfPath uint
 
 const (
 	pfPathUndefined pfPath = iota
-	pfPathSetupInlineDestFolder
-	pfPathSetupInlineDestFileOriginalExt
+	pfPathInputDestinationFolder
+	pfPathTxInputDestinationFolder
+	pfPathInputDestinationFileOriginalExt
+	pfPathResultFolder
+	pfPathResultFile
 )
 
 const (
@@ -30,18 +33,41 @@ var (
 	pfTemplates pfTemplatesCollection
 )
 
+/*
+📚 FIELD DICTIONARY:
+- ADHOC: (static): tag that indicates no profile or scheme is active
+- INPUT-DESTINATION: the path where the input file is moved to
+- ITEM-FULL-NAME: the original item.Name, which includes the original extension
+- OUTPUT-ROOT: --output flag
+- ITEM-SUB-PATH: item.Extension.SubPath
+- RESULT-NAME: the path of the result file
+- SUPPLEMENT: ${{ADHOC}} | <scheme?>/<profile> --> created dynamically
+- TRASH-LABEL: (static) input file tag marked for deletion
+*/
+
 func init() {
 	pfTemplates = pfTemplatesCollection{
-		// we probably have to come up with better key names...
-		//
-		pfPathSetupInlineDestFolder: templateSegments{
-			"${{OUTPUT-ROOT}}",
+		pfPathInputDestinationFolder: templateSegments{
+			"${{INPUT-DESTINATION}}",
 			"${{ITEM-SUB-PATH}}",
+			"${{SUPPLEMENT}}",
 			"${{TRASH-LABEL}}",
 		},
+		pfPathTxInputDestinationFolder: templateSegments{
+			"${{OUTPUT-ROOT}}",
+		},
 
-		pfPathSetupInlineDestFileOriginalExt: templateSegments{
-			"${{ITEM-NAME-ORIG-EXT}}",
+		pfPathInputDestinationFileOriginalExt: templateSegments{
+			"${{ITEM-FULL-NAME}}",
+		},
+
+		pfPathResultFolder: templateSegments{
+			"${{OUTPUT-ROOT}}",
+			"${{ITEM-SUB-PATH}}",
+			"${{SUPPLEMENT}}",
+		},
+		pfPathResultFile: templateSegments{
+			"${{RESULT-NAME}}",
 		},
 	}
 }
@@ -63,6 +89,44 @@ func (tc pfTemplatesCollection) evaluate(
 	)
 
 	result := lo.Reduce(placeHolders, func(acc, field string, _ int) string {
+		return strings.Replace(acc, field, values[field], quantity)
+	},
+		sourceTemplate,
+	)
+
+	return filepath.Clean(result)
+}
+
+// eval returns a string representing a file system path from a
+// template string containing place-holders and field values.
+//
+// Make sure that the keys of the values passed in match the segments.
+// If they differ, then the result will contain unresolved segments (ie,
+// 1 or more segments that are not evaluated and still contain the
+// template placeholder.)
+func (tc pfTemplatesCollection) eval(
+	values pfFieldValues,
+	segments ...string,
+) string {
+	// There is a very subtle but important point to note about the eval
+	// method, in particular the parameters being passed in. It might seem
+	// to the reader that the segments being passed in are redundant, because
+	// they could be derived from the keys of the values map. However, map
+	// entries do not have a guaranteed iteration order. Only arrays are
+	// guaranteed to remain in the same order in which they were created. This
+	// is the purpose of the segments parameter; it dictates the order in which
+	// the segments of a path are evaluated. We can't even use the OrderedKeys
+	// map, because entries are sorted lexically, which is not what we want.
+	//
+	const (
+		quantity = 1
+	)
+
+	// expand
+	sourceTemplate := filepath.Join(segments...)
+
+	// evaluate
+	result := lo.Reduce(segments, func(acc, field string, _ int) string {
 		return strings.Replace(acc, field, values[field], quantity)
 	},
 		sourceTemplate,
@@ -158,6 +222,9 @@ type PathFinder struct {
 	// I think this depends on the mode (tidy/preserve)
 	Trash string
 
+	arity            int
+	transparentInput bool
+
 	behaviours strategies
 }
 
@@ -166,11 +233,11 @@ type staticInfo struct {
 	legacyLabel string
 }
 
-type destinationInfo struct {
+type pathInfo struct {
 	item   *nav.TraverseItem
 	origin string // in:item.Parent.Path, ej:eject-path(output???)
 	// statics     *staticInfo
-	transparent bool
+
 	//
 	// transparent=true should be the default scenario. This means
 	// that any changes that occur leave the file system in a state
@@ -210,16 +277,58 @@ type destinationInfo struct {
 // is extracted from the source path and attached to the output
 // folder.
 //
-// should return empty string if no move is required
-func (f *PathFinder) Destination(info *destinationInfo) (destinationFolder, destinationFile string) {
+// Destination creates a path for the input; should return empty
+// string for the folder, if no move is required (ie transparent)
+// The PathFinder will only call this function when the input
+// is not transparent
+func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 	// TODO: we still need to get the rest of the mirror sub-path
-	// ./<item.Parent>/<MIRROR-SUB-PATH>/TRASH/<scheme>/<profile>/<.item.Name>.<LEGACY>.ext
 	// legacyLabel := "LEGACY"
 	trashLabel := "TRASH"
 
 	// this does not take into account transparent, without modification;
 	// ie what happens if we don;t want any supplemented paths?
 
+	to := lo.TernaryF(f.Trash != "",
+		func() string {
+			return f.Trash // eject
+		},
+		func() string {
+			return info.origin // inline
+		},
+	)
+
+	folder = func() string {
+		segments := pfTemplates[pfPathInputDestinationFolder]
+
+		return pfTemplates.eval(pfFieldValues{
+			"${{INPUT-DESTINATION}}": to,
+			"${{ITEM-SUB-PATH}}":     info.item.Extension.SubPath,
+			"${{SUPPLEMENT}}":        f.supplement(),
+			"${{TRASH-LABEL}}":       trashLabel,
+		}, segments...)
+	}()
+
+	file = func() string {
+		segments := pfTemplates[pfPathInputDestinationFileOriginalExt]
+
+		return pfTemplates.eval(pfFieldValues{
+			"${{ITEM-FULL-NAME}}": info.item.Extension.Name,
+		}, segments...)
+	}()
+
+	return folder, file
+}
+
+type resultInfo struct {
+	pathInfo
+	scheme  string
+	profile string
+}
+
+// Result creates a path for each result so should be called by the
+// execution step
+func (f *PathFinder) Result(info *resultInfo) (folder, file string) {
 	to := lo.TernaryF(f.Output != "",
 		func() string {
 			return f.Output // eject
@@ -229,27 +338,60 @@ func (f *PathFinder) Destination(info *destinationInfo) (destinationFolder, dest
 		},
 	)
 
-	destinationFolder = func() string {
-		segments := pfTemplates[pfPathSetupInlineDestFolder]
-		path := pfTemplates.expand(filepath.Join(segments...))
+	folder = func() string {
+		segments := pfTemplates[pfPathInputDestinationFolder]
 
-		return pfTemplates.evaluate(path, segments, pfFieldValues{
-			"${{OUTPUT-ROOT}}":   to,
-			"${{ITEM-SUB-PATH}}": info.item.Extension.SubPath,
-			"${{TRASH-LABEL}}":   trashLabel,
-		})
+		return lo.TernaryF(f.transparentInput && f.arity == 1,
+			func() string {
+				// The result file has to be in the same folder
+				// as the input
+				//
+				segments = pfTemplates[pfPathTxInputDestinationFolder]
+
+				return pfTemplates.eval(pfFieldValues{
+					"${{OUTPUT-ROOT}}": info.origin,
+				}, segments...)
+			},
+			func() string {
+				// If there is no scheme of profile, then the user is
+				// only relying flags on the command line, ie running adhoc
+				// so the result path should include an adhoc label. Otherwise,
+				// the result should reflect the supplementary path.
+				//
+
+				return pfTemplates.eval(pfFieldValues{
+					"${{OUTPUT-ROOT}}":   to,
+					"${{SUPPLEMENT}}":    f.supplement(),
+					"${{ITEM-SUB-PATH}}": info.item.Extension.SubPath,
+				}, segments...)
+			},
+		)
 	}()
 
-	destinationFile = func() string {
-		segments := pfTemplates[pfPathSetupInlineDestFileOriginalExt]
-		path := pfTemplates.expand(filepath.Join(segments...))
+	file = func() string {
+		// The file name just matches the input file name. The folder name
+		// provides the context.
+		//
+		segments := pfTemplates[pfPathResultFile]
 
-		return pfTemplates.evaluate(path, segments, pfFieldValues{
-			"${{ITEM-NAME-ORIG-EXT}}": info.item.Extension.Name,
-		})
+		return pfTemplates.eval(pfFieldValues{
+			"${{RESULT-NAME}}": info.item.Extension.Name,
+		}, segments...)
 	}()
 
-	return destinationFolder, destinationFile
+	return folder, file
+}
+
+func (f *PathFinder) supplement() string {
+	return lo.TernaryF(f.Scheme == "" && f.Profile == "",
+		func() string {
+			adhocLabel := "ADHOC"
+			return adhocLabel
+		},
+		func() string {
+			return filepath.Join(f.Scheme, f.Profile)
+		},
+	)
 }
 
 /*
