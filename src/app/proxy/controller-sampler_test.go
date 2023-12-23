@@ -154,18 +154,21 @@ func doMockViper(config *cmocks.MockViperConfig) {
 func resetFS(index string, silent bool) (vfs storage.VirtualFS, root string) {
 	vfs = storage.UseMemFS()
 	root = helpers.Scientist(vfs, index, silent)
-	// ??? Expect(matchers.AsDirectory(root)).To(matchers.ExistInFS(vfs))
+	Expect(matchers.AsDirectory(root)).To(matchers.ExistInFS(vfs))
 
 	return vfs, root
 }
 
 type controllerTE struct {
-	given    string
-	should   string
-	args     []string
-	profile  string
-	relative string
-	expected []string
+	given        string
+	should       string
+	args         []string
+	profile      string
+	relative     string
+	expected     []string
+	intermediate string
+	supplement   string
+	inputs       []string
 }
 
 type samplerTE struct {
@@ -272,6 +275,20 @@ var _ = Describe("SamplerController", Ordered, func() {
 			// eventually, we should assert on files created in the virtual
 			// file system, using entry.expected
 			//
+			if entry.inputs != nil {
+				intermediate := helpers.Path(root, entry.intermediate)
+				supplement := helpers.Path(intermediate, entry.supplement)
+
+				for _, original := range entry.inputs {
+					originalPath := filepath.Join(supplement, original)
+					Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
+
+					// We can't assert this until an actual output is created:
+					// output := helpers.Path(root, entry.intermediate)
+					// resultPath := filepath.Join(intermediate, output, original)
+					// Expect(matchers.AsFile(resultPath)).To(matchers.ExistInFS(vfs))
+				}
+			}
 		},
 		func(entry *samplerTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'",
@@ -281,8 +298,27 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 		Entry(nil, &samplerTE{
 			controllerTE: controllerTE{
-				given:    "profile",
-				should:   "sample(first) with glob filter using the defined profile",
+				given:    "run transparent adhoc",
+				should:   "sample(first) with glob filter, result file takes place of input",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--files-gb", "*Backyard Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "ADHOC/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run transparent with profile",
+				should:   "sample(first) with glob filter, result file takes place of input",
 				relative: backyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
@@ -292,11 +328,14 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				expected: backyardWorldsPlanet9Scan01First4,
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "adaptive/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
-		Entry(nil, &samplerTE{
+		XEntry(nil, &samplerTE{
 			controllerTE: controllerTE{
 				given:    "profile",
 				should:   "sample(last) with glob filter using the defined profile",
@@ -312,7 +351,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			},
 		}),
 
-		Entry(nil, &samplerTE{
+		XEntry(nil, &samplerTE{
 			controllerTE: controllerTE{
 				given:    "profile without no-files in args",
 				should:   "sample(first) with glob filter, using no-files from config",
@@ -344,7 +383,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 		// ===
 
-		Entry(nil, &samplerTE{
+		XEntry(nil, &samplerTE{
 			controllerTE: controllerTE{
 				given:    "scheme",
 				should:   "sample all profiles in the scheme",

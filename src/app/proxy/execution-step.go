@@ -1,16 +1,26 @@
 package proxy
 
 import (
+	"path/filepath"
+
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/extendio/xfs/nav"
 )
 
 // Step
-type Step interface {
-	Run(*SharedControllerInfo) error
-}
+type (
+	RunStepInfo struct {
+		Item   *nav.TraverseItem
+		Source string
+	}
 
-// Sequence
-type Sequence []Step
+	Step interface {
+		Run(rsi *RunStepInfo) error
+	}
+
+	// Sequence
+	Sequence []Step
+)
 
 // magickStep knows how to combine parameters together so that the program
 // can be invoked correctly; but it does not know how to compose the input
@@ -27,8 +37,24 @@ type magickStep struct {
 }
 
 // Run
-func (s *magickStep) Run(*SharedControllerInfo) error {
-	positional := []string{s.sourcePath}
+func (s *magickStep) Run(rsi *RunStepInfo) error {
+	folder, file := s.shared.finder.Result(&resultInfo{
+		pathInfo: pathInfo{
+			item:   rsi.Item,
+			origin: rsi.Item.Extension.Parent,
+		},
+		scheme:  s.scheme,
+		profile: s.profile,
+	})
+	result := filepath.Join(folder, file)
+	input := []string{rsi.Source}
 
-	return s.shared.program.Execute(clif.Expand(positional, s.thirdPartyCL, s.outputPath)...)
+	// if transparent, then we need to ask the fm to move the
+	// existing file out of the way. But shouldn't that already have happened
+	// during setup? See, which mean setup in not working properly in
+	// this scenario.
+
+	return s.shared.program.Execute(
+		clif.Expand(input, s.thirdPartyCL, result)...,
+	)
 }

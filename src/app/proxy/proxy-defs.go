@@ -23,6 +23,10 @@ type SharedControllerInfo struct {
 	fileManager *FileManager
 }
 
+type localControllerInfo struct {
+	destination string
+}
+
 // ItemController
 type ItemController interface {
 	OnNewShrinkItem(item *nav.TraverseItem,
