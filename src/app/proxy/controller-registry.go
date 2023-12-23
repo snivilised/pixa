@@ -21,7 +21,8 @@ func NewControllerRegistry(shared *SharedControllerInfo) *ControllerRegistry {
 				case ControllerTypeSamplerEn:
 					return &SamplerController{
 						controller: controller{
-							shared: shared,
+							shared:  shared,
+							private: &privateControllerInfo{},
 						},
 					}
 				}

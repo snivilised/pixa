@@ -23,6 +23,7 @@ sampler:
       profiles: ["adaptive", "sf"]
     adaptive-blur:
       profiles: ["adaptive", "blur"]
+    singleton: ["adaptive"]
 advanced:
   abort-on-error: false
   external-program-execution-timeout: "20s"

@@ -2,6 +2,7 @@
 <tree>
   <directory name="scientist">
     <directory name="output"/>
+    <directory name="discard"/>
     <directory name="nasa">
       <directory name="exo">
         <directory name="Backyard Worlds - Planet 9">

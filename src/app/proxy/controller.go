@@ -14,21 +14,21 @@ import (
 //
 
 type controller struct {
-	shared *SharedControllerInfo
-	local  localControllerInfo
+	shared  *SharedControllerInfo
+	private *privateControllerInfo
 }
 
 func (c *controller) profileSequence(
-	name, itemPath string,
+	pi *pathInfo,
 ) Sequence {
 	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
-	cl := c.composeProfileCL(name, changed)
+	cl := c.composeProfileCL(pi.profile, changed)
 	step := &magickStep{
 		shared:       c.shared,
 		thirdPartyCL: cl,
-		sourcePath:   itemPath,
-		profile:      name,
-		// outputPath: ,
+		sourcePath:   pi.item.Path,
+		profile:      pi.profile,
+		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
 		// journalPath: ,
 	}
 
@@ -36,10 +36,10 @@ func (c *controller) profileSequence(
 }
 
 func (c *controller) schemeSequence(
-	name, itemPath string,
+	pi *pathInfo,
 ) Sequence {
 	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
-	schemeCfg, _ := c.shared.sampler.Scheme(name) // scheme already validated
+	schemeCfg, _ := c.shared.sampler.Scheme(pi.scheme) // scheme already validated
 	sequence := make(Sequence, 0, len(schemeCfg.Profiles))
 
 	for _, current := range schemeCfg.Profiles {
@@ -47,10 +47,9 @@ func (c *controller) schemeSequence(
 		step := &magickStep{
 			shared:       c.shared,
 			thirdPartyCL: cl,
-			sourcePath:   itemPath,
-			scheme:       name,
+			sourcePath:   pi.item.Path,
 			profile:      current,
-			// outputPath: ,
+			outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
 			// journalPath: ,
 		}
 
@@ -61,14 +60,14 @@ func (c *controller) schemeSequence(
 }
 
 func (c *controller) adhocSequence(
-	itemPath string,
+	pi *pathInfo,
 ) Sequence {
 	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
 	step := &magickStep{
 		shared:       c.shared,
 		thirdPartyCL: changed,
-		sourcePath:   itemPath,
-		// outputPath: ,
+		sourcePath:   pi.item.Path,
+		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
 		// journalPath: ,
 	}
 
@@ -90,26 +89,29 @@ func (c *controller) composeProfileCL(
 
 func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 	var (
-		zero      Step
-		resultErr error
+		zero Step
+		err  error
 	)
 
 	iterator := collections.ForwardRunIt[Step, error](sequence, zero)
 	each := func(step Step) error {
-		return step.Run(&RunStepInfo{
-			Item:   item,
-			Source: c.local.destination,
-		})
+		return step.Run(&c.private.pi)
 	}
-	while := func(_ Step, err error) bool {
-		if resultErr == nil {
-			resultErr = err
+	while := func(_ Step, e error) bool {
+		if err == nil {
+			err = e
 		}
 
 		// TODO: this needs to change according to a new, not yet defined
 		// setting, 'ContinueOnError'
 		//
-		return err == nil
+		return e == nil
+	}
+
+	c.private.pi = pathInfo{
+		item:   item,
+		origin: item.Parent.Path,
+		scheme: c.shared.finder.Scheme,
 	}
 
 	// TODO: need to decide a proper policy for cleaning up
@@ -119,8 +121,10 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 	// Perhaps we have an error policy including one that implements
 	// a retry.
 	//
-	if c.local.destination, resultErr = c.shared.fileManager.Setup(item); resultErr != nil {
-		return resultErr
+	if c.private.pi.runStep.Source, err = c.shared.fileManager.Setup(
+		&c.private.pi,
+	); err != nil {
+		return err
 	}
 
 	iterator.RunAll(each, while)
@@ -128,6 +132,4 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 	return c.shared.fileManager.Tidy()
 }
 
-func (c *controller) Reset() {
-	c.local.destination = ""
-}
+func (c *controller) Reset() {}
