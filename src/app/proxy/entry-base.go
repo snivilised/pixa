@@ -25,7 +25,7 @@ func summariseAfter(result *nav.TraverseResult, err error) {
 	summary := fmt.Sprintf("files: %v, folders: %v", files, folders)
 	message := lo.Ternary(err == nil,
 		fmt.Sprintf("navigation completed ok (%v) 💝 [%v]", summary, measure),
-		fmt.Sprintf("error occurred during navigation (%v)❤️💔 [%v]", err, measure),
+		fmt.Sprintf("error occurred during navigation (%v)💔 [%v]", err, measure),
 	)
 	fmt.Println(message)
 }
@@ -44,6 +44,7 @@ type EntryBase struct {
 	ProfilesCFG ProfilesConfig
 	SamplerCFG  SamplerConfig
 	Vfs         storage.VirtualFS
+	FileManager *FileManager
 }
 
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/samber/lo"
+	"github.com/snivilised/extendio/xfs/nav"
 )
 
 type pfPath uint
@@ -190,11 +191,6 @@ so we have 3 parameters:
 // PathFinder provides the common paths required, but its the controller that know
 // the specific paths based around this common framework
 
-type strategies struct {
-	output   outputStrategy
-	deletion deletionStrategy
-}
-
 type PathFinder struct {
 	Scheme          string
 	ExplicitProfile string
@@ -223,13 +219,17 @@ type PathFinder struct {
 
 	arity            int
 	transparentInput bool
-
-	behaviours strategies
 }
 
 type staticInfo struct {
 	trashLabel  string
 	legacyLabel string
+}
+
+func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
+	path := FilenameWithoutExtension(item.Extension.Name) + ".journal.txt"
+
+	return filepath.Join(item.Extension.Parent, path)
 }
 
 // Destination returns the location of what should be used
@@ -240,7 +240,7 @@ type staticInfo struct {
 // folder.
 //
 // Destination creates a path for the input; should return empty
-// string for the folder, if no move is required (ie transparent)
+// string for the folder, if no move is required (ie non transparent)
 // The PathFinder will only call this function when the input
 // is not transparent. When the --Trash option is present, it will
 // determine the destination path for the input.

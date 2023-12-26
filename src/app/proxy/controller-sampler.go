@@ -8,11 +8,7 @@ type SamplerController struct {
 	controller
 }
 
-func (c *SamplerController) OnNewShrinkItem(item *nav.TraverseItem,
-	positional []string,
-) error {
-	_ = positional
-
+func (c *SamplerController) OnNewShrinkItem(item *nav.TraverseItem) error {
 	// create a master path info here and pass into the sequences
 	// to replace the individual properties on the step
 	//

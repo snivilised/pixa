@@ -18,13 +18,29 @@ const (
 // system and nothing else.
 type FileManager struct {
 	vfs    storage.VirtualFS
-	finder *PathFinder
+	Finder *PathFinder
+}
+
+func (fm *FileManager) Create(path string) error {
+	if fm.vfs.FileExists(path) {
+		return nil
+	}
+
+	file, err := fm.vfs.Create(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	return nil
 }
 
 // Setup prepares for operation by moving existing file out of the way,
 // if applicable. Return the path denoting where the input will be moved to.
 func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
-	if !fm.finder.transparentInput {
+	if !fm.Finder.transparentInput {
 		// Any result file must not clash with the input file, so the input
 		// file must stay in place
 		return pi.item.Path, nil
@@ -36,7 +52,7 @@ func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
 	// original alone and create other outputs; in this scenario
 	// we don't want to rename/move the source...
 	//
-	if folder, file := fm.finder.Destination(pi); folder != "" {
+	if folder, file := fm.Finder.Destination(pi); folder != "" {
 		if err = fm.vfs.MkdirAll(folder, beezledub); err != nil {
 			return errorDestination, errors.Wrapf(
 				err, "could not create parent setup for '%v'", pi.item.Path,
@@ -69,21 +85,12 @@ func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
 	return destination, nil
 }
 
-func (fm *FileManager) move(from, to string) error {
-	_, _ = from, to
+func (fm *FileManager) Tidy(pi *pathInfo) error {
+	journalFile := fm.Finder.JournalFile(pi.item)
 
-	return nil
-}
+	if !fm.vfs.FileExists(journalFile) {
+		return fmt.Errorf("journal file '%v' not found", journalFile)
+	}
 
-func (fm *FileManager) delete(target string) error {
-	_ = target
-
-	return nil
-}
-
-func (fm *FileManager) Tidy() error {
-	// invoke deletions
-	// delete journal file
-	//
-	return nil
+	return fm.vfs.Remove(journalFile)
 }
