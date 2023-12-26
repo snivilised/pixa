@@ -18,6 +18,33 @@ type controller struct {
 	private *privateControllerInfo
 }
 
+func (c *controller) OnNewShrinkItem(item *nav.TraverseItem) error {
+	// create a master path info here and pass into the sequences
+	// to replace the individual properties on the step
+	//
+	pi := &pathInfo{
+		item:    item,
+		scheme:  c.shared.Inputs.Root.ProfileFam.Native.Scheme,
+		profile: c.shared.Inputs.Root.ProfileFam.Native.Profile,
+		origin:  item.Extension.Parent,
+	}
+
+	var sequence Sequence
+
+	switch {
+	case pi.profile != "":
+		sequence = c.profileSequence(pi)
+
+	case pi.scheme != "":
+		sequence = c.schemeSequence(pi)
+
+	default:
+		sequence = c.adhocSequence(pi)
+	}
+
+	return c.Run(item, sequence)
+}
+
 func (c *controller) profileSequence(
 	pi *pathInfo,
 ) Sequence {

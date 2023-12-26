@@ -10,24 +10,10 @@ func NewControllerRegistry(shared *SharedControllerInfo) *ControllerRegistry {
 			// see: https://www.sobyte.net/post/2022-03/think-in-sync-pool/
 			//
 			New: func() interface{} {
-				switch shared.Type {
-				case ControllerTypeFullEn:
-					return &FullController{
-						controller: controller{
-							shared: shared,
-						},
-					}
-
-				case ControllerTypeSamplerEn:
-					return &SamplerController{
-						controller: controller{
-							shared:  shared,
-							private: &privateControllerInfo{},
-						},
-					}
+				return &controller{
+					shared:  shared,
+					private: &privateControllerInfo{},
 				}
-
-				panic("undefined controller type")
 			},
 		},
 	}

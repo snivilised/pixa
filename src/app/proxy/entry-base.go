@@ -138,7 +138,6 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	//
 	if e.Registry == nil {
 		e.Registry = NewControllerRegistry(&SharedControllerInfo{
-			Type:     ControllerTypeSamplerEn, // TODO: to come from an arg !!!
 			Options:  e.Options,
 			program:  e.Program,
 			profiles: e.ProfilesCFG,
