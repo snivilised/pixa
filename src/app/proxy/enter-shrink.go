@@ -130,7 +130,6 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	}
 
 	e.Registry = NewControllerRegistry(&SharedControllerInfo{
-		Type:        ControllerTypeSamplerEn, // TODO: to come from an arg !!!
 		Options:     e.Options,
 		program:     e.Program,
 		profiles:    e.ProfilesCFG,
