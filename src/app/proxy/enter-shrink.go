@@ -3,7 +3,6 @@ package proxy
 import (
 	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -27,26 +26,16 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "LookAhead: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			// TODO: get the journal filename from path-finder
-			//
-			withoutExt := FilenameWithoutExtension(item.Extension.Name) + ".journal.txt"
-			pathWithoutExt := filepath.Join(item.Extension.Parent, withoutExt)
-
-			// TODO(put this back in): only create file if not exits
-			//
-			// file, err := os.Create(pathWithoutExt) // TODO: use vfs
-
-			// ??? if err == nil {
-			// 	defer file.Close()
-			// }
+			journalPath := e.FileManager.Finder.JournalFile(item)
+			err := e.FileManager.Create(journalPath)
 
 			fmt.Printf(
-				"---> 💧💧 SHRINK-JOURNAL-FILE(disabled!!): (create journal:%v) '%v'\n",
-				pathWithoutExt,
+				"---> 💧💧 SHRINK-JOURNAL-FILE: (create journal:%v) '%v'\n",
+				journalPath,
 				item.Path,
 			)
 
-			return nil
+			return err
 		},
 	}
 
@@ -88,14 +77,10 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 				item.Path,
 			)
 
-			positional := []string{
-				fmt.Sprintf("'%v'", item.Path),
-			}
-
 			controller := e.Registry.Get()
 			defer e.Registry.Put(controller)
 
-			return controller.OnNewShrinkItem(item, positional)
+			return controller.OnNewShrinkItem(item)
 		},
 	}
 }
@@ -104,11 +89,7 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 	finder := &PathFinder{
 		Scheme:          e.Inputs.Root.ProfileFam.Native.Scheme,
 		ExplicitProfile: e.Inputs.Root.ProfileFam.Native.Profile,
-		behaviours: strategies{
-			output:   &inlineOutputStrategy{},
-			deletion: &inlineDeletionStrategy{},
-		},
-		arity: 1,
+		arity:           1,
 	}
 
 	if finder.Scheme != "" {
@@ -118,14 +99,12 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 
 	if e.Inputs.ParamSet.Native.OutputPath != "" {
 		finder.Output = e.Inputs.ParamSet.Native.OutputPath
-		finder.behaviours.output = &ejectOutputStrategy{}
 	} else {
 		finder.transparentInput = true
 	}
 
 	if e.Inputs.ParamSet.Native.TrashPath != "" {
 		finder.Trash = e.Inputs.ParamSet.Native.TrashPath
-		finder.behaviours.deletion = &ejectOutputStrategy{}
 	}
 
 	return finder
@@ -145,18 +124,20 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	e.EntryBase.ConfigureOptions(o)
 
 	finder := e.createFinder()
+	e.FileManager = &FileManager{
+		vfs:    e.Vfs,
+		Finder: finder,
+	}
+
 	e.Registry = NewControllerRegistry(&SharedControllerInfo{
-		Type:     ControllerTypeSamplerEn, // TODO: to come from an arg !!!
-		Options:  e.Options,
-		program:  e.Program,
-		profiles: e.ProfilesCFG,
-		sampler:  e.SamplerCFG,
-		Inputs:   e.Inputs,
-		finder:   finder,
-		fileManager: &FileManager{
-			vfs:    e.Vfs,
-			finder: finder,
-		},
+		Type:        ControllerTypeSamplerEn, // TODO: to come from an arg !!!
+		Options:     e.Options,
+		program:     e.Program,
+		profiles:    e.ProfilesCFG,
+		sampler:     e.SamplerCFG,
+		Inputs:      e.Inputs,
+		finder:      finder,
+		fileManager: e.FileManager,
 	})
 }
 
@@ -200,14 +181,10 @@ func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 		item.Path,
 	)
 
-	positional := []string{
-		fmt.Sprintf("'%v'", item.Path),
-	}
-
 	controller := e.Registry.Get()
 	defer e.Registry.Put(controller)
 
-	return controller.OnNewShrinkItem(item, positional)
+	return controller.OnNewShrinkItem(item)
 }
 
 func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {

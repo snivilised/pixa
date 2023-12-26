@@ -9,12 +9,11 @@ type FullController struct {
 	controller
 }
 
-func (c *FullController) OnNewShrinkItem(item *nav.TraverseItem,
-	positional []string,
+func (c *FullController) OnNewShrinkItem(
+	item *nav.TraverseItem,
 	thirdPartyCL cobrass.ThirdPartyCommandLine,
 ) error {
 	_ = item
-	_ = positional
 	_ = thirdPartyCL
 
 	return nil

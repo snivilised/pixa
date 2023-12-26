@@ -129,7 +129,7 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 
 	iterator.RunAll(each, while)
 
-	return c.shared.fileManager.Tidy()
+	return c.shared.fileManager.Tidy(&c.private.pi)
 }
 
 func (c *controller) Reset() {}

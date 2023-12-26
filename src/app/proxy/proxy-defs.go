@@ -30,9 +30,7 @@ type privateControllerInfo struct {
 
 // ItemController
 type ItemController interface {
-	OnNewShrinkItem(item *nav.TraverseItem,
-		positional []string,
-	) error
+	OnNewShrinkItem(item *nav.TraverseItem) error
 	Reset()
 }
 

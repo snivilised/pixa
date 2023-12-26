@@ -39,6 +39,8 @@ var (
 	backyardWorldsPlanet9Scan01First4 []string
 	backyardWorldsPlanet9Scan01First6 []string
 
+	backyardWorldsPlanet9Scan01Last4 []string
+
 	profilesConfigData proxy.ProfilesConfigMap
 	samplerConfigData  *proxy.MsSamplerConfig
 )
@@ -66,6 +68,13 @@ func init() {
 			"06_Backyard-Worlds-Planet-9_s01.jpg",
 		}...,
 	)
+
+	backyardWorldsPlanet9Scan01Last4 = []string{
+		"03_Backyard-Worlds-Planet-9_s01.jpg",
+		"04_Backyard-Worlds-Planet-9_s01.jpg",
+		"05_Backyard-Worlds-Planet-9_s01.jpg",
+		"06_Backyard-Worlds-Planet-9_s01.jpg",
+	}
 
 	profilesConfigData = proxy.ProfilesConfigMap{
 		"blur": clif.ChangedFlagsMap{
@@ -319,7 +328,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard Worlds*",
+					"--files-gb", "*Backyard-Worlds*",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
@@ -338,10 +347,69 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard Worlds*",
+					"--files-gb", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
+				},
+				expected:     backyardWorldsPlanet9Scan01First4,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "adaptive/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run(last) transparent with profile",
+				should:   "sample(last) with glob filter using the defined profile",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--last",
+					"--no-files", "4",
+					"--files-gb", "*Backyard-Worlds*",
+					"--profile", "adaptive",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     backyardWorldsPlanet9Scan01Last4,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "adaptive/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01Last4,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "profile without no-files in args",
+				should:   "sample(first) with glob filter, using no-files from config",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--files-gb", "*Backyard-Worlds*",
+					"--profile", "adaptive",
+				},
+				expected:     backyardWorldsPlanet9Scan01First2,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "adaptive/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First2,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "profile",
+				should:   "sample with regex filter using the defined profile",
+				relative: backyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"--files-rx", "Backyard-Worlds",
+					"--profile", "adaptive",
 				},
 				expected:     backyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
@@ -358,7 +426,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard Worlds*",
+					"--files-gb", "*Backyard-Worlds*",
 					"--scheme", "singleton",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -378,7 +446,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard Worlds*",
+					"--files-gb", "*Backyard-Worlds*",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
@@ -398,7 +466,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard Worlds*",
+					"--files-gb", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -419,7 +487,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard Worlds*",
+					"--files-gb", "*Backyard-Worlds*",
 					"--scheme", "singleton",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -432,63 +500,23 @@ var _ = Describe("SamplerController", Ordered, func() {
 			},
 		}),
 
-		XEntry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "profile",
-				should:   "sample(last) with glob filter using the defined profile",
-				relative: backyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--last",
-					"--no-files", "4",
-					"--files-gb", "*Energy-Explorers*",
-					"--profile", "adaptive",
-				},
-				expected: backyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		XEntry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "profile without no-files in args",
-				should:   "sample(first) with glob filter, using no-files from config",
-				relative: backyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--files-gb", "*Energy-Explorers*",
-					"--profile", "adaptive",
-				},
-				expected: backyardWorldsPlanet9Scan01First2,
-			},
-		}),
-
-		XEntry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "profile",
-				should:   "sample with regex filter using the defined profile",
-				relative: backyardWorldsPlanet9Scan01,
-				args: []string{
-					"--strip", "--interlace", "plane", "--quality", "85", "--profile", "adaptive",
-				},
-			},
-		}),
-
-		// override config with explicitly defined args on command line
-		// ie they should be present in args as opposed to relying on presence
-		// in config. Here we are testing that command line overrides config
-		// ...
-
-		// ===
-
-		XEntry(nil, &samplerTE{
+		Entry(nil, &samplerTE{
 			controllerTE: controllerTE{
 				given:    "scheme",
 				should:   "sample all profiles in the scheme",
 				relative: backyardWorldsPlanet9Scan01,
 				args: []string{
-					"--strip", "--interlace", "plane", "--quality", "85", "--scheme", "blur-sf",
+					"--sample",
+					"--no-files", "4",
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"--scheme", "blur-sf",
 				},
-				expected: backyardWorldsPlanet9Scan01First6,
+				expected:     backyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "blur-sf/TRASH",
+				inputs:       backyardWorldsPlanet9Scan01First4,
 			},
 		}),
 	)
