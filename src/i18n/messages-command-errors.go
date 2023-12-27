@@ -103,8 +103,8 @@ type OutputPathDoesNotExistError struct {
 	xi18n.LocalisableError
 }
 
-func NewOutputPathDoesNotExistError(path string) InvalidInterlaceError {
-	return InvalidInterlaceError{
+func NewOutputPathDoesNotExistError(path string) OutputPathDoesNotExistError {
+	return OutputPathDoesNotExistError{
 		LocalisableError: xi18n.LocalisableError{
 			Data: ShrinkCmdOutputPathDoesNotExistTemplData{
 				Path: path,

@@ -7,7 +7,7 @@ require (
 	github.com/onsi/gomega v1.30.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
-	github.com/snivilised/extendio v0.5.0
+	github.com/snivilised/extendio v0.5.1
 	github.com/snivilised/lorax v0.4.2
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.1

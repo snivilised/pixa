@@ -2,14 +2,12 @@ package proxy_test
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
-	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy"
@@ -17,16 +15,11 @@ import (
 	"github.com/snivilised/pixa/src/app/mocks"
 	"github.com/snivilised/pixa/src/internal/helpers"
 	"github.com/snivilised/pixa/src/internal/matchers"
-	"github.com/spf13/viper"
 	"go.uber.org/mock/gomock"
 )
 
 const (
-	silent                      = true
-	verbose                     = false
-	faydeaudeau                 = os.FileMode(0o777)
-	beezledub                   = os.FileMode(0o666)
-	backyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
+	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
 )
 
 var (
@@ -34,142 +27,7 @@ var (
 	_ proxy.SamplerConfig        = &proxy.MsSamplerConfig{}
 	_ proxy.ProfilesConfigReader = &proxy.MsProfilesConfigReader{}
 	_ proxy.SamplerConfigReader  = &proxy.MsSamplerConfigReader{}
-
-	backyardWorldsPlanet9Scan01First2 []string
-	backyardWorldsPlanet9Scan01First4 []string
-	backyardWorldsPlanet9Scan01First6 []string
-
-	backyardWorldsPlanet9Scan01Last4 []string
-
-	profilesConfigData proxy.ProfilesConfigMap
-	samplerConfigData  *proxy.MsSamplerConfig
 )
-
-func init() {
-	backyardWorldsPlanet9Scan01First2 = []string{
-		"01_Backyard-Worlds-Planet-9_s01.jpg",
-		"02_Backyard-Worlds-Planet-9_s01.jpg",
-	}
-
-	backyardWorldsPlanet9Scan01First4 = backyardWorldsPlanet9Scan01First2
-	backyardWorldsPlanet9Scan01First4 = append(
-		backyardWorldsPlanet9Scan01First4,
-		[]string{
-			"03_Backyard-Worlds-Planet-9_s01.jpg",
-			"04_Backyard-Worlds-Planet-9_s01.jpg",
-		}...,
-	)
-
-	backyardWorldsPlanet9Scan01First6 = backyardWorldsPlanet9Scan01First4
-	backyardWorldsPlanet9Scan01First6 = append(
-		backyardWorldsPlanet9Scan01First6,
-		[]string{
-			"05_Backyard-Worlds-Planet-9_s01.jpg",
-			"06_Backyard-Worlds-Planet-9_s01.jpg",
-		}...,
-	)
-
-	backyardWorldsPlanet9Scan01Last4 = []string{
-		"03_Backyard-Worlds-Planet-9_s01.jpg",
-		"04_Backyard-Worlds-Planet-9_s01.jpg",
-		"05_Backyard-Worlds-Planet-9_s01.jpg",
-		"06_Backyard-Worlds-Planet-9_s01.jpg",
-	}
-
-	profilesConfigData = proxy.ProfilesConfigMap{
-		"blur": clif.ChangedFlagsMap{
-			"strip":         "true",
-			"interlace":     "plane",
-			"gaussian-blur": "0.05",
-		},
-		"sf": clif.ChangedFlagsMap{
-			"dry-run":         "true",
-			"strip":           "true",
-			"interlace":       "plane",
-			"sampling-factor": "4:2:0",
-		},
-		"adaptive": clif.ChangedFlagsMap{
-			"strip":           "true",
-			"interlace":       "plane",
-			"gaussian-blur":   "0.25",
-			"adaptive-resize": "60",
-		},
-	}
-
-	samplerConfigData = &proxy.MsSamplerConfig{
-		Files:   2,
-		Folders: 1,
-		Schemes: proxy.MsSamplerSchemesConfig{
-			"blur-sf": proxy.MsSchemeConfig{
-				Profiles: []string{"blur", "sf"},
-			},
-			"adaptive-sf": proxy.MsSchemeConfig{
-				Profiles: []string{"adaptive", "sf"},
-			},
-			"adaptive-blur": proxy.MsSchemeConfig{
-				Profiles: []string{"adaptive", "blur"},
-			},
-			"singleton": proxy.MsSchemeConfig{
-				Profiles: []string{"adaptive"},
-			},
-		},
-	}
-}
-
-func doMockProfilesConfigsWith(
-	data proxy.ProfilesConfigMap,
-	config configuration.ViperConfig,
-	reader *mocks.MockProfilesConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.ProfilesConfig, error) {
-			stub := &proxy.MsProfilesConfig{
-				Profiles: data,
-			}
-
-			return stub, nil
-		},
-	).AnyTimes()
-}
-
-func doMockSamplerConfigWith(
-	data *proxy.MsSamplerConfig,
-	config configuration.ViperConfig,
-	reader *mocks.MockSamplerConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.SamplerConfig, error) {
-			stub := data
-
-			return stub, nil
-		},
-	).AnyTimes()
-}
-
-func doMockConfigs(
-	config configuration.ViperConfig,
-	profilesReader *mocks.MockProfilesConfigReader,
-	samplerReader *mocks.MockSamplerConfigReader,
-) {
-	doMockProfilesConfigsWith(profilesConfigData, config, profilesReader)
-	doMockSamplerConfigWith(samplerConfigData, config, samplerReader)
-}
-
-func doMockViper(config *cmocks.MockViperConfig) {
-	config.EXPECT().ReadInConfig().DoAndReturn(
-		func() error {
-			return nil
-		},
-	).AnyTimes()
-}
-
-func resetFS(index string, silent bool) (vfs storage.VirtualFS, root string) {
-	vfs = storage.UseMemFS()
-	root = helpers.Scientist(vfs, index, silent)
-	Expect(matchers.AsDirectory(root)).To(matchers.ExistInFS(vfs))
-
-	return vfs, root
-}
 
 type controllerTE struct {
 	given        string
@@ -206,42 +64,20 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 	BeforeAll(func() {
 		repo = helpers.Repo(filepath.Join("..", "..", ".."))
-		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
-		configPath = filepath.Join(repo, "test", "data", "configuration")
+		l10nPath = helpers.Path(repo, "test/data/l10n")
+		configPath = helpers.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
-		viper.Reset()
-		vfs, root = resetFS("nasa-scientist-index.xml", silent)
+		vfs, root, config = helpers.SetupTest(
+			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
+		)
 
 		ctrl = gomock.NewController(GinkgoT())
 		mockViperConfig = cmocks.NewMockViperConfig(ctrl)
 		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
 		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
-		doMockViper(mockViperConfig)
-
-		// create a dummy config file in vfs
-		//
-		_ = vfs.MkdirAll(configPath, beezledub)
-		if _, err := vfs.Create(filepath.Join(configPath, helpers.PixaConfigTestFilename)); err != nil {
-			Fail(fmt.Sprintf("🔥 can't create dummy config (err: '%v')", err))
-		}
-
-		Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(vfs))
-
-		config = &configuration.GlobalViperConfig{}
-
-		config.SetConfigType(helpers.PixaConfigType)
-		config.SetConfigName(helpers.PixaConfigTestFilename)
-		config.AddConfigPath(configPath)
-
-		if err := config.ReadInConfig(); err != nil {
-			Fail(fmt.Sprintf("🔥 can't read config (err: '%v')", err))
-		}
-
-		if err := helpers.UseI18n(l10nPath); err != nil {
-			Fail(err.Error())
-		}
+		helpers.DoMockViper(mockViperConfig)
 	})
 
 	AfterEach(func() {
@@ -250,7 +86,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 	DescribeTable("sampler",
 		func(entry *samplerTE) {
-			doMockConfigs(config, mockProfilesReader, mockSamplerReader)
+			helpers.DoMockConfigs(config, mockProfilesReader, mockSamplerReader)
 
 			directory := helpers.Path(root, entry.relative)
 			options := []string{
@@ -262,13 +98,11 @@ var _ = Describe("SamplerController", Ordered, func() {
 			args = append(args, entry.args...)
 			if entry.outputFlag != "" {
 				output := helpers.Path(root, entry.outputFlag)
-				args = append(args, "--output")
-				args = append(args, output)
+				args = append(args, "--output", output)
 			}
 			if entry.trashFlag != "" {
 				trash := helpers.Path(root, entry.trashFlag)
-				args = append(args, "--trash")
-				args = append(args, trash)
+				args = append(args, "--trash", trash)
 			}
 
 			bootstrap := command.Bootstrap{
@@ -324,7 +158,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run transparent adhoc",
 				should:   "sample(first) with glob filter, result file takes place of input",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -332,10 +166,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "ADHOC/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -343,7 +177,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run transparent with profile",
 				should:   "sample(first) with glob filter, result file takes place of input",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -352,10 +186,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "adaptive/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -363,7 +197,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run(last) transparent with profile",
 				should:   "sample(last) with glob filter using the defined profile",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--last",
@@ -373,10 +207,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				expected:     backyardWorldsPlanet9Scan01Last4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01Last4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "adaptive/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01Last4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01Last4,
 			},
 		}),
 
@@ -384,16 +218,16 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "profile without no-files in args",
 				should:   "sample(first) with glob filter, using no-files from config",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--files-gb", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 				},
-				expected:     backyardWorldsPlanet9Scan01First2,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First2,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "adaptive/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First2,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First2,
 			},
 		}),
 
@@ -401,7 +235,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "profile",
 				should:   "sample with regex filter using the defined profile",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -411,10 +245,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--files-rx", "Backyard-Worlds",
 					"--profile", "adaptive",
 				},
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "adaptive/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -422,7 +256,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run transparent with scheme with single profile",
 				should:   "sample(first) with glob filter, result file takes place of input",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -431,10 +265,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "singleton/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -442,7 +276,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run non transparent adhoc",
 				should:   "sample(first) with glob filter, input moved to alternative location",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -451,10 +285,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
 				supplement:   "ADHOC/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -462,7 +296,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run non transparent with profile",
 				should:   "sample(first) with glob filter, input moved to alternative location",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -472,10 +306,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
 				supplement:   "adaptive/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -483,7 +317,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "run non transparent scheme single with profile",
 				should:   "sample(first) with glob filter, input moved to alternative location",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
@@ -493,10 +327,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				expected:     backyardWorldsPlanet9Scan01First4,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
 				supplement:   "singleton/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -504,19 +338,20 @@ var _ = Describe("SamplerController", Ordered, func() {
 			controllerTE: controllerTE{
 				given:    "scheme",
 				should:   "sample all profiles in the scheme",
-				relative: backyardWorldsPlanet9Scan01,
+				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
 					"--no-files", "4",
+					"--files-gb", "*Backyard-Worlds*",
 					"--strip",
 					"--interlace", "plane",
 					"--quality", "85",
 					"--scheme", "blur-sf",
 				},
-				expected:     backyardWorldsPlanet9Scan01First6,
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "blur-sf/TRASH",
-				inputs:       backyardWorldsPlanet9Scan01First4,
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 	)

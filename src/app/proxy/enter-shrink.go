@@ -39,29 +39,96 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 		},
 	}
 
+	defs := e.getFilterDefs()
+	o.Store.FilterDefs = defs
+}
+
+func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
+	var (
+		file, folder  *nav.FilterDef
+		defs          *nav.FilterDefinitions
+		folderDefined = true
+		pattern       string
+	)
+
 	switch {
 	case e.Inputs.FilesFam.Native.FilesGlob != "":
-		pattern := e.Inputs.FilesFam.Native.FilesGlob
-		o.Store.FilterDefs = &nav.FilterDefinitions{
-			Node: nav.FilterDef{
-				Type:        nav.FilterTypeGlobEn,
-				Description: fmt.Sprintf("--files-gb(G): '%v'", pattern),
-				Pattern:     pattern,
-				Scope:       nav.ScopeFileEn,
-			},
+		pattern = e.Inputs.FilesFam.Native.FilesGlob
+		file = &nav.FilterDef{
+			Type:        nav.FilterTypeGlobEn,
+			Description: fmt.Sprintf("--files-gb(G): '%v'", pattern),
+			Pattern:     pattern,
+			Scope:       nav.ScopeFileEn,
 		}
 
 	case e.Inputs.FilesFam.Native.FilesRexEx != "":
-		pattern := e.Inputs.FilesFam.Native.FilesRexEx
-		o.Store.FilterDefs = &nav.FilterDefinitions{
-			Node: nav.FilterDef{
-				Type:        nav.FilterTypeRegexEn,
-				Description: fmt.Sprintf("--files-rx(X): '%v'", pattern),
-				Pattern:     pattern,
-				Scope:       nav.ScopeFileEn,
-			},
+		pattern = e.Inputs.FilesFam.Native.FilesRexEx
+		file = &nav.FilterDef{
+			Type:        nav.FilterTypeRegexEn,
+			Description: fmt.Sprintf("--files-rx(X): '%v'", pattern),
+			Pattern:     pattern,
+			Scope:       nav.ScopeFileEn,
+		}
+
+	default:
+		pattern = "(?i).(jpe?g|png)$"
+		file = &nav.FilterDef{
+			Type:        nav.FilterTypeRegexEn,
+			Description: fmt.Sprintf("--files-rx(X): '%v'", pattern),
+			Pattern:     pattern,
+			Scope:       nav.ScopeFileEn,
 		}
 	}
+
+	switch {
+	case e.Inputs.Root.FoldersFam.Native.FoldersGlob != "":
+		pattern = e.Inputs.Root.FoldersFam.Native.FoldersRexEx
+		folder = &nav.FilterDef{
+			Type:        nav.FilterTypeGlobEn,
+			Description: fmt.Sprintf("--folders-gb(Z): '%v'", pattern),
+			Pattern:     pattern,
+			Scope:       nav.ScopeFolderEn | nav.ScopeLeafEn,
+		}
+
+	case e.Inputs.Root.FoldersFam.Native.FoldersRexEx != "":
+		pattern = e.Inputs.Root.FoldersFam.Native.FoldersRexEx
+		folder = &nav.FilterDef{
+			Type:        nav.FilterTypeRegexEn,
+			Description: fmt.Sprintf("--folders-rx(Y): '%v'", pattern),
+			Pattern:     pattern,
+			Scope:       nav.ScopeFolderEn | nav.ScopeLeafEn,
+		}
+
+	default:
+		folderDefined = false
+	}
+
+	switch {
+	case folderDefined:
+		defs = &nav.FilterDefinitions{
+			Node: nav.FilterDef{
+				Type: nav.FilterTypePolyEn,
+				Poly: &nav.PolyFilterDef{
+					File:   *file,
+					Folder: *folder,
+				},
+			},
+		}
+
+	default:
+		defs = &nav.FilterDefinitions{
+			Node: *file,
+		}
+	}
+
+	return lo.TernaryF(pattern != "",
+		func() *nav.FilterDefinitions {
+			return defs
+		},
+		func() *nav.FilterDefinitions {
+			return nil
+		},
+	)
 }
 
 func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {

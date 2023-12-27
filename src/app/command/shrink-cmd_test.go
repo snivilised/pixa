@@ -9,15 +9,22 @@ import (
 
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/pixa/src/internal/matchers"
 
 	"github.com/snivilised/extendio/xfs/storage"
 )
 
+const (
+	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
+)
+
 type commandTE struct {
-	message    string
-	args       []string
-	configPath string
+	message     string
+	args        []string
+	trashFlag   string
+	trashValue  string
+	outputFlag  string
+	outputValue string
+	configPath  string
 }
 
 type shrinkTE struct {
@@ -25,19 +32,28 @@ type shrinkTE struct {
 	directory string
 }
 
-func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE) {
+func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root string) {
 	bootstrap := command.Bootstrap{
 		Vfs: vfs,
 	}
 
-	// we also prepend the directory name to the command line
-	//
-	options := append([]string{helpers.ShrinkCommandName, entry.directory}, []string{
+	directory := helpers.Path(root, entry.directory)
+	args := append([]string{helpers.ShrinkCommandName, directory}, []string{
 		"--dry-run", "--mode", "tidy",
 	}...)
 
+	if entry.outputFlag != "" && entry.outputValue != "" {
+		output := helpers.Path(root, entry.outputValue)
+		args = append(args, entry.outputFlag, output)
+	}
+
+	if entry.trashFlag != "" && entry.trashValue != "" {
+		trash := helpers.Path(root, entry.trashValue)
+		args = append(args, entry.trashFlag, trash)
+	}
+
 	tester := helpers.CommandTester{
-		Args: append(options, entry.args...),
+		Args: append(args, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &DetectorStub{}
 			co.Program = &ExecutorStub{
@@ -59,34 +75,27 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 		repo       string
 		l10nPath   string
 		configPath string
-		nfs        storage.VirtualFS
+		root       string
+		vfs        storage.VirtualFS
 	)
 
 	BeforeAll(func() {
-		nfs = storage.UseNativeFS()
 		repo = helpers.Repo(filepath.Join("..", "..", ".."))
-
-		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
-		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
-
-		configPath = filepath.Join(repo, "test", "data", "configuration")
-		Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(nfs))
+		l10nPath = helpers.Path(repo, "test/data/l10n")
+		configPath = helpers.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
-		if err := helpers.UseI18n(l10nPath); err != nil {
-			Fail(err.Error())
-		}
+		vfs, root, _ = helpers.SetupTest(
+			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
+		)
 	})
 
 	DescribeTable("ShrinkCmd",
 		func(entry *shrinkTE) {
-			// set directory here, because during discovery phase of unit test ,
-			// l10nPath is not set, so we can't set it inside the Entry
-			//
-			entry.directory = l10nPath
+			entry.directory = BackyardWorldsPlanet9Scan01
 			entry.configPath = configPath
-			expectValidShrinkCmdInvocation(nfs, entry)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		},
 		func(entry *shrinkTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v'", entry.message)
@@ -177,64 +186,64 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 	When("with general long form parameters", func() {
 		It("🧪 should: execute successfully", func() {
 			entry := &shrinkTE{
-				directory: l10nPath,
+				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
-					message: "with general long form parameters",
-					args: []string{
-						"--output", l10nPath,
-					},
-					configPath: configPath,
+					message:     "with general long form parameters",
+					args:        []string{},
+					outputFlag:  "--output",
+					outputValue: "output",
+					configPath:  configPath,
 				},
 			}
 
-			expectValidShrinkCmdInvocation(nfs, entry)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
 			entry := &shrinkTE{
-				directory: l10nPath,
+				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
-					message: "with general long form parameters",
-					args: []string{
-						"--trash", l10nPath,
-					},
+					message:    "with general long form parameters",
+					args:       []string{},
+					trashFlag:  "--trash",
+					trashValue: "discard",
 					configPath: configPath,
 				},
 			}
 
-			expectValidShrinkCmdInvocation(nfs, entry)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 	})
 
 	When("with general short form parameters", func() {
 		It("🧪 should: execute successfully", func() {
 			entry := &shrinkTE{
-				directory: l10nPath,
+				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
-					message: "with general short form parameters",
-					args: []string{
-						"-o", l10nPath,
-					},
-					configPath: configPath,
+					message:     "with general short form parameters",
+					args:        []string{},
+					outputFlag:  "-o",
+					outputValue: "output",
+					configPath:  configPath,
 				},
 			}
 
-			expectValidShrinkCmdInvocation(nfs, entry)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
 			entry := &shrinkTE{
-				directory: l10nPath,
+				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
-					message: "with general short form parameters",
-					args: []string{
-						"-t", l10nPath,
-					},
+					message:    "with general short form parameters",
+					args:       []string{},
+					trashFlag:  "-t",
+					trashValue: "discard",
 					configPath: configPath,
 				},
 			}
 
-			expectValidShrinkCmdInvocation(nfs, entry)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 	})
 })
