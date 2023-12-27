@@ -10,7 +10,6 @@ import (
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
 type rootTE struct {
@@ -23,28 +22,24 @@ var _ = Describe("RootCmd", Ordered, func() {
 		repo       string
 		l10nPath   string
 		configPath string
-		nfs        storage.VirtualFS
-		tester     helpers.CommandTester
+		vfs        storage.VirtualFS
+
+		tester helpers.CommandTester
 	)
 
 	BeforeAll(func() {
-		nfs = storage.UseNativeFS()
 		repo = helpers.Repo(filepath.Join("..", "..", ".."))
-
-		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
-		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
-
-		configPath = filepath.Join(repo, "test", "data", "configuration")
-		Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(nfs))
-
-		if err := helpers.UseI18n(l10nPath); err != nil {
-			Fail(err.Error())
-		}
+		l10nPath = helpers.Path(repo, "test/data/l10n")
+		configPath = helpers.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
+		vfs, _, _ = helpers.SetupTest(
+			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
+		)
+
 		bootstrap := command.Bootstrap{
-			Vfs: nfs,
+			Vfs: vfs,
 		}
 		tester = helpers.CommandTester{
 			Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
