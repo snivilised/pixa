@@ -127,6 +127,7 @@ type RootCommandInputs struct {
 	WorkerPoolFam *assistant.ParamSet[store.WorkerPoolParameterSet]
 	FoldersFam    *assistant.ParamSet[store.FoldersFilterParameterSet]
 	ProfileFam    *assistant.ParamSet[store.ProfileParameterSet]
+	CascadeFam    *assistant.ParamSet[store.CascadeParameterSet]
 }
 
 type ShrinkCommandInputs struct {

@@ -178,6 +178,42 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			},
 		}),
+
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message: "vanilla with long form skim",
+				args: []string{
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"--skim",
+				},
+			},
+		}),
+
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message: "vanilla with short form skim",
+				args: []string{
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"-K",
+				},
+			},
+		}),
+
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message: "vanilla with depth",
+				args: []string{
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"--depth", "1",
+				},
+			},
+		}),
 	)
 
 	// NB: these tests are required because state does not work with
