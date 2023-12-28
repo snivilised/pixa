@@ -20,6 +20,7 @@ const (
 	WorkerPoolFamName = "worker-pool-family"
 	FoldersFamName    = "folders-family"
 	ProfileFamName    = "profile-family"
+	CascadeFamName    = "cascade-family"
 )
 
 func Execute() error {
@@ -124,6 +125,11 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	profileFam := assistant.NewParamSet[store.ProfileParameterSet](rootCommand)
 	profileFam.Native.BindAll(profileFam, rootCommand.PersistentFlags())
 
+	// family: cascade [--depth, --skim(K)]
+	//
+	cascadeFam := assistant.NewParamSet[store.CascadeParameterSet](rootCommand)
+	cascadeFam.Native.BindAll(cascadeFam, rootCommand.PersistentFlags())
+
 	// ??? rootCommand.Args = validatePositionalArgs
 
 	container.MustRegisterParamSet(RootPsName, paramSet)
@@ -131,6 +137,7 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	container.MustRegisterParamSet(WorkerPoolFamName, workerPoolFam)
 	container.MustRegisterParamSet(FoldersFamName, foldersFam)
 	container.MustRegisterParamSet(ProfileFamName, profileFam)
+	container.MustRegisterParamSet(CascadeFamName, cascadeFam)
 }
 
 func (b *Bootstrap) getRootInputs() *proxy.RootCommandInputs {
@@ -150,5 +157,8 @@ func (b *Bootstrap) getRootInputs() *proxy.RootCommandInputs {
 		ProfileFam: b.Container.MustGetParamSet(
 			ProfileFamName,
 		).(*assistant.ParamSet[store.ProfileParameterSet]),
+		CascadeFam: b.Container.MustGetParamSet(
+			CascadeFamName,
+		).(*assistant.ParamSet[store.CascadeParameterSet]),
 	}
 }
