@@ -20,11 +20,11 @@ type (
 	Sequence []Step
 )
 
-// magickStep knows how to combine parameters together so that the program
+// executionStep knows how to combine parameters together so that the program
 // can be invoked correctly; but it does not know how to compose the input
 // and output file names; this is the responsibility of the controller, which uses
 // the path-finder to accomplish that task.
-type magickStep struct {
+type executionStep struct {
 	shared       *SharedControllerInfo
 	thirdPartyCL clif.ThirdPartyCommandLine
 	profile      string
@@ -34,7 +34,7 @@ type magickStep struct {
 }
 
 // Run
-func (s *magickStep) Run(pi *pathInfo) error {
+func (s *executionStep) Run(pi *pathInfo) error {
 	folder, file := s.shared.finder.Result(pi)
 	result := filepath.Join(folder, file)
 	input := []string{pi.runStep.Source}

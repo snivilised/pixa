@@ -8,7 +8,9 @@ type SharedControllerInfo struct {
 	Options     *nav.TraverseOptions
 	program     Executor
 	profiles    ProfilesConfig
+	schemes     SchemesConfig
 	sampler     SamplerConfig
+	advanced    AdvancedConfig
 	Inputs      *ShrinkCommandInputs
 	finder      *PathFinder
 	fileManager *FileManager

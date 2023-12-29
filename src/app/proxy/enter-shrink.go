@@ -160,7 +160,7 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 	}
 
 	if finder.Scheme != "" {
-		schemeCFG, _ := e.SamplerCFG.Scheme(finder.Scheme)
+		schemeCFG, _ := e.SchemesCFG.Scheme(finder.Scheme)
 		finder.arity = len(schemeCFG.Profiles)
 	}
 
@@ -172,6 +172,13 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 
 	if e.Inputs.ParamSet.Native.TrashPath != "" {
 		finder.Trash = e.Inputs.ParamSet.Native.TrashPath
+	}
+
+	finder.statics = &staticInfo{
+		adhoc:   e.AdvancedCFG.AdhocLabel(),
+		journal: e.AdvancedCFG.JournalLabel(),
+		legacy:  e.AdvancedCFG.LegacyLabel(),
+		trash:   e.AdvancedCFG.TrashLabel(),
 	}
 
 	return finder
@@ -200,7 +207,9 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 		Options:     e.Options,
 		program:     e.Program,
 		profiles:    e.ProfilesCFG,
+		schemes:     e.SchemesCFG,
 		sampler:     e.SamplerCFG,
+		advanced:    e.AdvancedCFG,
 		Inputs:      e.Inputs,
 		finder:      finder,
 		fileManager: e.FileManager,
@@ -286,7 +295,9 @@ func EnterShrink(
 	program Executor,
 	config configuration.ViperConfig,
 	profilesCFG ProfilesConfig,
+	schemesCFG SchemesConfig,
 	samplerCFG SamplerConfig,
+	advancedCFG AdvancedConfig,
 	vfs storage.VirtualFS,
 ) error {
 	fmt.Printf("---> 🔊🔊 Directory: '%v'\n", inputs.Root.ParamSet.Native.Directory)
@@ -297,7 +308,9 @@ func EnterShrink(
 			Program:     program,
 			Config:      config,
 			ProfilesCFG: profilesCFG,
+			SchemesCFG:  schemesCFG,
 			SamplerCFG:  samplerCFG,
+			AdvancedCFG: advancedCFG,
 			Vfs:         vfs,
 		},
 		Inputs: inputs,

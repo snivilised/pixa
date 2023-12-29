@@ -6,22 +6,36 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/viper"
+	"go.uber.org/mock/gomock"
 
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
-	xi18n "github.com/snivilised/extendio/i18n"
+	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/i18n"
+	"github.com/snivilised/pixa/src/app/mocks"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
-func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE) {
+func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE,
+	config configuration.ViperConfig,
+) {
 	bootstrap := command.Bootstrap{
 		Vfs: vfs,
 	}
+
+	var (
+		ctrl               = gomock.NewController(GinkgoT())
+		mockViperConfig    = cmocks.NewMockViperConfig(ctrl)
+		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
+		mockSchemesReader  = mocks.NewMockSchemesConfigReader(ctrl)
+		mockSamplerReader  = mocks.NewMockSamplerConfigReader(ctrl)
+		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+	)
+
+	helpers.DoMockReadInConfig(mockViperConfig)
+	helpers.DoMockConfigs(config,
+		mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+	)
 
 	options := []string{
 		entry.comm, entry.file,
@@ -41,6 +55,13 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE) {
 			}
 			co.Config.Name = helpers.PixaConfigTestFilename
 			co.Config.ConfigPath = configPath
+			co.Viper = &configuration.GlobalViperConfig{}
+			co.Config.Readers = command.ConfigReaders{
+				Profiles: mockProfilesReader,
+				Schemes:  mockSchemesReader,
+				Sampler:  mockSamplerReader,
+				Advanced: mockAdvancedReader,
+			}
 		}),
 	}
 
@@ -60,54 +81,44 @@ type configTE struct {
 
 var _ = Describe("Config", Ordered, func() {
 	var (
-		repo       string
-		l10nPath   string
-		configPath string
-		config     configuration.ViperConfig
-		nfs        storage.VirtualFS
+		repo               string
+		l10nPath           string
+		configPath         string
+		config             configuration.ViperConfig
+		vfs                storage.VirtualFS
+		ctrl               *gomock.Controller
+		mockProfilesReader *mocks.MockProfilesConfigReader
+		mockSchemesReader  *mocks.MockSchemesConfigReader
+		mockSamplerReader  *mocks.MockSamplerConfigReader
+		mockAdvancedReader *mocks.MockAdvancedConfigReader
+		mockViperConfig    *cmocks.MockViperConfig
 	)
 
 	BeforeAll(func() {
-		nfs = storage.UseNativeFS()
 		repo = helpers.Repo(filepath.Join("..", "..", ".."))
-
-		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
-		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
-
-		configPath = filepath.Join(repo, "test", "data", "configuration")
-		Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(nfs))
+		l10nPath = helpers.Path(repo, "test/data/l10n")
+		configPath = helpers.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
-		viper.Reset()
-		config = &configuration.GlobalViperConfig{}
+		vfs, _, config = helpers.SetupTest(
+			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
+		)
 
-		config.SetConfigType(helpers.PixaConfigType)
-		config.SetConfigName(helpers.PixaConfigTestFilename)
+		ctrl = gomock.NewController(GinkgoT())
+		mockViperConfig = cmocks.NewMockViperConfig(ctrl)
+		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
+		mockSchemesReader = mocks.NewMockSchemesConfigReader(ctrl)
+		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
+		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+		helpers.DoMockReadInConfig(mockViperConfig)
+		helpers.DoMockConfigs(config,
+			mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+		)
+	})
 
-		config.AddConfigPath(configPath)
-		if err := config.ReadInConfig(); err != nil {
-			Fail(fmt.Sprintf("🔥 can't read config (err: '%v')", err))
-		}
-
-		err := xi18n.Use(func(uo *xi18n.UseOptions) {
-			uo.From = xi18n.LoadFrom{
-				Path: l10nPath,
-				Sources: xi18n.TranslationFiles{
-					i18n.PixaSourceID: xi18n.TranslationSource{
-						Name: "dummy-cobrass",
-					},
-
-					ci18n.CobrassSourceID: xi18n.TranslationSource{
-						Name: "dummy-cobrass",
-					},
-				},
-			}
-		})
-
-		if err != nil {
-			Fail(err.Error())
-		}
+	AfterEach(func() {
+		ctrl.Finish()
 	})
 
 	DescribeTable("profile",
@@ -117,7 +128,7 @@ var _ = Describe("Config", Ordered, func() {
 				_ = actual
 
 				Expect(1).To(Equal(1))
-				expectValidShrinkCmdInvocation(nfs, entry)
+				expectValidShrinkCmdInvocation(vfs, entry, config)
 			} else {
 				actual := entry.actual(entry)
 				entry.assert(entry, actual)

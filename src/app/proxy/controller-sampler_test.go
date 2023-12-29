@@ -25,8 +25,9 @@ const (
 var (
 	_ proxy.ProfilesConfig       = proxy.MsProfilesConfig{}
 	_ proxy.SamplerConfig        = &proxy.MsSamplerConfig{}
-	_ proxy.ProfilesConfigReader = &proxy.MsProfilesConfigReader{}
-	_ proxy.SamplerConfigReader  = &proxy.MsSamplerConfigReader{}
+	_ proxy.ProfilesConfigReader = &command.MsProfilesConfigReader{}
+	_ proxy.SamplerConfigReader  = &command.MsSamplerConfigReader{}
+	_ proxy.AdvancedConfigReader = &command.MsAdvancedConfigReader{}
 )
 
 type controllerTE struct {
@@ -58,7 +59,9 @@ var _ = Describe("SamplerController", Ordered, func() {
 		vfs                storage.VirtualFS
 		ctrl               *gomock.Controller
 		mockProfilesReader *mocks.MockProfilesConfigReader
+		mockSchemesReader  *mocks.MockSchemesConfigReader
 		mockSamplerReader  *mocks.MockSamplerConfigReader
+		mockAdvancedReader *mocks.MockAdvancedConfigReader
 		mockViperConfig    *cmocks.MockViperConfig
 	)
 
@@ -76,8 +79,10 @@ var _ = Describe("SamplerController", Ordered, func() {
 		ctrl = gomock.NewController(GinkgoT())
 		mockViperConfig = cmocks.NewMockViperConfig(ctrl)
 		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
+		mockSchemesReader = mocks.NewMockSchemesConfigReader(ctrl)
 		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
-		helpers.DoMockViper(mockViperConfig)
+		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+		helpers.DoMockReadInConfig(mockViperConfig)
 	})
 
 	AfterEach(func() {
@@ -86,7 +91,9 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 	DescribeTable("sampler",
 		func(entry *samplerTE) {
-			helpers.DoMockConfigs(config, mockProfilesReader, mockSamplerReader)
+			helpers.DoMockConfigs(config,
+				mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+			)
 
 			directory := helpers.Path(root, entry.relative)
 			options := []string{
@@ -118,9 +125,11 @@ var _ = Describe("SamplerController", Ordered, func() {
 					co.Config.Name = helpers.PixaConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Viper = &configuration.GlobalViperConfig{}
-					co.Config.Readers = proxy.ConfigReaders{
+					co.Config.Readers = command.ConfigReaders{
 						Profiles: mockProfilesReader,
+						Schemes:  mockSchemesReader,
 						Sampler:  mockSamplerReader,
+						Advanced: mockAdvancedReader,
 					}
 				}),
 			}

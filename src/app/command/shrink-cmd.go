@@ -137,7 +137,9 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 						b.OptionsInfo.Program,
 						b.OptionsInfo.Config.Viper,
 						b.ProfilesCFG,
+						b.SchemesCFG,
 						b.SamplerCFG,
+						b.AdvancedCFG,
 						b.Vfs,
 					)
 				} else {

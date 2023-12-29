@@ -5,6 +5,12 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy"
 )
 
+const (
+	noSampleFiles   = 2
+	noSampleFolders = 1
+	noRetries       = 2
+)
+
 var (
 	BackyardWorldsPlanet9Scan01First2 []string
 	BackyardWorldsPlanet9Scan01First4 []string
@@ -13,7 +19,9 @@ var (
 	BackyardWorldsPlanet9Scan01Last4 []string
 
 	ProfilesConfigData proxy.ProfilesConfigMap
+	SchemesConfigData  *proxy.MsSchemesConfig
 	SamplerConfigData  *proxy.MsSamplerConfig
+	AdvancedConfigData *proxy.MsAdvancedConfig
 )
 
 func init() {
@@ -67,22 +75,35 @@ func init() {
 		},
 	}
 
+	SchemesConfigData = &proxy.MsSchemesConfig{
+		"blur-sf": proxy.MsSchemeConfig{
+			Profiles: []string{"blur", "sf"},
+		},
+		"adaptive-sf": proxy.MsSchemeConfig{
+			Profiles: []string{"adaptive", "sf"},
+		},
+		"adaptive-blur": proxy.MsSchemeConfig{
+			Profiles: []string{"adaptive", "blur"},
+		},
+		"singleton": proxy.MsSchemeConfig{
+			Profiles: []string{"adaptive"},
+		},
+	}
+
 	SamplerConfigData = &proxy.MsSamplerConfig{
-		Files:   2, //nolint:gomnd // not magic
-		Folders: 1,
-		Schemes: proxy.MsSamplerSchemesConfig{
-			"blur-sf": proxy.MsSchemeConfig{
-				Profiles: []string{"blur", "sf"},
-			},
-			"adaptive-sf": proxy.MsSchemeConfig{
-				Profiles: []string{"adaptive", "sf"},
-			},
-			"adaptive-blur": proxy.MsSchemeConfig{
-				Profiles: []string{"adaptive", "blur"},
-			},
-			"singleton": proxy.MsSchemeConfig{
-				Profiles: []string{"adaptive"},
-			},
+		Files:   noSampleFiles,
+		Folders: noSampleFolders,
+	}
+
+	AdvancedConfigData = &proxy.MsAdvancedConfig{
+		Abort:            false,
+		Timeout:          "10s",
+		NoProgramRetries: noRetries,
+		Labels: proxy.MsLabelsConfig{
+			Adhoc:   "ADHOC",
+			Journal: ".journal.txt",
+			Legacy:  ".LEGACY",
+			Trash:   "TRASH",
 		},
 	}
 }

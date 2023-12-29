@@ -13,22 +13,23 @@ profiles:
     interlace: "plane"
     gaussian-blur: "0.25"
     adaptive-resize: "60"
+schemes:
+  blur-sf:
+    profiles: ["blur", "sf"]
+  adaptive-sf:
+    profiles: ["adaptive", "sf"]
+  adaptive-blur:
+    profiles: ["adaptive", "blur"]
+  singleton: ["adaptive"]
 sampler:
   files: 2
   folders: 1
-  schemes:
-    blur-sf:
-      profiles: ["blur", "sf"]
-    adaptive-sf:
-      profiles: ["adaptive", "sf"]
-    adaptive-blur:
-      profiles: ["adaptive", "blur"]
-    singleton: ["adaptive"]
 advanced:
   abort-on-error: false
-  external-program-execution-timeout: "20s"
-  external-program-execution-retry: 0
-  legacy-file-dot-suffix: LEGACY
-  journal-file-dot-suffix: JOURNAL
-  trash-label: TRASH
-  shrink-label: SHRINK
+  program-timeout: "20s"
+  no-program-retries: 0
+  labels:
+    adhoc: ADHOC
+    legacy: .LEGACY
+    journal-suffix: .journal.txt
+    trash: TRASH
