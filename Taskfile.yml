@@ -206,12 +206,6 @@ tasks:
     cmds:
       - goveralls -repotoken {{.COVERALLS_TOKEN}}
 
-  # === go generate ==========================================
-
-  co-gen-cfg:
-    cmds:
-      - go generate src/app/proxy
-
   # === i18n =================================================
 
   clear:

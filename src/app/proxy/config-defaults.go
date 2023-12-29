@@ -5,13 +5,16 @@ import (
 )
 
 const (
-	defaultNoFiles   = 3
-	defaultNoFolders = 3
+	defaultNoFiles          = 3
+	defaultNoFolders        = 3
+	defaultNoProgramRetries = 2
 )
 
 var (
 	DefaultProfilesConfig *MsProfilesConfig
 	DefaultSamplerConfig  *MsSamplerConfig
+	DefaultSchemesConfig  *MsSchemesConfig
+	DefaultAdvancedConfig *MsAdvancedConfig
 )
 
 func init() {
@@ -40,19 +43,32 @@ func init() {
 		},
 	}
 
+	DefaultSchemesConfig = &MsSchemesConfig{
+		"blur-sf": MsSchemeConfig{
+			Profiles: []string{"blur", "sf"},
+		},
+		"adaptive-sf": MsSchemeConfig{
+			Profiles: []string{"adaptive", "sf"},
+		},
+		"adaptive-blur": MsSchemeConfig{
+			Profiles: []string{"adaptive", "blur"},
+		},
+	}
+
 	DefaultSamplerConfig = &MsSamplerConfig{
 		Files:   defaultNoFiles,
 		Folders: defaultNoFolders,
-		Schemes: MsSamplerSchemesConfig{
-			"blur-sf": MsSchemeConfig{
-				Profiles: []string{"blur", "sf"},
-			},
-			"adaptive-sf": MsSchemeConfig{
-				Profiles: []string{"adaptive", "sf"},
-			},
-			"adaptive-blur": MsSchemeConfig{
-				Profiles: []string{"adaptive", "blur"},
-			},
+	}
+
+	DefaultAdvancedConfig = &MsAdvancedConfig{
+		Abort:            false,
+		Timeout:          "10s",
+		NoProgramRetries: defaultNoProgramRetries,
+		Labels: MsLabelsConfig{
+			Adhoc:   "ADHOC",
+			Journal: ".journal.txt",
+			Legacy:  ".LEGACY",
+			Trash:   "TRASH",
 		},
 	}
 }

@@ -57,7 +57,7 @@ type ConfigInfo struct {
 	ConfigType string
 	ConfigPath string
 	Viper      configuration.ViperConfig
-	Readers    proxy.ConfigReaders
+	Readers    ConfigReaders
 }
 
 // Bootstrap represents construct that performs start up of the cli
@@ -67,7 +67,9 @@ type Bootstrap struct {
 	Container   *assistant.CobraContainer
 	OptionsInfo ConfigureOptionsInfo
 	ProfilesCFG proxy.ProfilesConfig
+	SchemesCFG  proxy.SchemesConfig
 	SamplerCFG  proxy.SamplerConfig
+	AdvancedCFG proxy.AdvancedConfig
 	Vfs         storage.VirtualFS
 }
 
@@ -96,9 +98,11 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			ConfigType: "yaml",
 			ConfigPath: home,
 			Viper:      &configuration.GlobalViperConfig{},
-			Readers: proxy.ConfigReaders{
-				Profiles: &proxy.MsProfilesConfigReader{},
-				Sampler:  &proxy.MsSamplerConfigReader{},
+			Readers: ConfigReaders{
+				Profiles: &MsProfilesConfigReader{},
+				Schemes:  &MsSchemesConfigReader{},
+				Sampler:  &MsSamplerConfigReader{},
+				Advanced: &MsAdvancedConfigReader{},
 			},
 		},
 	}
@@ -148,7 +152,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				}
 
 				if scheme := inputs.ProfileFam.Native.Scheme; scheme != "" {
-					if err := b.SamplerCFG.Validate(scheme, b.ProfilesCFG); err != nil {
+					if err := b.SchemesCFG.Validate(scheme, b.ProfilesCFG); err != nil {
 						return err
 					}
 				}
@@ -233,5 +237,7 @@ func (b *Bootstrap) viper() {
 	// TODO: handle the read errors
 	//
 	b.ProfilesCFG, _ = b.OptionsInfo.Config.Readers.Profiles.Read(b.OptionsInfo.Config.Viper)
+	b.SchemesCFG, _ = b.OptionsInfo.Config.Readers.Schemes.Read(b.OptionsInfo.Config.Viper)
 	b.SamplerCFG, _ = b.OptionsInfo.Config.Readers.Sampler.Read(b.OptionsInfo.Config.Viper)
+	b.AdvancedCFG, _ = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Viper)
 }

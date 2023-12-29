@@ -42,7 +42,9 @@ type EntryBase struct {
 	Options     *nav.TraverseOptions
 	Registry    *ControllerRegistry
 	ProfilesCFG ProfilesConfig
+	SchemesCFG  SchemesConfig
 	SamplerCFG  SamplerConfig
+	AdvancedCFG AdvancedConfig
 	Vfs         storage.VirtualFS
 	FileManager *FileManager
 }

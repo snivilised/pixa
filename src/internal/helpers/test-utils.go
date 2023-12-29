@@ -169,13 +169,17 @@ func MockConfigFile(vfs storage.VirtualFS, configPath string) error {
 func DoMockConfigs(
 	config configuration.ViperConfig,
 	profilesReader *mocks.MockProfilesConfigReader,
+	schemesReader *mocks.MockSchemesConfigReader,
 	samplerReader *mocks.MockSamplerConfigReader,
+	mockAdvancedReader *mocks.MockAdvancedConfigReader,
 ) {
 	DoMockProfilesConfigsWith(ProfilesConfigData, config, profilesReader)
+	DoMockSchemesConfigWith(SchemesConfigData, config, schemesReader)
 	DoMockSamplerConfigWith(SamplerConfigData, config, samplerReader)
+	DoMockAdvancedConfigWith(AdvancedConfigData, config, mockAdvancedReader)
 }
 
-func DoMockViper(config *cmocks.MockViperConfig) {
+func DoMockReadInConfig(config *cmocks.MockViperConfig) {
 	config.EXPECT().ReadInConfig().DoAndReturn(
 		func() error {
 			return nil
@@ -199,6 +203,20 @@ func DoMockProfilesConfigsWith(
 	).AnyTimes()
 }
 
+func DoMockSchemesConfigWith(
+	data *proxy.MsSchemesConfig,
+	config configuration.ViperConfig,
+	reader *mocks.MockSchemesConfigReader,
+) {
+	reader.EXPECT().Read(config).DoAndReturn(
+		func(viper configuration.ViperConfig) (proxy.SchemesConfig, error) {
+			stub := data
+
+			return stub, nil
+		},
+	).AnyTimes()
+}
+
 func DoMockSamplerConfigWith(
 	data *proxy.MsSamplerConfig,
 	config configuration.ViperConfig,
@@ -206,6 +224,20 @@ func DoMockSamplerConfigWith(
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
 		func(viper configuration.ViperConfig) (proxy.SamplerConfig, error) {
+			stub := data
+
+			return stub, nil
+		},
+	).AnyTimes()
+}
+
+func DoMockAdvancedConfigWith(
+	data *proxy.MsAdvancedConfig,
+	config configuration.ViperConfig,
+	reader *mocks.MockAdvancedConfigReader,
+) {
+	reader.EXPECT().Read(config).DoAndReturn(
+		func(viper configuration.ViperConfig) (proxy.AdvancedConfig, error) {
 			stub := data
 
 			return stub, nil

@@ -188,6 +188,13 @@ so we have 3 parameters:
 * --output <path> --trash <path>								[ous=eject; des=eject]
 */
 
+type staticInfo struct {
+	adhoc   string
+	journal string
+	legacy  string
+	trash   string
+}
+
 // PathFinder provides the common paths required, but its the controller that know
 // the specific paths based around this common framework
 
@@ -219,15 +226,12 @@ type PathFinder struct {
 
 	arity            int
 	transparentInput bool
-}
 
-type staticInfo struct {
-	trashLabel  string
-	legacyLabel string
+	statics *staticInfo
 }
 
 func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
-	path := FilenameWithoutExtension(item.Extension.Name) + ".journal.txt"
+	path := FilenameWithoutExtension(item.Extension.Name) + f.statics.journal
 
 	return filepath.Join(item.Extension.Parent, path)
 }
@@ -246,12 +250,9 @@ func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
 // determine the destination path for the input.
 func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 	// TODO: we still need to get the rest of the mirror sub-path
-	// legacyLabel := "LEGACY"
-	trashLabel := "TRASH"
-
+	//
 	// this does not take into account transparent, without modification;
 	// ie what happens if we don;t want any supplemented paths?
-
 	to := lo.TernaryF(f.Trash != "",
 		func() string {
 			return f.Trash // eject
@@ -268,7 +269,7 @@ func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 			"${{INPUT-DESTINATION}}": to,
 			"${{ITEM-SUB-PATH}}":     info.item.Extension.SubPath,
 			"${{SUPPLEMENT}}":        f.supplement(),
-			"${{TRASH-LABEL}}":       trashLabel,
+			"${{TRASH-LABEL}}":       f.statics.trash,
 		}, segments...)
 	}()
 
@@ -342,7 +343,7 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 func (f *PathFinder) supplement() string {
 	return lo.TernaryF(f.Scheme == "" && f.ExplicitProfile == "",
 		func() string {
-			adhocLabel := "ADHOC"
+			adhocLabel := f.statics.adhoc
 			return adhocLabel
 		},
 		func() string {

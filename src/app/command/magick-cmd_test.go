@@ -5,45 +5,78 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
+	"github.com/snivilised/cobrass/src/assistant/configuration"
+	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
+	"github.com/snivilised/pixa/src/app/mocks"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
 var _ = Describe("MagickCmd", Ordered, func() {
 	var (
-		repo     string
-		l10nPath string
-		nfs      storage.VirtualFS
+		repo               string
+		l10nPath           string
+		configPath         string
+		config             configuration.ViperConfig
+		vfs                storage.VirtualFS
+		ctrl               *gomock.Controller
+		mockProfilesReader *mocks.MockProfilesConfigReader
+		mockSchemesReader  *mocks.MockSchemesConfigReader
+		mockSamplerReader  *mocks.MockSamplerConfigReader
+		mockAdvancedReader *mocks.MockAdvancedConfigReader
+		mockViperConfig    *cmocks.MockViperConfig
 	)
 
 	BeforeAll(func() {
-		nfs = storage.UseNativeFS()
+		vfs = storage.UseNativeFS()
 		repo = helpers.Repo(filepath.Join("..", "..", ".."))
-		l10nPath = helpers.Path(repo, filepath.Join("test", "data", "l10n"))
-		Expect(matchers.AsDirectory(l10nPath)).To(matchers.ExistInFS(nfs))
+		l10nPath = helpers.Path(repo, "test/data/l10n")
+		configPath = helpers.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
 		xi18n.ResetTx()
+		vfs, _, config = helpers.SetupTest(
+			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
+		)
 
-		if err := helpers.UseI18n(l10nPath); err != nil {
-			Fail(err.Error())
-		}
+		ctrl = gomock.NewController(GinkgoT())
+		mockViperConfig = cmocks.NewMockViperConfig(ctrl)
+		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
+		mockSchemesReader = mocks.NewMockSchemesConfigReader(ctrl)
+		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
+		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+		helpers.DoMockReadInConfig(mockViperConfig)
+		helpers.DoMockConfigs(config,
+			mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+		)
 	})
 
 	When("specified flags are valid", func() {
 		It("🧪 should: execute without error", func() {
 			bootstrap := command.Bootstrap{
-				Vfs: nfs,
+				Vfs: vfs,
 			}
 			tester := helpers.CommandTester{
 				Args: []string{"mag"},
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &DetectorStub{}
+					co.Program = &helpers.ExecutorStub{
+						Name: helpers.ProgName,
+					}
+					co.Config.Name = helpers.PixaConfigTestFilename
+					co.Config.ConfigPath = configPath
+					co.Viper = &configuration.GlobalViperConfig{}
+					co.Config.Readers = command.ConfigReaders{
+						Profiles: mockProfilesReader,
+						Schemes:  mockSchemesReader,
+						Sampler:  mockSamplerReader,
+						Advanced: mockAdvancedReader,
+					}
 				}),
 			}
 			_, err := tester.Execute()
