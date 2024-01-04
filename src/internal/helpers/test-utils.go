@@ -3,8 +3,8 @@ package helpers
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
@@ -71,8 +71,17 @@ func Root() string {
 }
 
 func Repo(relative string) string {
-	_, filename, _, _ := runtime.Caller(0) //nolint:dogsled // use of 3 _ is out of our control
-	return Path(filepath.Dir(filename), relative)
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	if bytes, err := cmd.Output(); err != nil {
+		panic(errors.Wrap(err, "couldn't get repo root"))
+	} else {
+		segments := strings.Split(relative, "/")
+		output := strings.TrimSuffix(string(bytes), "\n")
+		path := []string{output}
+		path = append(path, segments...)
+
+		return filepath.Join(path...)
+	}
 }
 
 func Log() string {

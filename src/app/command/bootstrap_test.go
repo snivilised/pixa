@@ -1,8 +1,6 @@
 package command_test
 
 import (
-	"path/filepath"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
@@ -55,7 +53,7 @@ var _ = Describe("Bootstrap", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
 	})

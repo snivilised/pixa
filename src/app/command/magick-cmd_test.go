@@ -1,8 +1,6 @@
 package command_test
 
 import (
-	"path/filepath"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
@@ -33,7 +31,7 @@ var _ = Describe("MagickCmd", Ordered, func() {
 
 	BeforeAll(func() {
 		vfs = storage.UseNativeFS()
-		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
 	})

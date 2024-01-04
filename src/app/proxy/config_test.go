@@ -44,7 +44,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE,
 		"--profile", entry.profile,
 	}
 
-	repo := helpers.Repo(filepath.Join("..", "..", ".."))
+	repo := helpers.Repo("")
 	configPath := filepath.Join(repo, "test", "data", "configuration")
 	tester := helpers.CommandTester{
 		Args: append(options, entry.args...),
@@ -95,7 +95,7 @@ var _ = Describe("Config", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
 	})
