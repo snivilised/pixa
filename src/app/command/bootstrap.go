@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/cubiest/jibberjabber"
 	"github.com/samber/lo"
@@ -18,8 +19,27 @@ import (
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
-	"github.com/snivilised/pixa/src/internal/helpers"
 )
+
+func ResolvePath(path string) string {
+	if path == "" {
+		return path
+	}
+
+	result := path
+
+	if result[0] == '~' {
+		if h, err := os.UserHomeDir(); err == nil {
+			result = filepath.Join(h, result[1:])
+		}
+	} else {
+		if absolute, absErr := filepath.Abs(path); absErr == nil {
+			result = absolute
+		}
+	}
+
+	return result
+}
 
 type LocaleDetector interface {
 	Scan() language.Tag
@@ -43,7 +63,7 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	directory := helpers.ResolvePath(args[0])
+	directory := ResolvePath(args[0])
 
 	if !utils.Exists(directory) {
 		return xi18n.NewPathNotFoundError("shrink directory", directory)
@@ -137,7 +157,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
 
 				inputs := b.getRootInputs()
-				inputs.ParamSet.Native.Directory = helpers.ResolvePath(args[0])
+				inputs.ParamSet.Native.Directory = ResolvePath(args[0])
 
 				if inputs.WorkerPoolFam.Native.CPU {
 					inputs.WorkerPoolFam.Native.NoWorkers = 0

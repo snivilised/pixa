@@ -194,8 +194,8 @@ func DoMockProfilesConfigsWith(
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
 		func(viper configuration.ViperConfig) (proxy.ProfilesConfig, error) {
-			stub := &proxy.MsProfilesConfig{
-				Profiles: data,
+			stub := &testProfilesConfig{
+				profiles: data,
 			}
 
 			return stub, nil
@@ -204,7 +204,7 @@ func DoMockProfilesConfigsWith(
 }
 
 func DoMockSchemesConfigWith(
-	data *proxy.MsSchemesConfig,
+	data proxy.SchemesConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockSchemesConfigReader,
 ) {
@@ -218,7 +218,7 @@ func DoMockSchemesConfigWith(
 }
 
 func DoMockSamplerConfigWith(
-	data *proxy.MsSamplerConfig,
+	data proxy.SamplerConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockSamplerConfigReader,
 ) {
@@ -232,7 +232,7 @@ func DoMockSamplerConfigWith(
 }
 
 func DoMockAdvancedConfigWith(
-	data *proxy.MsAdvancedConfig,
+	data proxy.AdvancedConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockAdvancedConfigReader,
 ) {

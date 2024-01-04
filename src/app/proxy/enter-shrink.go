@@ -161,7 +161,7 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 
 	if finder.Scheme != "" {
 		schemeCFG, _ := e.SchemesCFG.Scheme(finder.Scheme)
-		finder.arity = len(schemeCFG.Profiles)
+		finder.arity = len(schemeCFG.Profiles())
 	}
 
 	if e.Inputs.ParamSet.Native.OutputPath != "" {

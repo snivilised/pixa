@@ -10,10 +10,19 @@ import (
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/mocks"
+	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/internal/helpers"
 	"go.uber.org/mock/gomock"
 
 	"github.com/snivilised/extendio/xfs/storage"
+)
+
+var (
+	_ proxy.ProfilesConfig       = &command.MsProfilesConfig{}
+	_ proxy.SamplerConfig        = &command.MsSamplerConfig{}
+	_ proxy.ProfilesConfigReader = &command.MsProfilesConfigReader{}
+	_ proxy.SamplerConfigReader  = &command.MsSamplerConfigReader{}
+	_ proxy.AdvancedConfigReader = &command.MsAdvancedConfigReader{}
 )
 
 const (

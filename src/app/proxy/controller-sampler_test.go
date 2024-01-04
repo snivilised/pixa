@@ -10,7 +10,6 @@ import (
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/app/proxy"
 
 	"github.com/snivilised/pixa/src/app/mocks"
 	"github.com/snivilised/pixa/src/internal/helpers"
@@ -20,14 +19,6 @@ import (
 
 const (
 	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
-)
-
-var (
-	_ proxy.ProfilesConfig       = proxy.MsProfilesConfig{}
-	_ proxy.SamplerConfig        = &proxy.MsSamplerConfig{}
-	_ proxy.ProfilesConfigReader = &command.MsProfilesConfigReader{}
-	_ proxy.SamplerConfigReader  = &command.MsSamplerConfigReader{}
-	_ proxy.AdvancedConfigReader = &command.MsAdvancedConfigReader{}
 )
 
 type controllerTE struct {
