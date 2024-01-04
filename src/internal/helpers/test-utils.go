@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -71,7 +72,18 @@ func Root() string {
 }
 
 func Repo(relative string) string {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	if bytes, err := cmd.Output(); err == nil {
+		segments := strings.Split(relative, "/")
+		output := strings.TrimSuffix(string(bytes), "\n")
+		path := []string{output}
+		path = append(path, segments...)
+
+		return filepath.Join(path...)
+	}
+
 	_, filename, _, _ := runtime.Caller(0) //nolint:dogsled // use of 3 _ is out of our control
+
 	return Path(filepath.Dir(filename), relative)
 }
 

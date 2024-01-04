@@ -68,6 +68,7 @@
     "structcheck",
     "stylecheck",
     "thelper",
+    "toplevel",
     "tparallel",
     "typecheck",
     "unconvert",

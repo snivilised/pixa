@@ -159,7 +159,7 @@ type File struct {
 const doWrite = true
 
 func Scientist(vfs storage.VirtualFS, index string, silent bool) string {
-	repo := Repo(filepath.Join("..", "..", ".."))
+	repo := Repo("")
 	research := filepath.Join(repo, "test", "data", "research")
 	scientist := filepath.Join(research, "scientist")
 	indexPath := filepath.Join(research, index)
