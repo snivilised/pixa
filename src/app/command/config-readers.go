@@ -16,7 +16,7 @@ func (r *MsProfilesConfigReader) Read(viper configuration.ViperConfig) (proxy.Pr
 	// the config, but extendio is not aware of config, so it can't
 	// check. Instead, we can check here.
 	//
-	profilesCFG := &proxy.MsProfilesConfig{
+	profilesCFG := &MsProfilesConfig{
 		Profiles: make(proxy.ProfilesConfigMap),
 	}
 
@@ -43,7 +43,7 @@ type MsSchemesConfigReader struct{}
 
 func (r *MsSchemesConfigReader) Read(viper configuration.ViperConfig) (proxy.SchemesConfig, error) {
 	var (
-		schemesCFG proxy.MsSchemesConfig
+		schemesCFG MsSchemesConfig
 	)
 
 	err := viper.UnmarshalKey("schemes", &schemesCFG)
@@ -55,7 +55,7 @@ type MsSamplerConfigReader struct{}
 
 func (r *MsSamplerConfigReader) Read(viper configuration.ViperConfig) (proxy.SamplerConfig, error) {
 	var (
-		samplerCFG proxy.MsSamplerConfig
+		samplerCFG MsSamplerConfig
 	)
 
 	err := viper.UnmarshalKey("sampler", &samplerCFG)
@@ -67,7 +67,7 @@ type MsAdvancedConfigReader struct{}
 
 func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (proxy.AdvancedConfig, error) {
 	var (
-		advancedCFG proxy.MsAdvancedConfig
+		advancedCFG MsAdvancedConfig
 	)
 
 	err := viper.UnmarshalKey("advanced", &advancedCFG)

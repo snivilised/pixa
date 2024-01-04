@@ -94,6 +94,43 @@ func (mr *MockProfilesConfigReaderMockRecorder) Read(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockProfilesConfigReader)(nil).Read), arg0)
 }
 
+// MockSchemeConfig is a mock of SchemeConfig interface.
+type MockSchemeConfig struct {
+	ctrl     *gomock.Controller
+	recorder *MockSchemeConfigMockRecorder
+}
+
+// MockSchemeConfigMockRecorder is the mock recorder for MockSchemeConfig.
+type MockSchemeConfigMockRecorder struct {
+	mock *MockSchemeConfig
+}
+
+// NewMockSchemeConfig creates a new mock instance.
+func NewMockSchemeConfig(ctrl *gomock.Controller) *MockSchemeConfig {
+	mock := &MockSchemeConfig{ctrl: ctrl}
+	mock.recorder = &MockSchemeConfigMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSchemeConfig) EXPECT() *MockSchemeConfigMockRecorder {
+	return m.recorder
+}
+
+// Profiles mocks base method.
+func (m *MockSchemeConfig) Profiles() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Profiles")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// Profiles indicates an expected call of Profiles.
+func (mr *MockSchemeConfigMockRecorder) Profiles() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Profiles", reflect.TypeOf((*MockSchemeConfig)(nil).Profiles))
+}
+
 // MockSchemesConfig is a mock of SchemesConfig interface.
 type MockSchemesConfig struct {
 	ctrl     *gomock.Controller
@@ -118,10 +155,10 @@ func (m *MockSchemesConfig) EXPECT() *MockSchemesConfigMockRecorder {
 }
 
 // Scheme mocks base method.
-func (m *MockSchemesConfig) Scheme(name string) (proxy.MsSchemeConfig, bool) {
+func (m *MockSchemesConfig) Scheme(name string) (proxy.SchemeConfig, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Scheme", name)
-	ret0, _ := ret[0].(proxy.MsSchemeConfig)
+	ret0, _ := ret[0].(proxy.SchemeConfig)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }

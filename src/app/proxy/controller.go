@@ -67,9 +67,9 @@ func (c *controller) schemeSequence(
 ) Sequence {
 	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
 	schemeCfg, _ := c.shared.schemes.Scheme(pi.scheme) // scheme already validated
-	sequence := make(Sequence, 0, len(schemeCfg.Profiles))
+	sequence := make(Sequence, 0, len(schemeCfg.Profiles()))
 
-	for _, current := range schemeCfg.Profiles {
+	for _, current := range schemeCfg.Profiles() {
 		cl := c.composeProfileCL(current, changed)
 		step := &executionStep{
 			shared:       c.shared,

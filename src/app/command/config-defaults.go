@@ -1,7 +1,8 @@
-package proxy
+package command
 
 import (
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/pixa/src/app/proxy"
 )
 
 const (
@@ -10,10 +11,25 @@ const (
 	defaultNoProgramRetries = 2
 )
 
+type (
+	defaultSchemes       map[string]proxy.SchemeConfig // should be the proxy interface
+	defaultSchemesConfig struct {
+		schemes defaultSchemes
+	}
+
+	defaultSchemeConfig struct {
+		profiles []string
+	}
+)
+
+func (cfg defaultSchemeConfig) Profiles() []string {
+	return cfg.profiles
+}
+
 var (
 	DefaultProfilesConfig *MsProfilesConfig
 	DefaultSamplerConfig  *MsSamplerConfig
-	DefaultSchemesConfig  *MsSchemesConfig
+	DefaultSchemesConfig  *defaultSchemesConfig
 	DefaultAdvancedConfig *MsAdvancedConfig
 )
 
@@ -22,7 +38,7 @@ func init() {
 	// values that don't mean anything. Update to real useable defaults
 	//
 	DefaultProfilesConfig = &MsProfilesConfig{
-		Profiles: ProfilesConfigMap{
+		Profiles: proxy.ProfilesConfigMap{
 			"blur": clif.ChangedFlagsMap{
 				"strip":         "true",
 				"interlace":     "plane",
@@ -43,15 +59,18 @@ func init() {
 		},
 	}
 
-	DefaultSchemesConfig = &MsSchemesConfig{
-		"blur-sf": MsSchemeConfig{
-			Profiles: []string{"blur", "sf"},
-		},
-		"adaptive-sf": MsSchemeConfig{
-			Profiles: []string{"adaptive", "sf"},
-		},
-		"adaptive-blur": MsSchemeConfig{
-			Profiles: []string{"adaptive", "blur"},
+	// tbd: repatriate MsSchemesConfig
+	DefaultSchemesConfig = &defaultSchemesConfig{
+		schemes: defaultSchemes{
+			"blur-sf": &defaultSchemeConfig{
+				profiles: []string{"blur", "sf"},
+			},
+			"adaptive-sf": &defaultSchemeConfig{
+				profiles: []string{"adaptive", "sf"},
+			},
+			"adaptive-blur": &defaultSchemeConfig{
+				profiles: []string{"adaptive", "blur"},
+			},
 		},
 	}
 
