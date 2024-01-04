@@ -2,7 +2,6 @@ package command_test
 
 import (
 	"fmt"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -117,7 +116,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
 	})

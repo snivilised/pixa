@@ -57,7 +57,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 	)
 
 	BeforeAll(func() {
-		repo = helpers.Repo(filepath.Join("..", "..", ".."))
+		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
 	})
