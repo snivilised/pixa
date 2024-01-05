@@ -469,3 +469,120 @@ func (mr *MockAdvancedConfigReaderMockRecorder) Read(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockAdvancedConfigReader)(nil).Read), arg0)
 }
+
+// MockLoggingConfig is a mock of LoggingConfig interface.
+type MockLoggingConfig struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoggingConfigMockRecorder
+}
+
+// MockLoggingConfigMockRecorder is the mock recorder for MockLoggingConfig.
+type MockLoggingConfigMockRecorder struct {
+	mock *MockLoggingConfig
+}
+
+// NewMockLoggingConfig creates a new mock instance.
+func NewMockLoggingConfig(ctrl *gomock.Controller) *MockLoggingConfig {
+	mock := &MockLoggingConfig{ctrl: ctrl}
+	mock.recorder = &MockLoggingConfigMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLoggingConfig) EXPECT() *MockLoggingConfigMockRecorder {
+	return m.recorder
+}
+
+// MaxAgeInDays mocks base method.
+func (m *MockLoggingConfig) MaxAgeInDays() uint {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MaxAgeInDays")
+	ret0, _ := ret[0].(uint)
+	return ret0
+}
+
+// MaxAgeInDays indicates an expected call of MaxAgeInDays.
+func (mr *MockLoggingConfigMockRecorder) MaxAgeInDays() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MaxAgeInDays", reflect.TypeOf((*MockLoggingConfig)(nil).MaxAgeInDays))
+}
+
+// MaxNoOfBackups mocks base method.
+func (m *MockLoggingConfig) MaxNoOfBackups() uint {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MaxNoOfBackups")
+	ret0, _ := ret[0].(uint)
+	return ret0
+}
+
+// MaxNoOfBackups indicates an expected call of MaxNoOfBackups.
+func (mr *MockLoggingConfigMockRecorder) MaxNoOfBackups() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MaxNoOfBackups", reflect.TypeOf((*MockLoggingConfig)(nil).MaxNoOfBackups))
+}
+
+// MaxSizeInMb mocks base method.
+func (m *MockLoggingConfig) MaxSizeInMb() uint {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MaxSizeInMb")
+	ret0, _ := ret[0].(uint)
+	return ret0
+}
+
+// MaxSizeInMb indicates an expected call of MaxSizeInMb.
+func (mr *MockLoggingConfigMockRecorder) MaxSizeInMb() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MaxSizeInMb", reflect.TypeOf((*MockLoggingConfig)(nil).MaxSizeInMb))
+}
+
+// Path mocks base method.
+func (m *MockLoggingConfig) Path() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Path")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Path indicates an expected call of Path.
+func (mr *MockLoggingConfigMockRecorder) Path() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Path", reflect.TypeOf((*MockLoggingConfig)(nil).Path))
+}
+
+// MockLoggingConfigReader is a mock of LoggingConfigReader interface.
+type MockLoggingConfigReader struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoggingConfigReaderMockRecorder
+}
+
+// MockLoggingConfigReaderMockRecorder is the mock recorder for MockLoggingConfigReader.
+type MockLoggingConfigReaderMockRecorder struct {
+	mock *MockLoggingConfigReader
+}
+
+// NewMockLoggingConfigReader creates a new mock instance.
+func NewMockLoggingConfigReader(ctrl *gomock.Controller) *MockLoggingConfigReader {
+	mock := &MockLoggingConfigReader{ctrl: ctrl}
+	mock.recorder = &MockLoggingConfigReaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLoggingConfigReader) EXPECT() *MockLoggingConfigReaderMockRecorder {
+	return m.recorder
+}
+
+// Read mocks base method.
+func (m *MockLoggingConfigReader) Read(arg0 configuration.ViperConfig) (proxy.LoggingConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Read", arg0)
+	ret0, _ := ret[0].(proxy.LoggingConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Read indicates an expected call of Read.
+func (mr *MockLoggingConfigReaderMockRecorder) Read(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockLoggingConfigReader)(nil).Read), arg0)
+}

@@ -111,3 +111,36 @@ func (cfg *MsAdvancedConfig) LegacyLabel() string {
 func (cfg *MsAdvancedConfig) TrashLabel() string {
 	return cfg.Labels.Trash
 }
+
+type MsLoggingConfig struct {
+	LogPath    string `mapstructure:"log-path"`
+	MaxSize    uint   `mapstructure:"max-size"`
+	MaxBackups uint   `mapstructure:"max-backups"`
+	MaxAge     uint   `mapstructure:"max-age"`
+	LogLevel   string `mapstructure:"level"`
+	Format     string `mapstructure:"time-format"`
+}
+
+func (cfg *MsLoggingConfig) Path() string {
+	return cfg.LogPath
+}
+
+func (cfg *MsLoggingConfig) MaxSizeInMb() uint {
+	return cfg.MaxSize
+}
+
+func (cfg *MsLoggingConfig) MaxNoOfBackups() uint {
+	return cfg.MaxBackups
+}
+
+func (cfg *MsLoggingConfig) MaxAgeInDays() uint {
+	return cfg.MaxAge
+}
+
+func (cfg *MsLoggingConfig) Level() string {
+	return cfg.LogLevel
+}
+
+func (cfg *MsLoggingConfig) TimeFormat() string {
+	return cfg.Format
+}

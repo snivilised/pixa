@@ -1,18 +1,25 @@
 package command
 
 import (
+	"os"
+	"path/filepath"
+
+	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/pixa/src/app/proxy"
 )
 
 const (
-	defaultNoFiles          = 3
-	defaultNoFolders        = 3
-	defaultNoProgramRetries = 2
+	defaultNoFiles           = 3
+	defaultNoFolders         = 3
+	defaultNoProgramRetries  = 2
+	defaultLogMaxSizeInMb    = 10
+	defaultLogMaxNoOfBackups = 3
+	defaultLogMaxAgeInDays   = 30
 )
 
 type (
-	defaultSchemes       map[string]proxy.SchemeConfig // should be the proxy interface
+	defaultSchemes       map[string]proxy.SchemeConfig
 	defaultSchemesConfig struct {
 		schemes defaultSchemes
 	}
@@ -31,6 +38,7 @@ var (
 	DefaultSamplerConfig  *MsSamplerConfig
 	DefaultSchemesConfig  *defaultSchemesConfig
 	DefaultAdvancedConfig *MsAdvancedConfig
+	DefaultLoggingConfig  *MsLoggingConfig
 )
 
 func init() {
@@ -59,7 +67,6 @@ func init() {
 		},
 	}
 
-	// tbd: repatriate MsSchemesConfig
 	DefaultSchemesConfig = &defaultSchemesConfig{
 		schemes: defaultSchemes{
 			"blur-sf": &defaultSchemeConfig{
@@ -89,5 +96,17 @@ func init() {
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},
+	}
+
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(errors.Wrap(err, "could not get home dir"))
+	}
+
+	DefaultLoggingConfig = &MsLoggingConfig{
+		LogPath:    filepath.Join(userHomeDir, "snivilised", "pixa"),
+		MaxSize:    defaultLogMaxSizeInMb,
+		MaxBackups: defaultLogMaxNoOfBackups,
+		MaxAge:     defaultLogMaxAgeInDays,
 	}
 }

@@ -75,9 +75,22 @@ func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (proxy.Ad
 	return &advancedCFG, err
 }
 
+type MsLoggingConfigReader struct{}
+
+func (r *MsLoggingConfigReader) Read(viper configuration.ViperConfig) (proxy.LoggingConfig, error) {
+	var (
+		loggingCFG MsLoggingConfig
+	)
+
+	err := viper.UnmarshalKey("logging", &loggingCFG)
+
+	return &loggingCFG, err
+}
+
 type ConfigReaders struct {
 	Profiles proxy.ProfilesConfigReader
 	Schemes  proxy.SchemesConfigReader
 	Sampler  proxy.SamplerConfigReader
 	Advanced proxy.AdvancedConfigReader
+	Logging  proxy.LoggingConfigReader
 }

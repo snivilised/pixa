@@ -181,11 +181,13 @@ func DoMockConfigs(
 	schemesReader *mocks.MockSchemesConfigReader,
 	samplerReader *mocks.MockSamplerConfigReader,
 	mockAdvancedReader *mocks.MockAdvancedConfigReader,
+	mockLoggingReader *mocks.MockLoggingConfigReader,
 ) {
 	DoMockProfilesConfigsWith(ProfilesConfigData, config, profilesReader)
 	DoMockSchemesConfigWith(SchemesConfigData, config, schemesReader)
 	DoMockSamplerConfigWith(SamplerConfigData, config, samplerReader)
 	DoMockAdvancedConfigWith(AdvancedConfigData, config, mockAdvancedReader)
+	DoMockLoggingConfigWith(LoggingConfigData, config, mockLoggingReader)
 }
 
 func DoMockReadInConfig(config *cmocks.MockViperConfig) {
@@ -247,6 +249,20 @@ func DoMockAdvancedConfigWith(
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
 		func(viper configuration.ViperConfig) (proxy.AdvancedConfig, error) {
+			stub := data
+
+			return stub, nil
+		},
+	).AnyTimes()
+}
+
+func DoMockLoggingConfigWith(
+	data proxy.LoggingConfig,
+	config configuration.ViperConfig,
+	reader *mocks.MockLoggingConfigReader,
+) {
+	reader.EXPECT().Read(config).DoAndReturn(
+		func(viper configuration.ViperConfig) (proxy.LoggingConfig, error) {
 			stub := data
 
 			return stub, nil

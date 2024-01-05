@@ -52,6 +52,7 @@
     "mockgen",
     "mohae",
     "nakedret",
+    "natefinch",
     "nolint",
     "nolintlint",
     "nosec",
@@ -77,6 +78,7 @@
     "watchv",
     "wgan",
     "Wrapf",
-    "xutils"
+    "xutils",
+    "zapslog"
   ]
 }
