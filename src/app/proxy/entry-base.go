@@ -8,16 +8,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/natefinch/lumberjack"
-	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/lorax/boost"
-	"go.uber.org/zap"
-	"go.uber.org/zap/exp/zapslog"
-	"go.uber.org/zap/zapcore"
 )
 
 type afterFunc func(*nav.TraverseResult, error)
@@ -51,7 +46,7 @@ type EntryBase struct {
 	SchemesCFG  SchemesConfig
 	SamplerCFG  SamplerConfig
 	AdvancedCFG AdvancedConfig
-	LoggingCFG  LoggingConfig
+	Logger      *slog.Logger
 	Vfs         storage.VirtualFS
 	FileManager *FileManager
 }
@@ -154,9 +149,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		})
 	}
 
-	if logger, err := e.createLogger(); err == nil {
-		e.Options.Monitor.Log = logger
-	}
+	o.Monitor.Log = e.Logger
 }
 
 func (e *EntryBase) navigate(
@@ -165,7 +158,7 @@ func (e *EntryBase) navigate(
 	resumption *nav.Resumption,
 	after ...afterFunc,
 ) error {
-	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal")
+	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal", e.Logger)
 	wgan.Add(1, navigatorRoutineName)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -194,36 +187,4 @@ func (e *EntryBase) navigate(
 	}
 
 	return err
-}
-
-func (e *EntryBase) level(raw string) zapcore.LevelEnabler {
-	if l, err := zapcore.ParseLevel(raw); err == nil {
-		return l
-	}
-
-	return zapcore.InfoLevel
-}
-
-func (e *EntryBase) createLogger() (*slog.Logger, error) {
-	path := e.LoggingCFG.Path()
-
-	if path == "" {
-		return nil, errors.New("logging path not defined")
-	}
-
-	ws := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   path,
-		MaxSize:    int(e.LoggingCFG.MaxSizeInMb()),
-		MaxBackups: int(e.LoggingCFG.MaxNoOfBackups()),
-		MaxAge:     int(e.LoggingCFG.MaxAgeInDays()),
-	})
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.TimeEncoderOfLayout(e.LoggingCFG.TimeFormat())
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(config),
-		ws,
-		e.level(e.LoggingCFG.Level()),
-	)
-
-	return slog.New(zapslog.NewHandler(core, nil)), nil
 }

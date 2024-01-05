@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"fmt"
+	"log/slog"
 	"path"
 	"strings"
 
@@ -298,7 +299,7 @@ type ShrinkParams struct {
 	SchemesCFG  SchemesConfig
 	SamplerCFG  SamplerConfig
 	AdvancedCFG AdvancedConfig
-	LoggingCFG  LoggingConfig
+	Logger      *slog.Logger
 	Vfs         storage.VirtualFS
 }
 
@@ -314,7 +315,7 @@ func EnterShrink(
 			SchemesCFG:  params.SchemesCFG,
 			SamplerCFG:  params.SamplerCFG,
 			AdvancedCFG: params.AdvancedCFG,
-			LoggingCFG:  params.LoggingCFG,
+			Logger:      params.Logger,
 			Vfs:         params.Vfs,
 		},
 		Inputs: params.Inputs,

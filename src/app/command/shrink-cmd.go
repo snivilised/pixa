@@ -2,13 +2,19 @@ package command
 
 import (
 	"fmt"
+	"log/slog"
 	"maps"
 	"strings"
 
+	"github.com/natefinch/lumberjack"
+	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"go.uber.org/zap"
+	"go.uber.org/zap/exp/zapslog"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -132,6 +138,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 						}
 					}
 
+					logger, _ := b.createLogger()
 					appErr = proxy.EnterShrink(
 						&proxy.ShrinkParams{
 							Inputs:      inputs,
@@ -141,7 +148,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 							SchemesCFG:  b.SchemesCFG,
 							SamplerCFG:  b.SamplerCFG,
 							AdvancedCFG: b.AdvancedCFG,
-							LoggingCFG:  b.LoggingCFG,
+							Logger:      logger,
 							Vfs:         b.Vfs,
 						},
 					)
@@ -373,4 +380,40 @@ func (b *Bootstrap) getShrinkInputs() *proxy.ShrinkCommandInputs {
 			filesFamName,
 		).(*assistant.ParamSet[store.FilesFilterParameterSet]),
 	}
+}
+
+func (b *Bootstrap) level(raw string) zapcore.LevelEnabler {
+	if l, err := zapcore.ParseLevel(raw); err == nil {
+		return l
+	}
+
+	return zapcore.InfoLevel
+}
+
+func (b *Bootstrap) createLogger() (*slog.Logger, error) {
+	path := b.LoggingCFG.Path()
+
+	if path == "" {
+		noc := slog.New(zapslog.NewHandler(
+			zapcore.NewNopCore(), nil),
+		)
+
+		return noc, errors.New("logging path not defined")
+	}
+
+	ws := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   path,
+		MaxSize:    int(b.LoggingCFG.MaxSizeInMb()),
+		MaxBackups: int(b.LoggingCFG.MaxNoOfBackups()),
+		MaxAge:     int(b.LoggingCFG.MaxAgeInDays()),
+	})
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.TimeEncoderOfLayout(b.LoggingCFG.TimeFormat())
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(config),
+		ws,
+		b.level(b.LoggingCFG.Level()),
+	)
+
+	return slog.New(zapslog.NewHandler(core, nil)), nil
 }
