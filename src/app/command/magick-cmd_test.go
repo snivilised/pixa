@@ -26,6 +26,7 @@ var _ = Describe("MagickCmd", Ordered, func() {
 		mockSchemesReader  *mocks.MockSchemesConfigReader
 		mockSamplerReader  *mocks.MockSamplerConfigReader
 		mockAdvancedReader *mocks.MockAdvancedConfigReader
+		mockLoggingReader  *mocks.MockLoggingConfigReader
 		mockViperConfig    *cmocks.MockViperConfig
 	)
 
@@ -48,9 +49,14 @@ var _ = Describe("MagickCmd", Ordered, func() {
 		mockSchemesReader = mocks.NewMockSchemesConfigReader(ctrl)
 		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
 		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+		mockLoggingReader = mocks.NewMockLoggingConfigReader(ctrl)
 		helpers.DoMockReadInConfig(mockViperConfig)
 		helpers.DoMockConfigs(config,
-			mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+			mockProfilesReader,
+			mockSchemesReader,
+			mockSamplerReader,
+			mockAdvancedReader,
+			mockLoggingReader,
 		)
 	})
 
@@ -74,6 +80,7 @@ var _ = Describe("MagickCmd", Ordered, func() {
 						Schemes:  mockSchemesReader,
 						Sampler:  mockSamplerReader,
 						Advanced: mockAdvancedReader,
+						Logging:  mockLoggingReader,
 					}
 				}),
 			}

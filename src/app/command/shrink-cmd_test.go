@@ -22,6 +22,7 @@ var (
 	_ proxy.ProfilesConfigReader = &command.MsProfilesConfigReader{}
 	_ proxy.SamplerConfigReader  = &command.MsSamplerConfigReader{}
 	_ proxy.AdvancedConfigReader = &command.MsAdvancedConfigReader{}
+	_ proxy.LoggingConfigReader  = &command.MsLoggingConfigReader{}
 )
 
 const (
@@ -72,11 +73,16 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 		mockSchemesReader  = mocks.NewMockSchemesConfigReader(ctrl)
 		mockSamplerReader  = mocks.NewMockSamplerConfigReader(ctrl)
 		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+		mockLoggingReader  = mocks.NewMockLoggingConfigReader(ctrl)
 	)
 
 	helpers.DoMockReadInConfig(mockViperConfig)
 	helpers.DoMockConfigs(config,
-		mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+		mockProfilesReader,
+		mockSchemesReader,
+		mockSamplerReader,
+		mockAdvancedReader,
+		mockLoggingReader,
 	)
 
 	tester := helpers.CommandTester{
@@ -95,6 +101,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 				Schemes:  mockSchemesReader,
 				Sampler:  mockSamplerReader,
 				Advanced: mockAdvancedReader,
+				Logging:  mockLoggingReader,
 			}
 		}),
 	}

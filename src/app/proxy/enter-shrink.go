@@ -290,31 +290,35 @@ func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {
 	)
 }
 
-func EnterShrink(
-	inputs *ShrinkCommandInputs,
-	program Executor,
-	config configuration.ViperConfig,
-	profilesCFG ProfilesConfig,
-	schemesCFG SchemesConfig,
-	samplerCFG SamplerConfig,
-	advancedCFG AdvancedConfig,
-	vfs storage.VirtualFS,
-) error {
-	fmt.Printf("---> 🔊🔊 Directory: '%v'\n", inputs.Root.ParamSet.Native.Directory)
+type ShrinkParams struct {
+	Inputs      *ShrinkCommandInputs
+	Program     Executor
+	Config      configuration.ViperConfig
+	ProfilesCFG ProfilesConfig
+	SchemesCFG  SchemesConfig
+	SamplerCFG  SamplerConfig
+	AdvancedCFG AdvancedConfig
+	LoggingCFG  LoggingConfig
+	Vfs         storage.VirtualFS
+}
 
+func EnterShrink(
+	params *ShrinkParams,
+) error {
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
-			Inputs:      inputs.Root,
-			Program:     program,
-			Config:      config,
-			ProfilesCFG: profilesCFG,
-			SchemesCFG:  schemesCFG,
-			SamplerCFG:  samplerCFG,
-			AdvancedCFG: advancedCFG,
-			Vfs:         vfs,
+			Inputs:      params.Inputs.Root,
+			Program:     params.Program,
+			Config:      params.Config,
+			ProfilesCFG: params.ProfilesCFG,
+			SchemesCFG:  params.SchemesCFG,
+			SamplerCFG:  params.SamplerCFG,
+			AdvancedCFG: params.AdvancedCFG,
+			LoggingCFG:  params.LoggingCFG,
+			Vfs:         params.Vfs,
 		},
-		Inputs: inputs,
+		Inputs: params.Inputs,
 	}
 
-	return entry.run(config)
+	return entry.run(params.Config)
 }

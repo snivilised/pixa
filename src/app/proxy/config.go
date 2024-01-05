@@ -53,4 +53,17 @@ type (
 	AdvancedConfigReader interface {
 		Read(configuration.ViperConfig) (AdvancedConfig, error)
 	}
+
+	LoggingConfig interface {
+		Path() string
+		MaxSizeInMb() uint
+		MaxNoOfBackups() uint
+		MaxAgeInDays() uint
+		Level() string
+		TimeFormat() string
+	}
+
+	LoggingConfigReader interface {
+		Read(configuration.ViperConfig) (LoggingConfig, error)
+	}
 )

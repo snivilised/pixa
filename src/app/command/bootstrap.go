@@ -90,6 +90,7 @@ type Bootstrap struct {
 	SchemesCFG  proxy.SchemesConfig
 	SamplerCFG  proxy.SamplerConfig
 	AdvancedCFG proxy.AdvancedConfig
+	LoggingCFG  proxy.LoggingConfig
 	Vfs         storage.VirtualFS
 }
 
@@ -123,6 +124,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				Schemes:  &MsSchemesConfigReader{},
 				Sampler:  &MsSamplerConfigReader{},
 				Advanced: &MsAdvancedConfigReader{},
+				Logging:  &MsLoggingConfigReader{},
 			},
 		},
 	}
@@ -260,4 +262,5 @@ func (b *Bootstrap) viper() {
 	b.SchemesCFG, _ = b.OptionsInfo.Config.Readers.Schemes.Read(b.OptionsInfo.Config.Viper)
 	b.SamplerCFG, _ = b.OptionsInfo.Config.Readers.Sampler.Read(b.OptionsInfo.Config.Viper)
 	b.AdvancedCFG, _ = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Viper)
+	b.LoggingCFG, _ = b.OptionsInfo.Config.Readers.Logging.Read(b.OptionsInfo.Viper)
 }

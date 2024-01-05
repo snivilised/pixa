@@ -15,6 +15,10 @@ const (
 	noSampleFiles   = 2
 	noSampleFolders = 1
 	noRetries       = 2
+
+	maxLogSizeInMb  = 10
+	maxLogBackups   = 3
+	maxLogAgeInDays = 30
 )
 
 var (
@@ -28,6 +32,7 @@ var (
 	SchemesConfigData  proxy.SchemesConfig
 	SamplerConfigData  proxy.SamplerConfig
 	AdvancedConfigData proxy.AdvancedConfig
+	LoggingConfigData  proxy.LoggingConfig
 )
 
 type testProfilesConfig struct {
@@ -141,6 +146,39 @@ func (cfg *testAdvancedConfig) TrashLabel() string {
 	return cfg.Labels.Trash
 }
 
+type testLoggingConfig struct {
+	LogPath    string
+	MaxSize    uint
+	MaxBackups uint
+	MaxAge     uint
+	LogLevel   string
+	Format     string
+}
+
+func (cfg *testLoggingConfig) Path() string {
+	return cfg.LogPath
+}
+
+func (cfg *testLoggingConfig) MaxSizeInMb() uint {
+	return cfg.MaxSize
+}
+
+func (cfg *testLoggingConfig) MaxNoOfBackups() uint {
+	return cfg.MaxBackups
+}
+
+func (cfg *testLoggingConfig) MaxAgeInDays() uint {
+	return cfg.MaxAge
+}
+
+func (cfg *testLoggingConfig) Level() string {
+	return cfg.LogLevel
+}
+
+func (cfg *testLoggingConfig) TimeFormat() string {
+	return cfg.Format
+}
+
 func init() {
 	BackyardWorldsPlanet9Scan01First2 = []string{
 		"01_Backyard-Worlds-Planet-9_s01.jpg",
@@ -224,5 +262,12 @@ func init() {
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},
+	}
+
+	LoggingConfigData = &testLoggingConfig{
+		LogPath:    "",
+		MaxSize:    maxLogSizeInMb,
+		MaxBackups: maxLogBackups,
+		MaxAge:     maxLogAgeInDays,
 	}
 }

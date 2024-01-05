@@ -30,11 +30,16 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE,
 		mockSchemesReader  = mocks.NewMockSchemesConfigReader(ctrl)
 		mockSamplerReader  = mocks.NewMockSamplerConfigReader(ctrl)
 		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
+		mockLoggingReader  = mocks.NewMockLoggingConfigReader(ctrl)
 	)
 
 	helpers.DoMockReadInConfig(mockViperConfig)
 	helpers.DoMockConfigs(config,
-		mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+		mockProfilesReader,
+		mockSchemesReader,
+		mockSamplerReader,
+		mockAdvancedReader,
+		mockLoggingReader,
 	)
 
 	options := []string{
@@ -91,6 +96,7 @@ var _ = Describe("Config", Ordered, func() {
 		mockSchemesReader  *mocks.MockSchemesConfigReader
 		mockSamplerReader  *mocks.MockSamplerConfigReader
 		mockAdvancedReader *mocks.MockAdvancedConfigReader
+		mockLoggingReader  *mocks.MockLoggingConfigReader
 		mockViperConfig    *cmocks.MockViperConfig
 	)
 
@@ -113,7 +119,11 @@ var _ = Describe("Config", Ordered, func() {
 		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
 		helpers.DoMockReadInConfig(mockViperConfig)
 		helpers.DoMockConfigs(config,
-			mockProfilesReader, mockSchemesReader, mockSamplerReader, mockAdvancedReader,
+			mockProfilesReader,
+			mockSchemesReader,
+			mockSamplerReader,
+			mockAdvancedReader,
+			mockLoggingReader,
 		)
 	})
 
