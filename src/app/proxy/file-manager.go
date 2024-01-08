@@ -11,6 +11,7 @@ import (
 
 const (
 	beezledub        = os.FileMode(0o666)
+	perm             = os.FileMode(0o766)
 	errorDestination = ""
 )
 
@@ -53,7 +54,7 @@ func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
 	// we don't want to rename/move the source...
 	//
 	if folder, file := fm.Finder.Destination(pi); folder != "" {
-		if err = fm.vfs.MkdirAll(folder, beezledub); err != nil {
+		if err = fm.vfs.MkdirAll(folder, perm); err != nil {
 			return errorDestination, errors.Wrapf(
 				err, "could not create parent setup for '%v'", pi.item.Path,
 			)

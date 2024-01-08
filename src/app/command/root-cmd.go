@@ -7,6 +7,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
 )
@@ -24,7 +25,9 @@ const (
 )
 
 func Execute() error {
-	return (&Bootstrap{}).Root().Execute()
+	return (&Bootstrap{
+		Vfs: storage.UseNativeFS(),
+	}).Root().Execute()
 }
 
 func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
