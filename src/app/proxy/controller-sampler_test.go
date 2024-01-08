@@ -121,7 +121,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 					}
 					co.Config.Name = helpers.PixaConfigTestFilename
 					co.Config.ConfigPath = configPath
-					co.Viper = &configuration.GlobalViperConfig{}
+					co.Config.Viper = &configuration.GlobalViperConfig{}
 					co.Config.Readers = command.ConfigReaders{
 						Profiles: mockProfilesReader,
 						Schemes:  mockSchemesReader,

@@ -2,13 +2,19 @@ package command
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cubiest/jibberjabber"
+	"github.com/natefinch/lumberjack"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"go.uber.org/zap/exp/zapslog"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/text/language"
 
 	"github.com/snivilised/cobrass/src/assistant"
@@ -20,26 +26,6 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
 )
-
-func ResolvePath(path string) string {
-	if path == "" {
-		return path
-	}
-
-	result := path
-
-	if result[0] == '~' {
-		if h, err := os.UserHomeDir(); err == nil {
-			result = filepath.Join(h, result[1:])
-		}
-	} else {
-		if absolute, absErr := filepath.Abs(path); absErr == nil {
-			result = absolute
-		}
-	}
-
-	return result
-}
 
 type LocaleDetector interface {
 	Scan() language.Tag
@@ -63,7 +49,7 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	directory := ResolvePath(args[0])
+	directory := utils.ResolvePath(args[0])
 
 	if !utils.Exists(directory) {
 		return xi18n.NewPathNotFoundError("shrink directory", directory)
@@ -98,7 +84,6 @@ type ConfigureOptionsInfo struct {
 	Detector LocaleDetector
 	Program  proxy.Executor
 	Config   ConfigInfo
-	Viper    configuration.ViperConfig
 }
 
 type ConfigureOptionFn func(*ConfigureOptionsInfo)
@@ -159,7 +144,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
 
 				inputs := b.getRootInputs()
-				inputs.ParamSet.Native.Directory = ResolvePath(args[0])
+				inputs.ParamSet.Native.Directory = utils.ResolvePath(args[0])
 
 				if inputs.WorkerPoolFam.Native.CPU {
 					inputs.WorkerPoolFam.Native.NoWorkers = 0
@@ -261,6 +246,65 @@ func (b *Bootstrap) viper() {
 	b.ProfilesCFG, _ = b.OptionsInfo.Config.Readers.Profiles.Read(b.OptionsInfo.Config.Viper)
 	b.SchemesCFG, _ = b.OptionsInfo.Config.Readers.Schemes.Read(b.OptionsInfo.Config.Viper)
 	b.SamplerCFG, _ = b.OptionsInfo.Config.Readers.Sampler.Read(b.OptionsInfo.Config.Viper)
-	b.AdvancedCFG, _ = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Viper)
-	b.LoggingCFG, _ = b.OptionsInfo.Config.Readers.Logging.Read(b.OptionsInfo.Viper)
+	b.AdvancedCFG, _ = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Config.Viper)
+	b.LoggingCFG, _ = b.OptionsInfo.Config.Readers.Logging.Read(b.OptionsInfo.Config.Viper)
+}
+
+func (b *Bootstrap) ensure(p string) string {
+	var (
+		directory, file string
+	)
+
+	if strings.HasSuffix(p, string(os.PathSeparator)) {
+		directory = p
+		file = "pixa.log"
+	} else {
+		directory, file = filepath.Split(p)
+	}
+
+	if !b.Vfs.DirectoryExists(directory) {
+		const perm = 0o766
+		_ = b.Vfs.MkdirAll(directory, os.FileMode(perm))
+	}
+
+	return filepath.Clean(filepath.Join(directory, file))
+}
+
+func (b *Bootstrap) level(raw string) zapcore.LevelEnabler {
+	if l, err := zapcore.ParseLevel(raw); err == nil {
+		return l
+	}
+
+	return zapcore.InfoLevel
+}
+
+func (b *Bootstrap) logger() *slog.Logger {
+	noc := slog.New(zapslog.NewHandler(
+		zapcore.NewNopCore(), nil),
+	)
+
+	logPath := b.LoggingCFG.Path()
+
+	if logPath == "" {
+		return noc
+	}
+
+	logPath = utils.ResolvePath(logPath)
+	logPath = b.ensure(logPath)
+
+	ws := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   logPath,
+		MaxSize:    int(b.LoggingCFG.MaxSizeInMb()),
+		MaxBackups: int(b.LoggingCFG.MaxNoOfBackups()),
+		MaxAge:     int(b.LoggingCFG.MaxAgeInDays()),
+	})
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.TimeEncoderOfLayout(b.LoggingCFG.TimeFormat())
+	core := zapcore.NewCore(
+		zapcore.NewJSONEncoder(config),
+		ws,
+		b.level(b.LoggingCFG.Level()),
+	)
+
+	return slog.New(zapslog.NewHandler(core, nil))
 }
