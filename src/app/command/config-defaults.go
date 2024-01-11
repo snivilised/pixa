@@ -92,9 +92,12 @@ func init() {
 		NoProgramRetries: defaultNoProgramRetries,
 		Labels: MsLabelsConfig{
 			Adhoc:   "ADHOC",
-			Journal: ".journal.txt",
+			Journal: ".journal",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
+		},
+		Extensions: MsExtensionsConfig{
+			Suffixes: "jpg,jpeg,png",
 		},
 	}
 

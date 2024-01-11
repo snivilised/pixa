@@ -34,7 +34,7 @@ advanced:
     journal-suffix: .journal.txt
     trash: TRASH
   extensions:
-    suffixes: "jpg,png"
+    suffixes: "jpg,jpeg,png"
 logging:
   log-path: "~/snivilised/pixa/pixa.log"
   max-size: 10

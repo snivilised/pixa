@@ -111,11 +111,15 @@ type testLabelsConfig struct {
 	Trash   string
 }
 
+type testExtensionsConfig struct {
+	Suffixes string
+}
 type testAdvancedConfig struct {
 	Abort            bool
 	Timeout          string
 	NoProgramRetries uint
 	Labels           testLabelsConfig
+	Extensions       testExtensionsConfig
 }
 
 func (cfg *testAdvancedConfig) AbortOnError() bool {
@@ -144,6 +148,10 @@ func (cfg *testAdvancedConfig) LegacyLabel() string {
 
 func (cfg *testAdvancedConfig) TrashLabel() string {
 	return cfg.Labels.Trash
+}
+
+func (cfg *testAdvancedConfig) Suffixes() string {
+	return cfg.Extensions.Suffixes
 }
 
 type testLoggingConfig struct {
@@ -261,6 +269,9 @@ func init() {
 			Journal: ".journal.txt",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
+		},
+		Extensions: testExtensionsConfig{
+			Suffixes: "jpg,jpeg,png",
 		},
 	}
 
