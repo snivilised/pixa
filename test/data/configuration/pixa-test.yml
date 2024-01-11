@@ -35,6 +35,9 @@ advanced:
     trash: TRASH
   extensions:
     suffixes: "jpg,jpeg,png"
+    transforms: lower
+    map:
+      jpeg: jpg
 logging:
   log-path: "~/snivilised/pixa/pixa.log"
   max-size: 10

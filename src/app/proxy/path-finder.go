@@ -78,33 +78,13 @@ func (tc pfTemplatesCollection) expand(segments ...string) string {
 }
 
 // evaluate returns a string representing a file system path from a
-// template string containing place-holders and field values
-func (tc pfTemplatesCollection) evaluate(
-	sourceTemplate string,
-	placeHolders templateSegments,
-	values pfFieldValues,
-) string {
-	const (
-		quantity = 1
-	)
-
-	result := lo.Reduce(placeHolders, func(acc, field string, _ int) string {
-		return strings.Replace(acc, field, values[field], quantity)
-	},
-		sourceTemplate,
-	)
-
-	return filepath.Clean(result)
-}
-
-// eval returns a string representing a file system path from a
 // template string containing place-holders and field values.
 //
 // Make sure that the keys of the values passed in match the segments.
 // If they differ, then the result will contain unresolved segments (ie,
 // 1 or more segments that are not evaluated and still contain the
 // template placeholder.)
-func (tc pfTemplatesCollection) eval(
+func (tc pfTemplatesCollection) evaluate(
 	values pfFieldValues,
 	segments ...string,
 ) string {
@@ -195,9 +175,13 @@ type staticInfo struct {
 	trash   string
 }
 
+type extensionTransformation struct {
+	transformers []string
+	remap        map[string]string
+}
+
 // PathFinder provides the common paths required, but its the controller that know
 // the specific paths based around this common framework
-
 type PathFinder struct {
 	Scheme          string
 	ExplicitProfile string
@@ -228,6 +212,7 @@ type PathFinder struct {
 	transparentInput bool
 
 	statics *staticInfo
+	ext     *extensionTransformation
 }
 
 func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
@@ -236,19 +221,19 @@ func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
 	return filepath.Join(item.Extension.Parent, file)
 }
 
-// Destination returns the location of what should be used
+// Transfer returns the location of what should be used
 // for the specified source path; ie when the program runs, it uses
 // a source file and requires the destination location. The source
-// and destination may not be n the same folder, so the source's name
+// and destination may not be in the same folder, so the source's name
 // is extracted from the source path and attached to the output
 // folder.
 //
-// Destination creates a path for the input; should return empty
+// Transfer creates a path for the input; should return empty
 // string for the folder, if no move is required (ie non transparent)
 // The PathFinder will only call this function when the input
 // is not transparent. When the --Trash option is present, it will
 // determine the destination path for the input.
-func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
+func (f *PathFinder) Transfer(info *pathInfo) (folder, file string) {
 	// TODO: we still need to get the rest of the mirror sub-path
 	//
 	// this does not take into account transparent, without modification;
@@ -265,7 +250,7 @@ func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 	folder = func() string {
 		segments := pfTemplates[pfPathInputDestinationFolder]
 
-		return pfTemplates.eval(pfFieldValues{
+		return pfTemplates.evaluate(pfFieldValues{
 			"${{INPUT-DESTINATION}}": to,
 			"${{ITEM-SUB-PATH}}":     info.item.Extension.SubPath,
 			"${{SUPPLEMENT}}":        f.supplement(),
@@ -276,12 +261,38 @@ func (f *PathFinder) Destination(info *pathInfo) (folder, file string) {
 	file = func() string {
 		segments := pfTemplates[pfPathInputDestinationFileOriginalExt]
 
-		return pfTemplates.eval(pfFieldValues{
+		return pfTemplates.evaluate(pfFieldValues{
 			"${{ITEM-FULL-NAME}}": info.item.Extension.Name,
 		}, segments...)
 	}()
 
 	return folder, file
+}
+
+func (f *PathFinder) mutateExtension(file string) string {
+	extension := filepath.Ext(file)
+	withoutDot := extension[1:]
+
+	if _, found := f.ext.remap[withoutDot]; found {
+		extension = "." + f.ext.remap[withoutDot]
+	}
+
+	if len(f.ext.transformers) > 0 {
+		base := FilenameWithoutExtension(file)
+
+		for _, transform := range f.ext.transformers {
+			switch transform {
+			case "lower":
+				extension = strings.ToLower(extension)
+			case "upper":
+				extension = strings.ToUpper(extension)
+			}
+		}
+
+		file = base + extension
+	}
+
+	return file
 }
 
 // Result creates a path for each result so should be called by the
@@ -306,18 +317,18 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 				//
 				segments = pfTemplates[pfPathTxInputDestinationFolder]
 
-				return pfTemplates.eval(pfFieldValues{
+				return pfTemplates.evaluate(pfFieldValues{
 					"${{OUTPUT-ROOT}}": info.origin,
 				}, segments...)
 			},
 			func() string {
-				// If there is no scheme of profile, then the user is
+				// If there is no scheme or profile, then the user is
 				// only relying flags on the command line, ie running adhoc
 				// so the result path should include an adhoc label. Otherwise,
 				// the result should reflect the supplementary path.
 				//
 
-				return pfTemplates.eval(pfFieldValues{
+				return pfTemplates.evaluate(pfFieldValues{
 					"${{OUTPUT-ROOT}}":   to,
 					"${{SUPPLEMENT}}":    f.supplement(),
 					"${{ITEM-SUB-PATH}}": info.item.Extension.SubPath,
@@ -332,12 +343,12 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 		//
 		segments := pfTemplates[pfPathResultFile]
 
-		return pfTemplates.eval(pfFieldValues{
+		return pfTemplates.evaluate(pfFieldValues{
 			"${{RESULT-NAME}}": info.item.Extension.Name,
 		}, segments...)
 	}()
 
-	return folder, file
+	return folder, f.mutateExtension(file)
 }
 
 func (f *PathFinder) supplement() string {

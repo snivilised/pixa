@@ -53,7 +53,7 @@ func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
 	// original alone and create other outputs; in this scenario
 	// we don't want to rename/move the source...
 	//
-	if folder, file := fm.Finder.Destination(pi); folder != "" {
+	if folder, file := fm.Finder.Transfer(pi); folder != "" {
 		if err = fm.vfs.MkdirAll(folder, perm); err != nil {
 			return errorDestination, errors.Wrapf(
 				err, "could not create parent setup for '%v'", pi.item.Path,

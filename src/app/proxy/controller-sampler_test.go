@@ -137,9 +137,6 @@ var _ = Describe("SamplerController", Ordered, func() {
 				fmt.Sprintf("execution result non nil (%v)", err),
 			)
 
-			// eventually, we should assert on files created in the virtual
-			// file system, using entry.expected
-			//
 			if entry.inputs != nil {
 				intermediate := helpers.Path(root, entry.intermediate)
 				supplement := helpers.Path(intermediate, entry.supplement)
@@ -147,11 +144,6 @@ var _ = Describe("SamplerController", Ordered, func() {
 				for _, original := range entry.inputs {
 					originalPath := filepath.Join(supplement, original)
 					Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
-
-					// We can't assert this until an actual output is created:
-					// output := helpers.Path(root, entry.intermediate)
-					// resultPath := filepath.Join(intermediate, output, original)
-					// Expect(matchers.AsFile(resultPath)).To(matchers.ExistInFS(vfs))
 				}
 			}
 		},

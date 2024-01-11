@@ -51,7 +51,7 @@ func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
 		defs          *nav.FilterDefinitions
 		folderDefined = true
 		pattern       string
-		suffixes      = e.AdvancedCFG.Suffixes()
+		suffixes      = e.AdvancedCFG.Extensions().Suffixes()
 	)
 
 	switch {
@@ -163,10 +163,21 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 }
 
 func (e *ShrinkEntry) createFinder() *PathFinder {
+	extensions := e.AdvancedCFG.Extensions()
 	finder := &PathFinder{
 		Scheme:          e.Inputs.Root.ProfileFam.Native.Scheme,
 		ExplicitProfile: e.Inputs.Root.ProfileFam.Native.Profile,
 		arity:           1,
+		statics: &staticInfo{
+			adhoc:   e.AdvancedCFG.AdhocLabel(),
+			journal: e.AdvancedCFG.JournalLabel(),
+			legacy:  e.AdvancedCFG.LegacyLabel(),
+			trash:   e.AdvancedCFG.TrashLabel(),
+		},
+		ext: &extensionTransformation{
+			transformers: strings.Split(extensions.Transforms(), ","),
+			remap:        extensions.Map(),
+		},
 	}
 
 	if finder.Scheme != "" {
@@ -182,13 +193,6 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 
 	if e.Inputs.ParamSet.Native.TrashPath != "" {
 		finder.Trash = e.Inputs.ParamSet.Native.TrashPath
-	}
-
-	finder.statics = &staticInfo{
-		adhoc:   e.AdvancedCFG.AdhocLabel(),
-		journal: e.AdvancedCFG.JournalLabel(),
-		legacy:  e.AdvancedCFG.LegacyLabel(),
-		trash:   e.AdvancedCFG.TrashLabel(),
 	}
 
 	if !strings.HasSuffix(finder.statics.journal, ".txt") {
