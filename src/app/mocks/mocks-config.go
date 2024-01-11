@@ -418,6 +418,20 @@ func (mr *MockAdvancedConfigMockRecorder) ProgramTimeout() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProgramTimeout", reflect.TypeOf((*MockAdvancedConfig)(nil).ProgramTimeout))
 }
 
+// Suffixes mocks base method.
+func (m *MockAdvancedConfig) Suffixes() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Suffixes")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Suffixes indicates an expected call of Suffixes.
+func (mr *MockAdvancedConfigMockRecorder) Suffixes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Suffixes", reflect.TypeOf((*MockAdvancedConfig)(nil).Suffixes))
+}
+
 // TrashLabel mocks base method.
 func (m *MockAdvancedConfig) TrashLabel() string {
 	m.ctrl.T.Helper()
@@ -493,6 +507,20 @@ func (m *MockLoggingConfig) EXPECT() *MockLoggingConfigMockRecorder {
 	return m.recorder
 }
 
+// Level mocks base method.
+func (m *MockLoggingConfig) Level() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Level")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Level indicates an expected call of Level.
+func (mr *MockLoggingConfigMockRecorder) Level() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Level", reflect.TypeOf((*MockLoggingConfig)(nil).Level))
+}
+
 // MaxAgeInDays mocks base method.
 func (m *MockLoggingConfig) MaxAgeInDays() uint {
 	m.ctrl.T.Helper()
@@ -547,6 +575,20 @@ func (m *MockLoggingConfig) Path() string {
 func (mr *MockLoggingConfigMockRecorder) Path() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Path", reflect.TypeOf((*MockLoggingConfig)(nil).Path))
+}
+
+// TimeFormat mocks base method.
+func (m *MockLoggingConfig) TimeFormat() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TimeFormat")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// TimeFormat indicates an expected call of TimeFormat.
+func (mr *MockLoggingConfigMockRecorder) TimeFormat() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TimeFormat", reflect.TypeOf((*MockLoggingConfig)(nil).TimeFormat))
 }
 
 // MockLoggingConfigReader is a mock of LoggingConfigReader interface.

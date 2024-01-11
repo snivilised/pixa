@@ -48,6 +48,7 @@ type (
 		JournalLabel() string
 		LegacyLabel() string
 		TrashLabel() string
+		Suffixes() string
 	}
 
 	AdvancedConfigReader interface {

@@ -77,11 +77,16 @@ type MsLabelsConfig struct {
 	Trash   string `mapstructure:"trash"`
 }
 
+type MsExtensionsConfig struct {
+	Suffixes string `mapstructure:"suffixes"`
+}
+
 type MsAdvancedConfig struct {
-	Abort            bool           `mapstructure:"abort-on-error"`
-	Timeout          string         `mapstructure:"program-timeout"`
-	NoProgramRetries uint           `mapstructure:"no-program-retries"`
-	Labels           MsLabelsConfig `mapstructure:"labels"`
+	Abort            bool               `mapstructure:"abort-on-error"`
+	Timeout          string             `mapstructure:"program-timeout"`
+	NoProgramRetries uint               `mapstructure:"no-program-retries"`
+	Labels           MsLabelsConfig     `mapstructure:"labels"`
+	Extensions       MsExtensionsConfig `mapstructure:"extensions"`
 }
 
 func (cfg *MsAdvancedConfig) AbortOnError() bool {
@@ -110,6 +115,10 @@ func (cfg *MsAdvancedConfig) LegacyLabel() string {
 
 func (cfg *MsAdvancedConfig) TrashLabel() string {
 	return cfg.Labels.Trash
+}
+
+func (cfg *MsAdvancedConfig) Suffixes() string {
+	return cfg.Extensions.Suffixes
 }
 
 type MsLoggingConfig struct {

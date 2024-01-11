@@ -51,18 +51,12 @@ func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
 		defs          *nav.FilterDefinitions
 		folderDefined = true
 		pattern       string
+		suffixes      = e.AdvancedCFG.Suffixes()
 	)
-
-	const (
-		defaultGbSuffix = "*.jp*g"
-		defaultRxSuffix = "(?i).(jpe?g|png)$"
-	)
-
-	extensions := "jpg,jpeg,png"
 
 	switch {
 	case e.Inputs.PolyFam.Native.Files != "":
-		pattern = fmt.Sprintf("%v|%v", e.Inputs.PolyFam.Native.Files, extensions)
+		pattern = fmt.Sprintf("%v|%v", e.Inputs.PolyFam.Native.Files, suffixes)
 
 		file = &nav.FilterDef{
 			Type:        nav.FilterTypeExtendedGlobEn,
@@ -87,7 +81,7 @@ func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
 		}
 
 	default:
-		pattern = fmt.Sprintf("*|%v", extensions)
+		pattern = fmt.Sprintf("*|%v", suffixes)
 		file = &nav.FilterDef{
 			Type:        nav.FilterTypeExtendedGlobEn,
 			Description: fmt.Sprintf("default extended glob filter: '%v'", pattern),
@@ -195,6 +189,10 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 		journal: e.AdvancedCFG.JournalLabel(),
 		legacy:  e.AdvancedCFG.LegacyLabel(),
 		trash:   e.AdvancedCFG.TrashLabel(),
+	}
+
+	if !strings.HasSuffix(finder.statics.journal, ".txt") {
+		finder.statics.journal += ".txt"
 	}
 
 	return finder
