@@ -231,9 +231,9 @@ type PathFinder struct {
 }
 
 func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
-	path := FilenameWithoutExtension(item.Extension.Name) + f.statics.journal
+	file := FilenameWithoutExtension(item.Extension.Name) + f.statics.journal
 
-	return filepath.Join(item.Extension.Parent, path)
+	return filepath.Join(item.Extension.Parent, file)
 }
 
 // Destination returns the location of what should be used

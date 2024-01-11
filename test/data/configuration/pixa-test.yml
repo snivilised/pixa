@@ -33,6 +33,8 @@ advanced:
     legacy: .LEGACY
     journal-suffix: .journal.txt
     trash: TRASH
+  extensions:
+    suffixes: "jpg,png"
 logging:
   log-path: "~/snivilised/pixa/pixa.log"
   max-size: 10

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/cubiest/jibberjabber"
 	"github.com/natefinch/lumberjack"
@@ -25,6 +23,11 @@ import (
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
+)
+
+const (
+	defaultLogFilename = "pixa.log"
+	perm               = 0o766
 )
 
 type LocaleDetector interface {
@@ -250,26 +253,6 @@ func (b *Bootstrap) viper() {
 	b.LoggingCFG, _ = b.OptionsInfo.Config.Readers.Logging.Read(b.OptionsInfo.Config.Viper)
 }
 
-func (b *Bootstrap) ensure(p string) string {
-	var (
-		directory, file string
-	)
-
-	if strings.HasSuffix(p, string(os.PathSeparator)) {
-		directory = p
-		file = "pixa.log"
-	} else {
-		directory, file = filepath.Split(p)
-	}
-
-	if !b.Vfs.DirectoryExists(directory) {
-		const perm = 0o766
-		_ = b.Vfs.MkdirAll(directory, os.FileMode(perm))
-	}
-
-	return filepath.Clean(filepath.Join(directory, file))
-}
-
 func (b *Bootstrap) level(raw string) zapcore.LevelEnabler {
 	if l, err := zapcore.ParseLevel(raw); err == nil {
 		return l
@@ -290,7 +273,7 @@ func (b *Bootstrap) logger() *slog.Logger {
 	}
 
 	logPath = utils.ResolvePath(logPath)
-	logPath = b.ensure(logPath)
+	logPath, _ = utils.EnsurePathAt(logPath, defaultLogFilename, perm, b.Vfs)
 
 	ws := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,

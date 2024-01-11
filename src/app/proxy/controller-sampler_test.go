@@ -169,7 +169,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
@@ -188,7 +188,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -209,7 +209,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 					"--sample",
 					"--last",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -228,7 +228,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
 					"--sample",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 				},
 				expected:     helpers.BackyardWorldsPlanet9Scan01First2,
@@ -267,7 +267,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--scheme", "singleton",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -287,7 +287,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
@@ -307,7 +307,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -328,7 +328,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--scheme", "singleton",
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
@@ -349,7 +349,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 				args: []string{
 					"--sample",
 					"--no-files", "4",
-					"--files-gb", "*Backyard-Worlds*",
+					"--files", "*Backyard-Worlds*",
 					"--strip",
 					"--interlace", "plane",
 					"--quality", "85",

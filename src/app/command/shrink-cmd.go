@@ -51,8 +51,10 @@ var shrinkShortFlags = cobrass.KnownByCollection{
 	"cpu":        "C", // family: worker-pool
 	"now":        "N", // family: worker-pool
 	"dry-run":    "D", // family: preview
+	"files":      "F", // family: filter
 	"files-gb":   "G", // family: filter
 	"files-rx":   "X", // family: filter
+	"folders":    "F", // family: filter
 	"folders-gb": "Z", // family: filter
 	"folders-rx": "Y", // family: filter
 	"profile":    "P", // family: profile
@@ -65,7 +67,7 @@ func init() {
 
 const (
 	shrinkPsName = "shrink-ps"
-	filesFamName = "files-family"
+	polyFamName  = "poly-family"
 )
 
 func newShrinkFlagInfoWithShort[T any](usage string, defaultValue T) *assistant.FlagInfo {
@@ -322,13 +324,13 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		maxQuality,
 	)
 
-	// family: files [--files-gb(G), --files-rx(X)]
+	// family: poly [--files(f), --files-rx(X), --folders-gb(Z), --folders-rx(Y)]
 	//
-	// The files filter family is not required on the root, so we define it
+	// A file filter is not required on the root, so we define it
 	// here instead.
 	//
-	filesFam := assistant.NewParamSet[store.FilesFilterParameterSet](shrinkCommand)
-	filesFam.Native.BindAll(filesFam)
+	polyFam := assistant.NewParamSet[store.PolyFilterParameterSet](shrinkCommand)
+	polyFam.Native.BindAll(polyFam)
 
 	paramSet.Native.KnownBy = thirdPartyFlags
 
@@ -352,7 +354,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	//
 	container.MustRegisterRootedCommand(shrinkCommand)
 	container.MustRegisterParamSet(shrinkPsName, paramSet)
-	container.MustRegisterParamSet(filesFamName, filesFam)
+	container.MustRegisterParamSet(polyFamName, polyFam)
 
 	// TODO: we might need to code this via an anonymous func, store the vfs on
 	// the bootstrap, then access it from the func, instead of using
@@ -369,8 +371,8 @@ func (b *Bootstrap) getShrinkInputs() *proxy.ShrinkCommandInputs {
 		ParamSet: b.Container.MustGetParamSet(
 			shrinkPsName,
 		).(*assistant.ParamSet[proxy.ShrinkParameterSet]),
-		FilesFam: b.Container.MustGetParamSet(
-			filesFamName,
-		).(*assistant.ParamSet[store.FilesFilterParameterSet]),
+		PolyFam: b.Container.MustGetParamSet(
+			polyFamName,
+		).(*assistant.ParamSet[store.PolyFilterParameterSet]),
 	}
 }

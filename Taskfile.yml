@@ -29,9 +29,9 @@ tasks:
 
   c:
     cmds:
-      - task: clean
+      - task: clean-dist
 
-  clean:
+  clean-dist:
     cmds:
       - cmd: rm -rf {{.DIST_DIR}}/*
 
