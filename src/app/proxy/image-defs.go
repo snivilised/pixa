@@ -125,7 +125,7 @@ type RootCommandInputs struct {
 	ParamSet      *assistant.ParamSet[RootParameterSet]
 	PreviewFam    *assistant.ParamSet[store.PreviewParameterSet]
 	WorkerPoolFam *assistant.ParamSet[store.WorkerPoolParameterSet]
-	FoldersFam    *assistant.ParamSet[store.FoldersFilterParameterSet]
+	FoldersFam    *assistant.ParamSet[store.FoldersFilterParameterSet] // !!!
 	ProfileFam    *assistant.ParamSet[store.ProfileParameterSet]
 	CascadeFam    *assistant.ParamSet[store.CascadeParameterSet]
 }
@@ -133,5 +133,5 @@ type RootCommandInputs struct {
 type ShrinkCommandInputs struct {
 	Root     *RootCommandInputs
 	ParamSet *assistant.ParamSet[ShrinkParameterSet]
-	FilesFam *assistant.ParamSet[store.FilesFilterParameterSet]
+	PolyFam  *assistant.ParamSet[store.PolyFilterParameterSet]
 }

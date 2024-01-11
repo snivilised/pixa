@@ -207,7 +207,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				message: "with long form glob filtering options options",
 				args: []string{
 					// "--folders-gb", "A*",
-					"--files-gb", "*.jpg",
+					"--files", "*.jpg",
 				},
 			},
 		}),

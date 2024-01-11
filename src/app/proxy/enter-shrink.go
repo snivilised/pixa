@@ -39,12 +39,13 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 			return err
 		},
 	}
-
-	defs := e.getFilterDefs()
-	o.Store.FilterDefs = defs
 }
 
 func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
+	// the filter we expect the user to provide does not include the file suffix,
+	// it only applies to the base name and we define the suffix part of the filter
+	// internally.
+	//
 	var (
 		file, folder  *nav.FilterDef
 		defs          *nav.FilterDefinitions
@@ -52,18 +53,32 @@ func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
 		pattern       string
 	)
 
+	const (
+		defaultGbSuffix = "*.jp*g"
+		defaultRxSuffix = "(?i).(jpe?g|png)$"
+	)
+
+	extensions := "jpg,jpeg,png"
+
 	switch {
-	case e.Inputs.FilesFam.Native.FilesGlob != "":
-		pattern = e.Inputs.FilesFam.Native.FilesGlob
+	case e.Inputs.PolyFam.Native.Files != "":
+		pattern = fmt.Sprintf("%v|%v", e.Inputs.PolyFam.Native.Files, extensions)
+
 		file = &nav.FilterDef{
-			Type:        nav.FilterTypeGlobEn,
-			Description: fmt.Sprintf("--files-gb(G): '%v'", pattern),
+			Type:        nav.FilterTypeExtendedGlobEn,
+			Description: fmt.Sprintf("--files(F): '%v'", pattern),
 			Pattern:     pattern,
 			Scope:       nav.ScopeFileEn,
 		}
 
-	case e.Inputs.FilesFam.Native.FilesRexEx != "":
-		pattern = e.Inputs.FilesFam.Native.FilesRexEx
+	case e.Inputs.PolyFam.Native.FilesRexEx != "":
+		// we make the regex non case specific and also use a dot ta match
+		// any character before the suffix. Perhaps we need extendio to define
+		// an extended regex filter that has similar suffix functionality to
+		// the extended glob
+		//
+		pattern = fmt.Sprintf("(?i).%v.*(jpe?g|png)$", e.Inputs.PolyFam.Native.FilesRexEx)
+
 		file = &nav.FilterDef{
 			Type:        nav.FilterTypeRegexEn,
 			Description: fmt.Sprintf("--files-rx(X): '%v'", pattern),
@@ -72,10 +87,10 @@ func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
 		}
 
 	default:
-		pattern = "(?i).(jpe?g|png)$"
+		pattern = fmt.Sprintf("*|%v", extensions)
 		file = &nav.FilterDef{
-			Type:        nav.FilterTypeRegexEn,
-			Description: fmt.Sprintf("--files-rx(X): '%v'", pattern),
+			Type:        nav.FilterTypeExtendedGlobEn,
+			Description: fmt.Sprintf("default extended glob filter: '%v'", pattern),
 			Pattern:     pattern,
 			Scope:       nav.ScopeFileEn,
 		}
@@ -215,6 +230,8 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 		finder:      finder,
 		fileManager: e.FileManager,
 	})
+
+	o.Store.FilterDefs = e.getFilterDefs()
 }
 
 func clearResumeFromWith(with nav.CreateNewRunnerWith) nav.CreateNewRunnerWith {
