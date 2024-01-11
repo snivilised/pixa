@@ -78,15 +78,29 @@ type MsLabelsConfig struct {
 }
 
 type MsExtensionsConfig struct {
-	Suffixes string `mapstructure:"suffixes"`
+	FileSuffixes  string            `mapstructure:"suffixes"`
+	TransformsCSV string            `mapstructure:"transforms"`
+	Remap         map[string]string `mapstructure:"map"`
+}
+
+func (cfg *MsExtensionsConfig) Suffixes() string {
+	return cfg.FileSuffixes
+}
+
+func (cfg *MsExtensionsConfig) Transforms() string {
+	return cfg.TransformsCSV
+}
+
+func (cfg *MsExtensionsConfig) Map() map[string]string {
+	return cfg.Remap
 }
 
 type MsAdvancedConfig struct {
 	Abort            bool               `mapstructure:"abort-on-error"`
 	Timeout          string             `mapstructure:"program-timeout"`
 	NoProgramRetries uint               `mapstructure:"no-program-retries"`
-	Labels           MsLabelsConfig     `mapstructure:"labels"`
-	Extensions       MsExtensionsConfig `mapstructure:"extensions"`
+	LabelsCFG        MsLabelsConfig     `mapstructure:"labels"`
+	ExtensionsCFG    MsExtensionsConfig `mapstructure:"extensions"`
 }
 
 func (cfg *MsAdvancedConfig) AbortOnError() bool {
@@ -102,23 +116,23 @@ func (cfg *MsAdvancedConfig) NoRetries() uint {
 }
 
 func (cfg *MsAdvancedConfig) AdhocLabel() string {
-	return cfg.Labels.Adhoc
+	return cfg.LabelsCFG.Adhoc
 }
 
 func (cfg *MsAdvancedConfig) JournalLabel() string {
-	return cfg.Labels.Journal
+	return cfg.LabelsCFG.Journal
 }
 
 func (cfg *MsAdvancedConfig) LegacyLabel() string {
-	return cfg.Labels.Legacy
+	return cfg.LabelsCFG.Legacy
 }
 
 func (cfg *MsAdvancedConfig) TrashLabel() string {
-	return cfg.Labels.Trash
+	return cfg.LabelsCFG.Trash
 }
 
-func (cfg *MsAdvancedConfig) Suffixes() string {
-	return cfg.Extensions.Suffixes
+func (cfg *MsAdvancedConfig) Extensions() proxy.ExtensionsConfig {
+	return &cfg.ExtensionsCFG
 }
 
 type MsLoggingConfig struct {

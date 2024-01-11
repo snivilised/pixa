@@ -112,14 +112,29 @@ type testLabelsConfig struct {
 }
 
 type testExtensionsConfig struct {
-	Suffixes string
+	FileSuffixes  string
+	TransformsCSV string
+	Remap         map[string]string
 }
+
+func (cfg *testExtensionsConfig) Suffixes() string {
+	return cfg.FileSuffixes
+}
+
+func (cfg *testExtensionsConfig) Transforms() string {
+	return cfg.TransformsCSV
+}
+
+func (cfg *testExtensionsConfig) Map() map[string]string {
+	return cfg.Remap
+}
+
 type testAdvancedConfig struct {
 	Abort            bool
 	Timeout          string
 	NoProgramRetries uint
-	Labels           testLabelsConfig
-	Extensions       testExtensionsConfig
+	LabelsCFG        testLabelsConfig
+	ExtensionsCFG    testExtensionsConfig
 }
 
 func (cfg *testAdvancedConfig) AbortOnError() bool {
@@ -135,23 +150,31 @@ func (cfg *testAdvancedConfig) NoRetries() uint {
 }
 
 func (cfg *testAdvancedConfig) AdhocLabel() string {
-	return cfg.Labels.Adhoc
+	return cfg.LabelsCFG.Adhoc
 }
 
 func (cfg *testAdvancedConfig) JournalLabel() string {
-	return cfg.Labels.Journal
+	return cfg.LabelsCFG.Journal
 }
 
 func (cfg *testAdvancedConfig) LegacyLabel() string {
-	return cfg.Labels.Legacy
+	return cfg.LabelsCFG.Legacy
 }
 
 func (cfg *testAdvancedConfig) TrashLabel() string {
-	return cfg.Labels.Trash
+	return cfg.LabelsCFG.Trash
+}
+
+func (cfg *testAdvancedConfig) Extensions() proxy.ExtensionsConfig {
+	return &cfg.ExtensionsCFG
 }
 
 func (cfg *testAdvancedConfig) Suffixes() string {
-	return cfg.Extensions.Suffixes
+	return cfg.ExtensionsCFG.FileSuffixes
+}
+
+func (cfg *testAdvancedConfig) Transforms() string {
+	return cfg.ExtensionsCFG.TransformsCSV
 }
 
 type testLoggingConfig struct {
@@ -188,9 +211,11 @@ func (cfg *testLoggingConfig) TimeFormat() string {
 }
 
 func init() {
+	// ✅ Keep this up to date with "nasa-scientist-index.xml"
+	//
 	BackyardWorldsPlanet9Scan01First2 = []string{
-		"01_Backyard-Worlds-Planet-9_s01.jpg",
-		"02_Backyard-Worlds-Planet-9_s01.jpg",
+		"01_Backyard-Worlds-Planet-9_s01.jpeg",
+		"02_Backyard-Worlds-Planet-9_s01.JPG",
 	}
 
 	BackyardWorldsPlanet9Scan01First4 = BackyardWorldsPlanet9Scan01First2
@@ -264,14 +289,18 @@ func init() {
 		Abort:            false,
 		Timeout:          "10s",
 		NoProgramRetries: noRetries,
-		Labels: testLabelsConfig{
+		LabelsCFG: testLabelsConfig{
 			Adhoc:   "ADHOC",
 			Journal: ".journal.txt",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},
-		Extensions: testExtensionsConfig{
-			Suffixes: "jpg,jpeg,png",
+		ExtensionsCFG: testExtensionsConfig{
+			FileSuffixes:  "jpg,jpeg,png",
+			TransformsCSV: "lower",
+			Remap: map[string]string{
+				"jpeg": "jpg",
+			},
 		},
 	}
 

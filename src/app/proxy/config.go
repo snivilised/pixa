@@ -40,6 +40,12 @@ type (
 		Read(configuration.ViperConfig) (SamplerConfig, error)
 	}
 
+	ExtensionsConfig interface {
+		Suffixes() string
+		Transforms() string
+		Map() map[string]string
+	}
+
 	AdvancedConfig interface {
 		AbortOnError() bool
 		ProgramTimeout() (duration time.Duration, err error)
@@ -48,7 +54,7 @@ type (
 		JournalLabel() string
 		LegacyLabel() string
 		TrashLabel() string
-		Suffixes() string
+		Extensions() ExtensionsConfig
 	}
 
 	AdvancedConfigReader interface {

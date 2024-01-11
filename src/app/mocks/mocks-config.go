@@ -310,6 +310,57 @@ func (mr *MockSamplerConfigReaderMockRecorder) Read(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockSamplerConfigReader)(nil).Read), arg0)
 }
 
+// MockExtensionsConfig is a mock of ExtensionsConfig interface.
+type MockExtensionsConfig struct {
+	ctrl     *gomock.Controller
+	recorder *MockExtensionsConfigMockRecorder
+}
+
+// MockExtensionsConfigMockRecorder is the mock recorder for MockExtensionsConfig.
+type MockExtensionsConfigMockRecorder struct {
+	mock *MockExtensionsConfig
+}
+
+// NewMockExtensionsConfig creates a new mock instance.
+func NewMockExtensionsConfig(ctrl *gomock.Controller) *MockExtensionsConfig {
+	mock := &MockExtensionsConfig{ctrl: ctrl}
+	mock.recorder = &MockExtensionsConfigMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockExtensionsConfig) EXPECT() *MockExtensionsConfigMockRecorder {
+	return m.recorder
+}
+
+// Suffixes mocks base method.
+func (m *MockExtensionsConfig) Suffixes() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Suffixes")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Suffixes indicates an expected call of Suffixes.
+func (mr *MockExtensionsConfigMockRecorder) Suffixes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Suffixes", reflect.TypeOf((*MockExtensionsConfig)(nil).Suffixes))
+}
+
+// Transforms mocks base method.
+func (m *MockExtensionsConfig) Transforms() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Transforms")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Transforms indicates an expected call of Transforms.
+func (mr *MockExtensionsConfigMockRecorder) Transforms() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transforms", reflect.TypeOf((*MockExtensionsConfig)(nil).Transforms))
+}
+
 // MockAdvancedConfig is a mock of AdvancedConfig interface.
 type MockAdvancedConfig struct {
 	ctrl     *gomock.Controller
@@ -359,6 +410,20 @@ func (m *MockAdvancedConfig) AdhocLabel() string {
 func (mr *MockAdvancedConfigMockRecorder) AdhocLabel() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdhocLabel", reflect.TypeOf((*MockAdvancedConfig)(nil).AdhocLabel))
+}
+
+// Extensions mocks base method.
+func (m *MockAdvancedConfig) Extensions() proxy.ExtensionsConfig {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Extensions")
+	ret0, _ := ret[0].(proxy.ExtensionsConfig)
+	return ret0
+}
+
+// Extensions indicates an expected call of Extensions.
+func (mr *MockAdvancedConfigMockRecorder) Extensions() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Extensions", reflect.TypeOf((*MockAdvancedConfig)(nil).Extensions))
 }
 
 // JournalLabel mocks base method.
@@ -416,20 +481,6 @@ func (m *MockAdvancedConfig) ProgramTimeout() (time.Duration, error) {
 func (mr *MockAdvancedConfigMockRecorder) ProgramTimeout() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProgramTimeout", reflect.TypeOf((*MockAdvancedConfig)(nil).ProgramTimeout))
-}
-
-// Suffixes mocks base method.
-func (m *MockAdvancedConfig) Suffixes() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Suffixes")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// Suffixes indicates an expected call of Suffixes.
-func (mr *MockAdvancedConfigMockRecorder) Suffixes() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Suffixes", reflect.TypeOf((*MockAdvancedConfig)(nil).Suffixes))
 }
 
 // TrashLabel mocks base method.

@@ -90,14 +90,15 @@ func init() {
 		Abort:            false,
 		Timeout:          "10s",
 		NoProgramRetries: defaultNoProgramRetries,
-		Labels: MsLabelsConfig{
+		LabelsCFG: MsLabelsConfig{
 			Adhoc:   "ADHOC",
 			Journal: ".journal",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},
-		Extensions: MsExtensionsConfig{
-			Suffixes: "jpg,jpeg,png",
+		ExtensionsCFG: MsExtensionsConfig{
+			FileSuffixes:  "jpg,jpeg,png",
+			TransformsCSV: "lower",
 		},
 	}
 
