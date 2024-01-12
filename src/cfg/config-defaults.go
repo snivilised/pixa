@@ -1,4 +1,4 @@
-package command
+package cfg
 
 import (
 	"os"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/clif"
-	"github.com/snivilised/pixa/src/app/proxy"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 )
 
 type (
-	defaultSchemes       map[string]proxy.SchemeConfig
+	defaultSchemes       map[string]SchemeConfig
 	defaultSchemesConfig struct {
 		schemes defaultSchemes
 	}
@@ -29,8 +28,8 @@ type (
 	}
 )
 
-func (cfg defaultSchemeConfig) Profiles() []string {
-	return cfg.profiles
+func (c defaultSchemeConfig) Profiles() []string {
+	return c.profiles
 }
 
 var (
@@ -46,7 +45,7 @@ func init() {
 	// values that don't mean anything. Update to real useable defaults
 	//
 	DefaultProfilesConfig = &MsProfilesConfig{
-		Profiles: proxy.ProfilesConfigMap{
+		Profiles: ProfilesConfigMap{
 			"blur": clif.ChangedFlagsMap{
 				"strip":         "true",
 				"interlace":     "plane",

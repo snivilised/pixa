@@ -16,7 +16,7 @@ import (
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/pixa/src/app/mocks"
-	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/matchers"
 
@@ -199,14 +199,14 @@ func DoMockReadInConfig(config *cmocks.MockViperConfig) {
 }
 
 func DoMockProfilesConfigsWith(
-	data proxy.ProfilesConfigMap,
+	data cfg.ProfilesConfigMap,
 	config configuration.ViperConfig,
 	reader *mocks.MockProfilesConfigReader,
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.ProfilesConfig, error) {
-			stub := &testProfilesConfig{
-				profiles: data,
+		func(viper configuration.ViperConfig) (cfg.ProfilesConfig, error) {
+			stub := &cfg.MsProfilesConfig{
+				Profiles: data,
 			}
 
 			return stub, nil
@@ -215,12 +215,12 @@ func DoMockProfilesConfigsWith(
 }
 
 func DoMockSchemesConfigWith(
-	data proxy.SchemesConfig,
+	data cfg.SchemesConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockSchemesConfigReader,
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.SchemesConfig, error) {
+		func(viper configuration.ViperConfig) (cfg.SchemesConfig, error) {
 			stub := data
 
 			return stub, nil
@@ -229,12 +229,12 @@ func DoMockSchemesConfigWith(
 }
 
 func DoMockSamplerConfigWith(
-	data proxy.SamplerConfig,
+	data cfg.SamplerConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockSamplerConfigReader,
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.SamplerConfig, error) {
+		func(viper configuration.ViperConfig) (cfg.SamplerConfig, error) {
 			stub := data
 
 			return stub, nil
@@ -243,12 +243,12 @@ func DoMockSamplerConfigWith(
 }
 
 func DoMockAdvancedConfigWith(
-	data proxy.AdvancedConfig,
+	data cfg.AdvancedConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockAdvancedConfigReader,
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.AdvancedConfig, error) {
+		func(viper configuration.ViperConfig) (cfg.AdvancedConfig, error) {
 			stub := data
 
 			return stub, nil
@@ -257,12 +257,12 @@ func DoMockAdvancedConfigWith(
 }
 
 func DoMockLoggingConfigWith(
-	data proxy.LoggingConfig,
+	data cfg.LoggingConfig,
 	config configuration.ViperConfig,
 	reader *mocks.MockLoggingConfigReader,
 ) {
 	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (proxy.LoggingConfig, error) {
+		func(viper configuration.ViperConfig) (cfg.LoggingConfig, error) {
 			stub := data
 
 			return stub, nil

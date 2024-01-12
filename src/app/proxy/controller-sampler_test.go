@@ -10,6 +10,7 @@ import (
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
+	"github.com/snivilised/pixa/src/cfg"
 
 	"github.com/snivilised/pixa/src/app/mocks"
 	"github.com/snivilised/pixa/src/internal/helpers"
@@ -122,7 +123,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 					co.Config.Name = helpers.PixaConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}
-					co.Config.Readers = command.ConfigReaders{
+					co.Config.Readers = cfg.ConfigReaders{
 						Profiles: mockProfilesReader,
 						Schemes:  mockSchemesReader,
 						Sampler:  mockSamplerReader,

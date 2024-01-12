@@ -2,15 +2,16 @@ package proxy
 
 import (
 	"github.com/snivilised/extendio/xfs/nav"
+	"github.com/snivilised/pixa/src/cfg"
 )
 
 type SharedControllerInfo struct {
 	Options     *nav.TraverseOptions
 	program     Executor
-	profiles    ProfilesConfig
-	schemes     SchemesConfig
-	sampler     SamplerConfig
-	advanced    AdvancedConfig
+	profiles    cfg.ProfilesConfig
+	schemes     cfg.SchemesConfig
+	sampler     cfg.SamplerConfig
+	advanced    cfg.AdvancedConfig
 	Inputs      *ShrinkCommandInputs
 	finder      *PathFinder
 	fileManager *FileManager

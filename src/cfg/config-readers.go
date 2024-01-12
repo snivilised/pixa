@@ -1,4 +1,4 @@
-package command
+package cfg
 
 import (
 	"fmt"
@@ -7,26 +7,25 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/cobrass/src/clif"
-	"github.com/snivilised/pixa/src/app/proxy"
 	"golang.org/x/exp/maps"
 )
 
 type MsProfilesConfigReader struct {
 }
 
-func (r *MsProfilesConfigReader) Read(viper configuration.ViperConfig) (proxy.ProfilesConfig, error) {
+func (r *MsProfilesConfigReader) Read(viper configuration.ViperConfig) (ProfilesConfig, error) {
 	// Ideally, the ProfileParameterSet would perform a check against
 	// the config, but extendio is not aware of config, so it can't
 	// check. Instead, we can check here.
 	//
 	profilesCFG := &MsProfilesConfig{
-		Profiles: make(proxy.ProfilesConfigMap),
+		Profiles: make(ProfilesConfigMap),
 	}
 
 	if raw := viper.Get("profiles"); raw != nil {
-		if profiles, ok := raw.(proxy.ProfilesFlagOptionAsAnyPair); ok {
+		if profiles, ok := raw.(ProfilesFlagOptionAsAnyPair); ok {
 			for profile, pv := range profiles {
-				if pair, ok := pv.(proxy.ProfilesFlagOptionAsAnyPair); ok {
+				if pair, ok := pv.(ProfilesFlagOptionAsAnyPair); ok {
 					profilesCFG.Profiles[profile] = make(clif.ChangedFlagsMap)
 
 					for flag, optionAsAny := range pair {
@@ -44,7 +43,7 @@ func (r *MsProfilesConfigReader) Read(viper configuration.ViperConfig) (proxy.Pr
 
 type MsSchemesConfigReader struct{}
 
-func (r *MsSchemesConfigReader) Read(viper configuration.ViperConfig) (proxy.SchemesConfig, error) {
+func (r *MsSchemesConfigReader) Read(viper configuration.ViperConfig) (SchemesConfig, error) {
 	var (
 		schemesCFG MsSchemesConfig
 	)
@@ -56,7 +55,7 @@ func (r *MsSchemesConfigReader) Read(viper configuration.ViperConfig) (proxy.Sch
 
 type MsSamplerConfigReader struct{}
 
-func (r *MsSamplerConfigReader) Read(viper configuration.ViperConfig) (proxy.SamplerConfig, error) {
+func (r *MsSamplerConfigReader) Read(viper configuration.ViperConfig) (SamplerConfig, error) {
 	var (
 		samplerCFG MsSamplerConfig
 	)
@@ -110,7 +109,7 @@ func (r *MsAdvancedConfigReader) validateSuffixes(suffixes []string, from string
 	return err
 }
 
-func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (proxy.AdvancedConfig, error) {
+func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (AdvancedConfig, error) {
 	var (
 		advancedCFG MsAdvancedConfig
 	)
@@ -141,7 +140,7 @@ func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (proxy.Ad
 
 type MsLoggingConfigReader struct{}
 
-func (r *MsLoggingConfigReader) Read(viper configuration.ViperConfig) (proxy.LoggingConfig, error) {
+func (r *MsLoggingConfigReader) Read(viper configuration.ViperConfig) (LoggingConfig, error) {
 	var (
 		loggingCFG MsLoggingConfig
 	)
@@ -152,9 +151,9 @@ func (r *MsLoggingConfigReader) Read(viper configuration.ViperConfig) (proxy.Log
 }
 
 type ConfigReaders struct {
-	Profiles proxy.ProfilesConfigReader
-	Schemes  proxy.SchemesConfigReader
-	Sampler  proxy.SamplerConfigReader
-	Advanced proxy.AdvancedConfigReader
-	Logging  proxy.LoggingConfigReader
+	Profiles ProfilesConfigReader
+	Schemes  SchemesConfigReader
+	Sampler  SamplerConfigReader
+	Advanced AdvancedConfigReader
+	Logging  LoggingConfigReader
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/pixa/src/cfg"
 )
 
 type ShrinkEntry struct {
@@ -314,10 +315,10 @@ type ShrinkParams struct {
 	Inputs      *ShrinkCommandInputs
 	Program     Executor
 	Config      configuration.ViperConfig
-	ProfilesCFG ProfilesConfig
-	SchemesCFG  SchemesConfig
-	SamplerCFG  SamplerConfig
-	AdvancedCFG AdvancedConfig
+	ProfilesCFG cfg.ProfilesConfig
+	SchemesCFG  cfg.SchemesConfig
+	SamplerCFG  cfg.SamplerConfig
+	AdvancedCFG cfg.AdvancedConfig
 	Logger      *slog.Logger
 	Vfs         storage.VirtualFS
 }

@@ -9,7 +9,7 @@ import (
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/mocks"
-	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/internal/helpers"
 	"go.uber.org/mock/gomock"
 
@@ -17,12 +17,12 @@ import (
 )
 
 var (
-	_ proxy.ProfilesConfig       = &command.MsProfilesConfig{}
-	_ proxy.SamplerConfig        = &command.MsSamplerConfig{}
-	_ proxy.ProfilesConfigReader = &command.MsProfilesConfigReader{}
-	_ proxy.SamplerConfigReader  = &command.MsSamplerConfigReader{}
-	_ proxy.AdvancedConfigReader = &command.MsAdvancedConfigReader{}
-	_ proxy.LoggingConfigReader  = &command.MsLoggingConfigReader{}
+	_ cfg.ProfilesConfig       = &cfg.MsProfilesConfig{}
+	_ cfg.SamplerConfig        = &cfg.MsSamplerConfig{}
+	_ cfg.ProfilesConfigReader = &cfg.MsProfilesConfigReader{}
+	_ cfg.SamplerConfigReader  = &cfg.MsSamplerConfigReader{}
+	_ cfg.AdvancedConfigReader = &cfg.MsAdvancedConfigReader{}
+	_ cfg.LoggingConfigReader  = &cfg.MsLoggingConfigReader{}
 )
 
 const (
@@ -96,7 +96,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 			co.Config.ConfigPath = entry.configPath
 
 			co.Config.Viper = &configuration.GlobalViperConfig{}
-			co.Config.Readers = command.ConfigReaders{
+			co.Config.Readers = cfg.ConfigReaders{
 				Profiles: mockProfilesReader,
 				Schemes:  mockSchemesReader,
 				Sampler:  mockSamplerReader,
