@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/samber/lo"
@@ -99,11 +100,14 @@ func (r *MsAdvancedConfigReader) validateSuffixes(suffixes []string, from string
 	)
 
 	for _, v := range suffixes {
-		invalid[v] = ""
+		if !slices.Contains(permittedSuffixes, v) {
+			invalid[v] = ""
+		}
 	}
 
 	if len(invalid) > 0 {
-		err = fmt.Errorf("invalid formats found (%v): '%v'", from, invalid)
+		keys := maps.Keys(invalid)
+		err = fmt.Errorf("invalid formats found (%v): '%v'", from, strings.Join(keys, ","))
 	}
 
 	return err
