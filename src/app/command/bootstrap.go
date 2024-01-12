@@ -244,13 +244,21 @@ func handleLangSetting(config configuration.ViperConfig) {
 }
 
 func (b *Bootstrap) viper() {
-	// TODO: handle the read errors
-	//
+	var (
+		err error
+	)
+
+	// TODO: this needs a refactor to handle errors better, we should be returning errors everywhere
+	// an error can occur, not selectively. this method is a perfect bad example.
 	b.ProfilesCFG, _ = b.OptionsInfo.Config.Readers.Profiles.Read(b.OptionsInfo.Config.Viper)
 	b.SchemesCFG, _ = b.OptionsInfo.Config.Readers.Schemes.Read(b.OptionsInfo.Config.Viper)
 	b.SamplerCFG, _ = b.OptionsInfo.Config.Readers.Sampler.Read(b.OptionsInfo.Config.Viper)
-	b.AdvancedCFG, _ = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Config.Viper)
+	b.AdvancedCFG, err = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Config.Viper)
 	b.LoggingCFG, _ = b.OptionsInfo.Config.Readers.Logging.Read(b.OptionsInfo.Config.Viper)
+
+	if err != nil {
+		b.exit(err)
+	}
 }
 
 func (b *Bootstrap) level(raw string) zapcore.LevelEnabler {
@@ -290,4 +298,8 @@ func (b *Bootstrap) logger() *slog.Logger {
 	)
 
 	return slog.New(zapslog.NewHandler(core, nil))
+}
+
+func (b *Bootstrap) exit(err error) {
+	panic(err)
 }
