@@ -2,10 +2,13 @@ package command
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/pixa/src/app/proxy"
+	"golang.org/x/exp/maps"
 )
 
 type MsProfilesConfigReader struct {
@@ -63,7 +66,49 @@ func (r *MsSamplerConfigReader) Read(viper configuration.ViperConfig) (proxy.Sam
 	return &samplerCFG, err
 }
 
+var (
+	// reference: https://fileinfo.com/software/imagemagick/imagemagick
+	permittedSuffixes = []string{
+		"apng", "arw", "avif",
+		"bmp", "bpg", "brf",
+		"cal", "cals", "cin", "cr2", "crw", "cube", "cur", "cut",
+		"dcm", "dcx", "dcr", "dcx",
+		"dds", "dib", "dicom", "djvu", "dng", "dot", "dpx",
+		"emf", "eps", "exr",
+		"fax", "ff", "fits", "flif", "fpx",
+		"gif",
+		"heic", "hpgl", "hrz",
+		"ico",
+		"j2c", "j2k", "jbig", "jng", "jp2", "jpc", "jpeg", "jpg", "jxl", "jxr",
+		"miff", "mng", "mpo", "mvg",
+		"nef",
+		"ora", "orf", "otb",
+		"pam", "pbm", "pcx", "pict", "pix", "png",
+		"tiff", "ttf",
+		"webp", "wdp", "wmf",
+		"xcf", "xpm", "xwd",
+		"yuv",
+	}
+)
+
 type MsAdvancedConfigReader struct{}
+
+func (r *MsAdvancedConfigReader) validateSuffixes(suffixes []string, from string) error {
+	var (
+		err     error
+		invalid = map[string]string{}
+	)
+
+	for _, v := range suffixes {
+		invalid[v] = ""
+	}
+
+	if len(invalid) > 0 {
+		err = fmt.Errorf("invalid formats found (%v): '%v'", from, invalid)
+	}
+
+	return err
+}
 
 func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (proxy.AdvancedConfig, error) {
 	var (
@@ -71,6 +116,25 @@ func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (proxy.Ad
 	)
 
 	err := viper.UnmarshalKey("advanced", &advancedCFG)
+	keys := maps.Keys(advancedCFG.ExtensionsCFG.Remap)
+	values := maps.Values(advancedCFG.ExtensionsCFG.Remap)
+
+	if err == nil {
+		err = r.validateSuffixes(keys, "extensions.map/keys")
+	}
+
+	if err == nil {
+		err = r.validateSuffixes(values, "extensions.map/values")
+	}
+
+	if err == nil {
+		suffixes := strings.Split(advancedCFG.ExtensionsCFG.Suffixes(), ",")
+		suffixes = lo.Map(suffixes, func(s string, _ int) string {
+			return strings.TrimSpace(s)
+		})
+
+		err = r.validateSuffixes(suffixes, "extensions.suffixes")
+	}
 
 	return &advancedCFG, err
 }
