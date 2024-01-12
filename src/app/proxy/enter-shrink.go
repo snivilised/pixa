@@ -31,12 +31,6 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 			journalPath := e.FileManager.Finder.JournalFile(item)
 			err := e.FileManager.Create(journalPath)
 
-			fmt.Printf(
-				"---> 💧💧 SHRINK-JOURNAL-FILE: (create journal:%v) '%v'\n",
-				journalPath,
-				item.Path,
-			)
-
 			return err
 		},
 	}
@@ -149,10 +143,9 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 		Fn: func(item *nav.TraverseItem) error {
 			depth := item.Extension.Depth
 
-			fmt.Printf(
-				"---> 🌀🌀 SHRINK-CALLBACK-FILE: (depth:%v) '%v'\n",
-				depth,
-				item.Path,
+			e.Logger.Debug("🌀🌀 Shrink Principle Callback",
+				slog.String("path", item.Extension.SubPath),
+				slog.Int("depth", depth),
 			)
 
 			controller := e.Registry.Get()
@@ -205,11 +198,17 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	o.Notify.OnBegin = func(_ *nav.NavigationState) {
-		fmt.Printf("===> 🛡️ beginning traversal ...\n")
+		fmt.Printf("===> 🛡️  beginning traversal ...\n")
 	}
 	o.Notify.OnEnd = func(result *nav.TraverseResult) {
-		fmt.Printf("===> 🚩 finished traversal - folders '%v'\n",
+		fmt.Printf("===> 🚩  finished traversal - files: '%v', folders: '%v'\n",
+			result.Metrics.Count(nav.MetricNoFilesInvokedEn),
 			result.Metrics.Count(nav.MetricNoFoldersInvokedEn),
+		)
+
+		e.Logger.Info("finished traversal",
+			slog.Int("files", int(result.Metrics.Count(nav.MetricNoFilesInvokedEn))),
+			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))),
 		)
 	}
 	o.Store.Subscription = nav.SubscribeFiles
@@ -268,13 +267,10 @@ func (e *ShrinkEntry) navigateWithLookAhead(
 
 func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 	depth := item.Extension.Depth
-	indicator := lo.Ternary(len(item.Children) > 0, "☀️", "🌊")
 
-	fmt.Printf(
-		"---> 🎙️🎙️ %v SHRINK-RESTORE-CALLBACK: (depth:%v) '%v'\n",
-		indicator,
-		depth,
-		item.Path,
+	e.Logger.Debug("🎙️🎙️ Shrink Restore Callback",
+		slog.String("path", item.Extension.SubPath),
+		slog.Int("depth", depth),
 	)
 
 	controller := e.Registry.Get()

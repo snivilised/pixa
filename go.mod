@@ -13,27 +13,24 @@ require (
 	github.com/spf13/viper v1.18.2
 	go.uber.org/zap v1.26.0
 	go.uber.org/zap/exp v0.2.0
+	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 )
 
 require (
 	github.com/avfs/avfs v0.33.0 // indirect
-	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20231229205709-960ae82b1e42 // indirect
 	github.com/google/uuid v1.5.0 // indirect
-	github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/tools v0.16.1 // indirect
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
 require (

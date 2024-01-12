@@ -31,17 +31,17 @@ advanced:
   labels:
     adhoc: ADHOC
     legacy: .LEGACY
-    journal-suffix: .journal.txt
+    journal-suffix: .$journal.txt
     trash: TRASH
   extensions:
-    suffixes: "jpg,jpeg,png"
-    transforms: lower
+    suffixes-csv: "jpg,jpeg,png"
+    transforms-csv: lower
     map:
       jpeg: jpg
 logging:
   log-path: "~/snivilised/pixa/pixa.log"
-  max-size: 10
+  max-size-in-mb: 10
   max-backups: 3
-  max-age: 30
+  max-age-in-days: 30
   level: info
   time-format: "2006-01-02 15:04:05"

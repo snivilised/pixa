@@ -70,11 +70,6 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		}), nil
 	}
 
-	// TODO: to apply the folder filters in combination with these
-	// file filters, we need to define a custom compound
-	// filter.
-	//
-
 	if o.Store.FilterDefs == nil {
 		switch {
 		case e.Inputs.FoldersFam.Native.FoldersGlob != "":

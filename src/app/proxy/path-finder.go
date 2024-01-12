@@ -88,7 +88,7 @@ func (tc pfTemplatesCollection) evaluate(
 	values pfFieldValues,
 	segments ...string,
 ) string {
-	// There is a very subtle but important point to note about the eval
+	// There is a very subtle but important point to note about the evaluate
 	// method, in particular the parameters being passed in. It might seem
 	// to the reader that the segments being passed in are redundant, because
 	// they could be derived from the keys of the values map. However, map
@@ -102,10 +102,7 @@ func (tc pfTemplatesCollection) evaluate(
 		quantity = 1
 	)
 
-	// expand
 	sourceTemplate := filepath.Join(segments...)
-
-	// evaluate
 	result := lo.Reduce(segments, func(acc, field string, _ int) string {
 		return strings.Replace(acc, field, values[field], quantity)
 	},
@@ -114,59 +111,6 @@ func (tc pfTemplatesCollection) evaluate(
 
 	return filepath.Clean(result)
 }
-
-// INLINE-MODE: EJECT | INLINE (should we call this a strategy?
-// they do the same thing but create a different output structure => OutputStrategy)
-//
-// EJECT: replicate the source directory struct but eject elsewhere
-// INLINE: create the file at the same location as the original but rename as required
-
-// The controller is aware of the output strategy moving files accordingly,
-// using the path-finder to create the paths and the file-manager to interact
-// with the file system, using a vfs.
-
-// Then we can also have a deletion strategy, use a central location or inline
-// CENTRAL-LOCATION: is like EJECT
-// INLINE: INLINE
-
-// Can we have 2 different strategies at the same time?, ie:
-// OUTPUT-STRATEGY: INLINE
-// DELETION-STRATEGY: EJECT
-//
-// ... well in this case, the output file would be in the same folder
-// as item.Path, but the TRASH folder would be relative to eject-path (ie in
-// the same folder as item.Path) and the
-
-/* eject parameters:
-
-we can't have --eject, because ambiguous, which strategy does this apply to?
-(but what we could say is --eject if specified applies to output && deletion)
-
-- the same goes for inline, but --inline would be a switch, not a flag
-==> --eject(path) & --inline [still needs a way to specify how to manage renames]
-both strategies set to eject or inline(~transparent mode)
-if we say this, then --inline could be redundant, ie if --eject is not set,
-then we revert to the default which is eject(transparent)
-
--- then other flags could adjust the transparent mode
-if --eject not specified, then ous=inline; des=inline
-but it can be adjusted by --output <path>, --trash <path>
-
-
--- perhaps we have a transparency mode, ie perform renames such that the new generated
-files adopt the existing files, so there is no difference, except for the original
-file would be renamed to something else. With transparency enabled, we make all the
-decisions to make this possible, we internally make the choice of which strategies
-are in place, so the user doesn't have to work this out for themselves. But the
-deletion strategy is independent of transparency, so it really only applies to output.
-Or, perhaps, do we assume transparent by default and the other options adjust this.
-
-so we have 3 parameters:
-* neither --output or --trash specified					[ous=eject; des=eject];
-* --output <path>																[ous=eject; des=inline]
-* --trash <path>    														[ous=inline; des=eject]
-* --output <path> --trash <path>								[ous=eject; des=eject]
-*/
 
 type staticInfo struct {
 	adhoc   string
@@ -189,30 +133,16 @@ type PathFinder struct {
 	//
 	Origin string
 
-	// only the step knows this, so this should be the parent of the output
-	// for scheme, this would include scheme/profile
-	// for profile, this should include profile
-	// only the step knows this, so this should be the parent
-	// the associated getter method (maybe GetOutput()) should accept a argument
-	//  that denotes intermediate segments, eg "<scheme>/<profile>",
-	// perhaps represented as a slice so it can be joined with filepath.Join
-	//
-	// if Output Path is set, then use this as the output, but also
-	// create the intermediate paths in order to implement mirroring.
-	// It is the output as indicated by --output. If not set, then it is
+	// Output is the output as indicated by --output. If not set, then it is
 	// derived:
 	// - sampling: (inline) -- item.parent; => item.parent/SHRINK/<supplement>
 	// - full: (inline) -- item.parent
-	Output string
-
-	// I think this depends on the mode (tidy/preserve)
-	Trash string
-
+	Output           string
+	Trash            string
 	arity            int
 	transparentInput bool
-
-	statics *staticInfo
-	ext     *extensionTransformation
+	statics          *staticInfo
+	ext              *extensionTransformation
 }
 
 func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
@@ -221,29 +151,18 @@ func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
 	return filepath.Join(item.Extension.Parent, file)
 }
 
-// Transfer returns the location of what should be used
-// for the specified source path; ie when the program runs, it uses
-// a source file and requires the destination location. The source
-// and destination may not be in the same folder, so the source's name
-// is extracted from the source path and attached to the output
-// folder.
-//
 // Transfer creates a path for the input; should return empty
-// string for the folder, if no move is required (ie non transparent)
-// The PathFinder will only call this function when the input
+// string for the folder, if no move is required (ie non transparent).
+// The FileManager will only call this function when the input
 // is not transparent. When the --Trash option is present, it will
 // determine the destination path for the input.
 func (f *PathFinder) Transfer(info *pathInfo) (folder, file string) {
-	// TODO: we still need to get the rest of the mirror sub-path
-	//
-	// this does not take into account transparent, without modification;
-	// ie what happens if we don;t want any supplemented paths?
 	to := lo.TernaryF(f.Trash != "",
 		func() string {
-			return f.Trash // eject
+			return f.Trash
 		},
 		func() string {
-			return info.origin // inline
+			return info.origin
 		},
 	)
 
@@ -300,10 +219,10 @@ func (f *PathFinder) mutateExtension(file string) string {
 func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 	to := lo.TernaryF(f.Output != "",
 		func() string {
-			return f.Output // eject
+			return f.Output
 		},
 		func() string {
-			return info.origin // inline
+			return info.origin
 		},
 	)
 
@@ -327,7 +246,6 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 				// so the result path should include an adhoc label. Otherwise,
 				// the result should reflect the supplementary path.
 				//
-
 				return pfTemplates.evaluate(pfFieldValues{
 					"${{OUTPUT-ROOT}}":   to,
 					"${{SUPPLEMENT}}":    f.supplement(),
@@ -362,42 +280,3 @@ func (f *PathFinder) supplement() string {
 		},
 	)
 }
-
-/*
-mode: tidy | preserve
-
-*** item-handler
-
-contains:
-- the Program
-- positional args
-- third party CL
-- path-manager
-
-*** path-manager needs to provide the following paths
-- output directory (inline | eject)
-- trash file location (central or local)
-- for sampling scheme, we use profile name as part of the relative output path
-- output root (depends on eject)
-
-behaviour of naming output files:
-- output filename (same as input file with a suffix | backup input, replace input file)
-
-- this is where the extension mapper will be implemented
-
-
-*** file-manager: perform file system operations such as moving files around
-- there will be a file-system service that can perform fs operations. it
-will contain the path-finder
-- contains file manager as a member
-- is populated with the current traversal item
-
-
-the sample mode is a bit tricky because for 1 file it will do multiple things
-
-we need to capture that concept somehow
-
-- foreach incoming file
-FULL: => a single output file
-SAMPLE: => multiple files, foreach each profile in the sample create an output
-*/

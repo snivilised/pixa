@@ -56,7 +56,6 @@ func (c *controller) profileSequence(
 		sourcePath:   pi.item.Path,
 		profile:      pi.profile,
 		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
-		// journalPath: ,
 	}
 
 	return Sequence{step}
@@ -77,7 +76,6 @@ func (c *controller) schemeSequence(
 			sourcePath:   pi.item.Path,
 			profile:      current,
 			outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
-			// journalPath: ,
 		}
 
 		sequence = append(sequence, step)

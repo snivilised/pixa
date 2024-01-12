@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 
 	"github.com/cubiest/jibberjabber"
 	"github.com/natefinch/lumberjack"
@@ -29,6 +30,10 @@ import (
 const (
 	defaultLogFilename = "pixa.log"
 	perm               = 0o766
+)
+
+var (
+	pixaRelativePath = filepath.Join("snivilised", "pixa")
 )
 
 type LocaleDetector interface {
@@ -106,7 +111,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 		Config: ConfigInfo{
 			Name:       ApplicationName,
 			ConfigType: "yaml",
-			ConfigPath: home,
+			ConfigPath: filepath.Join(home, pixaRelativePath),
 			Viper:      &configuration.GlobalViperConfig{},
 			Readers: cfg.ConfigReaders{
 				Profiles: &cfg.MsProfilesConfigReader{},
