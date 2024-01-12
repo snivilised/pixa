@@ -1,11 +1,8 @@
 package helpers
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/snivilised/cobrass/src/clif"
-	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/cfg"
 )
 
 // need to re-think this mock data as this is currently sub-optimal
@@ -28,187 +25,12 @@ var (
 
 	BackyardWorldsPlanet9Scan01Last4 []string
 
-	ProfilesConfigData proxy.ProfilesConfigMap
-	SchemesConfigData  proxy.SchemesConfig
-	SamplerConfigData  proxy.SamplerConfig
-	AdvancedConfigData proxy.AdvancedConfig
-	LoggingConfigData  proxy.LoggingConfig
+	ProfilesConfigData cfg.ProfilesConfigMap
+	SchemesConfigData  cfg.SchemesConfig
+	SamplerConfigData  cfg.SamplerConfig
+	AdvancedConfigData cfg.AdvancedConfig
+	LoggingConfigData  cfg.LoggingConfig
 )
-
-type testProfilesConfig struct {
-	profiles proxy.ProfilesConfigMap
-}
-
-func (cfg testProfilesConfig) Profile(name string) (clif.ChangedFlagsMap, bool) {
-	profile, found := cfg.profiles[name]
-
-	return profile, found
-}
-
-type (
-	testSchemes       map[string]proxy.SchemeConfig
-	testSchemesConfig struct {
-		schemes testSchemes
-	}
-
-	testSchemeConfig struct {
-		profiles []string
-	}
-)
-
-func (cfg *testSchemeConfig) Profiles() []string {
-	return cfg.profiles
-}
-
-func (cfg *testSchemesConfig) Validate(name string, profiles proxy.ProfilesConfig) error {
-	if name == "" {
-		return nil
-	}
-
-	var (
-		found  bool
-		scheme proxy.SchemeConfig
-	)
-
-	if scheme, found = cfg.schemes[name]; !found {
-		return fmt.Errorf("scheme: '%v' not found in config", name)
-	}
-
-	for _, p := range scheme.Profiles() {
-		if _, found := profiles.Profile(p); !found {
-			return fmt.Errorf("profile(referenced by scheme: '%v'): '%v' not found in config",
-				name, p,
-			)
-		}
-	}
-
-	return nil
-}
-
-func (cfg *testSchemesConfig) Scheme(name string) (proxy.SchemeConfig, bool) {
-	config, found := cfg.schemes[name]
-
-	return config, found
-}
-
-type testSamplerConfig struct {
-	Files   uint
-	Folders uint
-}
-
-func (cfg *testSamplerConfig) NoFiles() uint {
-	return cfg.Files
-}
-
-func (cfg *testSamplerConfig) NoFolders() uint {
-	return cfg.Folders
-}
-
-type testLabelsConfig struct {
-	Adhoc   string
-	Journal string
-	Legacy  string
-	Trash   string
-}
-
-type testExtensionsConfig struct {
-	FileSuffixes  string
-	TransformsCSV string
-	Remap         map[string]string
-}
-
-func (cfg *testExtensionsConfig) Suffixes() string {
-	return cfg.FileSuffixes
-}
-
-func (cfg *testExtensionsConfig) Transforms() string {
-	return cfg.TransformsCSV
-}
-
-func (cfg *testExtensionsConfig) Map() map[string]string {
-	return cfg.Remap
-}
-
-type testAdvancedConfig struct {
-	Abort            bool
-	Timeout          string
-	NoProgramRetries uint
-	LabelsCFG        testLabelsConfig
-	ExtensionsCFG    testExtensionsConfig
-}
-
-func (cfg *testAdvancedConfig) AbortOnError() bool {
-	return cfg.Abort
-}
-
-func (cfg *testAdvancedConfig) ProgramTimeout() (duration time.Duration, err error) {
-	return time.ParseDuration(cfg.Timeout)
-}
-
-func (cfg *testAdvancedConfig) NoRetries() uint {
-	return cfg.NoProgramRetries
-}
-
-func (cfg *testAdvancedConfig) AdhocLabel() string {
-	return cfg.LabelsCFG.Adhoc
-}
-
-func (cfg *testAdvancedConfig) JournalLabel() string {
-	return cfg.LabelsCFG.Journal
-}
-
-func (cfg *testAdvancedConfig) LegacyLabel() string {
-	return cfg.LabelsCFG.Legacy
-}
-
-func (cfg *testAdvancedConfig) TrashLabel() string {
-	return cfg.LabelsCFG.Trash
-}
-
-func (cfg *testAdvancedConfig) Extensions() proxy.ExtensionsConfig {
-	return &cfg.ExtensionsCFG
-}
-
-func (cfg *testAdvancedConfig) Suffixes() string {
-	return cfg.ExtensionsCFG.FileSuffixes
-}
-
-func (cfg *testAdvancedConfig) Transforms() string {
-	return cfg.ExtensionsCFG.TransformsCSV
-}
-
-type testLoggingConfig struct {
-	LogPath    string
-	MaxSize    uint
-	MaxBackups uint
-	MaxAge     uint
-	LogLevel   string
-	Format     string
-}
-
-func (cfg *testLoggingConfig) Path() string {
-	return cfg.LogPath
-}
-
-func (cfg *testLoggingConfig) MaxSizeInMb() uint {
-	return cfg.MaxSize
-}
-
-func (cfg *testLoggingConfig) MaxNoOfBackups() uint {
-	return cfg.MaxBackups
-}
-
-func (cfg *testLoggingConfig) MaxAgeInDays() uint {
-	return cfg.MaxAge
-}
-
-func (cfg *testLoggingConfig) Level() string {
-	return cfg.LogLevel
-}
-
-func (cfg *testLoggingConfig) TimeFormat() string {
-	return cfg.Format
-}
 
 func init() {
 	// ✅ Keep this up to date with "nasa-scientist-index.xml"
@@ -243,7 +65,7 @@ func init() {
 		"06_Backyard-Worlds-Planet-9_s01.jpg",
 	}
 
-	ProfilesConfigData = proxy.ProfilesConfigMap{
+	ProfilesConfigData = cfg.ProfilesConfigMap{
 		"blur": clif.ChangedFlagsMap{
 			"strip":         "true",
 			"interlace":     "plane",
@@ -263,39 +85,37 @@ func init() {
 		},
 	}
 
-	SchemesConfigData = &testSchemesConfig{
-		schemes: testSchemes{
-			"blur-sf": &testSchemeConfig{
-				profiles: []string{"blur", "sf"},
-			},
-			"adaptive-sf": &testSchemeConfig{
-				profiles: []string{"adaptive", "sf"},
-			},
-			"adaptive-blur": &testSchemeConfig{
-				profiles: []string{"adaptive", "blur"},
-			},
-			"singleton": &testSchemeConfig{
-				profiles: []string{"adaptive"},
-			},
+	SchemesConfigData = &cfg.MsSchemesConfig{
+		"blur-sf": &cfg.MsSchemeConfig{
+			ProfilesData: []string{"blur", "sf"},
+		},
+		"adaptive-sf": &cfg.MsSchemeConfig{
+			ProfilesData: []string{"adaptive", "sf"},
+		},
+		"adaptive-blur": &cfg.MsSchemeConfig{
+			ProfilesData: []string{"adaptive", "blur"},
+		},
+		"singleton": &cfg.MsSchemeConfig{
+			ProfilesData: []string{"adaptive"},
 		},
 	}
 
-	SamplerConfigData = &testSamplerConfig{
+	SamplerConfigData = &cfg.MsSamplerConfig{
 		Files:   noSampleFiles,
 		Folders: noSampleFolders,
 	}
 
-	AdvancedConfigData = &testAdvancedConfig{
+	AdvancedConfigData = &cfg.MsAdvancedConfig{
 		Abort:            false,
 		Timeout:          "10s",
 		NoProgramRetries: noRetries,
-		LabelsCFG: testLabelsConfig{
+		LabelsCFG: cfg.MsLabelsConfig{
 			Adhoc:   "ADHOC",
 			Journal: ".journal.txt",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},
-		ExtensionsCFG: testExtensionsConfig{
+		ExtensionsCFG: cfg.MsExtensionsConfig{
 			FileSuffixes:  "jpg,jpeg,png",
 			TransformsCSV: "lower",
 			Remap: map[string]string{
@@ -304,7 +124,7 @@ func init() {
 		},
 	}
 
-	LoggingConfigData = &testLoggingConfig{
+	LoggingConfigData = &cfg.MsLoggingConfig{
 		LogPath:    "",
 		MaxSize:    maxLogSizeInMb,
 		MaxBackups: maxLogBackups,

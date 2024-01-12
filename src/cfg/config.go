@@ -1,4 +1,4 @@
-package proxy
+package cfg
 
 import (
 	"time"
@@ -7,7 +7,7 @@ import (
 	"github.com/snivilised/cobrass/src/clif"
 )
 
-//go:generate mockgen -destination ../mocks/mocks-config.go -package mocks -source config.go
+//go:generate mockgen -destination ../app/mocks/mocks-config.go -package mocks -source config.go
 
 type (
 	ProfilesConfig interface {

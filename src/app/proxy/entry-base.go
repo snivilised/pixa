@@ -13,6 +13,7 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/lorax/boost"
+	"github.com/snivilised/pixa/src/cfg"
 )
 
 type afterFunc func(*nav.TraverseResult, error)
@@ -42,10 +43,10 @@ type EntryBase struct {
 	Config      configuration.ViperConfig
 	Options     *nav.TraverseOptions
 	Registry    *ControllerRegistry
-	ProfilesCFG ProfilesConfig
-	SchemesCFG  SchemesConfig
-	SamplerCFG  SamplerConfig
-	AdvancedCFG AdvancedConfig
+	ProfilesCFG cfg.ProfilesConfig
+	SchemesCFG  cfg.SchemesConfig
+	SamplerCFG  cfg.SamplerConfig
+	AdvancedCFG cfg.AdvancedConfig
 	Logger      *slog.Logger
 	Vfs         storage.VirtualFS
 	FileManager *FileManager

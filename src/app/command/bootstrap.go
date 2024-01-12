@@ -22,6 +22,7 @@ import (
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -66,7 +67,7 @@ type ConfigInfo struct {
 	ConfigType string
 	ConfigPath string
 	Viper      configuration.ViperConfig
-	Readers    ConfigReaders
+	Readers    cfg.ConfigReaders
 }
 
 // Bootstrap represents construct that performs start up of the cli
@@ -75,11 +76,11 @@ type ConfigInfo struct {
 type Bootstrap struct {
 	Container   *assistant.CobraContainer
 	OptionsInfo ConfigureOptionsInfo
-	ProfilesCFG proxy.ProfilesConfig
-	SchemesCFG  proxy.SchemesConfig
-	SamplerCFG  proxy.SamplerConfig
-	AdvancedCFG proxy.AdvancedConfig
-	LoggingCFG  proxy.LoggingConfig
+	ProfilesCFG cfg.ProfilesConfig
+	SchemesCFG  cfg.SchemesConfig
+	SamplerCFG  cfg.SamplerConfig
+	AdvancedCFG cfg.AdvancedConfig
+	LoggingCFG  cfg.LoggingConfig
 	Vfs         storage.VirtualFS
 }
 
@@ -107,12 +108,12 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			ConfigType: "yaml",
 			ConfigPath: home,
 			Viper:      &configuration.GlobalViperConfig{},
-			Readers: ConfigReaders{
-				Profiles: &MsProfilesConfigReader{},
-				Schemes:  &MsSchemesConfigReader{},
-				Sampler:  &MsSamplerConfigReader{},
-				Advanced: &MsAdvancedConfigReader{},
-				Logging:  &MsLoggingConfigReader{},
+			Readers: cfg.ConfigReaders{
+				Profiles: &cfg.MsProfilesConfigReader{},
+				Schemes:  &cfg.MsSchemesConfigReader{},
+				Sampler:  &cfg.MsSamplerConfigReader{},
+				Advanced: &cfg.MsAdvancedConfigReader{},
+				Logging:  &cfg.MsLoggingConfigReader{},
 			},
 		},
 	}
