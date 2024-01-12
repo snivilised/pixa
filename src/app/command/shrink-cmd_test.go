@@ -53,7 +53,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 
 	directory := helpers.Path(root, entry.directory)
 	args := append([]string{helpers.ShrinkCommandName, directory}, []string{
-		"--dry-run", "--mode", "tidy",
+		"--dry-run",
 	}...)
 
 	if entry.outputFlag != "" && entry.outputValue != "" {

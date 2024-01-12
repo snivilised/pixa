@@ -78,11 +78,6 @@ const (
 	ModePreserveEn
 )
 
-var ModeEnumInfo = assistant.NewEnumInfo(assistant.AcceptableEnumValues[ModeEnum]{
-	ModeTidyEn:     []string{"tidy", "t"},
-	ModePreserveEn: []string{"preserve", "p"},
-})
-
 // ThirdPartySet represents flags that are only of use to the third party application
 // being invoked (ie magick). These flags are of no significance to pixa, but we have
 // to define them explicitly, because of a deficiency in cobra in the way it handles
@@ -118,7 +113,6 @@ type ShrinkParameterSet struct {
 	//
 	OutputPath string
 	TrashPath  string
-	ModeEn     assistant.EnumValue[ModeEnum]
 }
 
 type RootCommandInputs struct {

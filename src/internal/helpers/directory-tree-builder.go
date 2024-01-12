@@ -47,7 +47,7 @@ func (r *DirectoryTreeBuilder) read() (*Directory, error) {
 }
 
 func (r *DirectoryTreeBuilder) status(path string) string {
-	return lo.Ternary(utils.Exists(path), "✔️", "❌")
+	return lo.Ternary(utils.Exists(path), "✅", "❌")
 }
 
 func (r *DirectoryTreeBuilder) pad() string {

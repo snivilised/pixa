@@ -296,20 +296,6 @@ func (td ShrinkCmdTrashPathParamUsageTemplData) Message() *i18n.Message {
 	}
 }
 
-// ShrinkCmdModeParamUsageTemplData
-// 🧊
-type ShrinkCmdModeParamUsageTemplData struct {
-	pixaTemplData
-}
-
-func (td ShrinkCmdModeParamUsageTemplData) Message() *i18n.Message {
-	return &i18n.Message{
-		ID:          "shrink-cmd-mode.param-usage",
-		Description: "shrink command mode parameter usage",
-		Other:       "mode defines the output behaviour of the image processing traversal batch",
-	}
-}
-
 // ShrinkCmdShortDefinitionTemplData
 // 🧊
 type ShrinkCmdShortDefinitionTemplData struct {

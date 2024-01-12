@@ -97,7 +97,6 @@ var _ = Describe("SamplerController", Ordered, func() {
 			options := []string{
 				helpers.ShrinkCommandName, directory,
 				"--dry-run",
-				"--mode", "tidy",
 			}
 			args := options
 			args = append(args, entry.args...)

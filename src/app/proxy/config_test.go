@@ -46,7 +46,6 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE,
 	options := []string{
 		entry.comm, entry.file,
 		"--dry-run",
-		"--mode", "tidy",
 		"--profile", entry.profile,
 	}
 

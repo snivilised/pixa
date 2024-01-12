@@ -9,13 +9,13 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/extendio/xfs/utils"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/i18n"
-	"github.com/snivilised/pixa/src/internal/helpers"
 )
 
 // We define all the options here, even the ones inherited from the root
@@ -45,7 +45,6 @@ var shrinkShortFlags = cobrass.KnownByCollection{
 	//
 	"output": "o",
 	"trash":  "t",
-	"mode":   "m",
 	// families:
 	//
 	"cpu":        "C", // family: worker-pool
@@ -89,7 +88,6 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		Long: xi18n.Text(i18n.ShrinkLongDefinitionTemplData{}),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("		===> 🌷🌷🌷 Shrink Command...\n")
 			var appErr error
 
 			shrinkPS := container.MustGetParamSet(shrinkPsName).(shrinkParameterSetPtr) //nolint:errcheck // is Must call
@@ -113,12 +111,13 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 					shrinkPS.Native.ThirdPartySet.LongChangedCL = changed
 
-					fmt.Printf("%v %v Running shrink, with options: '%v', args: '%v'\n",
-						AppEmoji, ApplicationName, changed, strings.Join(args, "/"),
+					fmt.Printf("%v %v Running shrink, with args: '%v'\n",
+						AppEmoji, ApplicationName, strings.Join(args, "/"),
 					)
 
 					inputs := b.getShrinkInputs()
-					inputs.Root.ParamSet.Native.Directory = helpers.ResolvePath(args[0])
+
+					inputs.Root.ParamSet.Native.Directory = utils.ResolvePath(args[0])
 
 					// Apply fallbacks, ie user didn't specify flag on command line
 					// so fallback to one defined in config. This is supposed to
@@ -194,31 +193,6 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		&paramSet.Native.TrashPath, func(s string, f *pflag.Flag) error {
 			if f.Changed && !b.Vfs.DirectoryExists(s) {
 				return i18n.NewOutputPathDoesNotExistError(s)
-			}
-
-			return nil
-		},
-	)
-
-	// --mode(m)
-	//
-	const (
-		defaultMode = "preserve"
-	)
-
-	paramSet.Native.ModeEn = proxy.ModeEnumInfo.NewValue()
-
-	paramSet.BindValidatedEnum(
-		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdModeParamUsageTemplData{}),
-			defaultMode,
-		),
-		&paramSet.Native.ModeEn.Source,
-		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(proxy.ModeEnumInfo.IsValid(value)) {
-				acceptableSet := proxy.ModeEnumInfo.AcceptablePrimes()
-
-				return i18n.NewModeError(value, acceptableSet)
 			}
 
 			return nil

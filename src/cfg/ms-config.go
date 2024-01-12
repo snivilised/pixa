@@ -84,8 +84,8 @@ type MsLabelsConfig struct {
 }
 
 type MsExtensionsConfig struct {
-	FileSuffixes  string            `mapstructure:"suffixes"`
-	TransformsCSV string            `mapstructure:"transforms"`
+	FileSuffixes  string            `mapstructure:"suffixes-csv"`
+	TransformsCSV string            `mapstructure:"transforms-csv"`
 	Remap         map[string]string `mapstructure:"map"`
 }
 
@@ -143,9 +143,9 @@ func (c *MsAdvancedConfig) Extensions() ExtensionsConfig {
 
 type MsLoggingConfig struct {
 	LogPath    string `mapstructure:"log-path"`
-	MaxSize    uint   `mapstructure:"max-size"`
+	MaxSize    uint   `mapstructure:"max-size-in-mb"`
 	MaxBackups uint   `mapstructure:"max-backups"`
-	MaxAge     uint   `mapstructure:"max-age"`
+	MaxAge     uint   `mapstructure:"max-age-in-days"`
 	LogLevel   string `mapstructure:"level"`
 	Format     string `mapstructure:"time-format"`
 }
