@@ -12,7 +12,7 @@ type pfPath uint
 
 const (
 	pfPathUndefined pfPath = iota
-	pfPathInputDestinationFolder
+	pfPathInputTransferFolder
 	pfPathTxInputDestinationFolder
 	pfPathInputDestinationFileOriginalExt
 	pfPathResultFolder
@@ -43,13 +43,21 @@ var (
 - RESULT-NAME: the path of the result file
 - SUPPLEMENT: ${{ADHOC}} | <scheme?>/<profile> --> created dynamically
 - TRASH-LABEL: (static) input file tag marked for deletion
+- DEJA-VU: a label that is meant to defend against accidental inclusion
+by recursion, caused by a subsequent run in the same location. eg, a user
+might run a sample shrink on ~/library/pics. This would create ~/library/pics/profile/TRASH.
+The user may re-run on the same path, but this second run would see that old
+trash path and attempt to process those files, by accident. To fix this,
+~/library/pics/profile/TRASH would be replaced by ~/library/pics/<DEJA-VU>/profile/TRASH
+where <DEJA-VU> would be skipped by he navigation process.
 */
 
 func init() {
 	pfTemplates = pfTemplatesCollection{
-		pfPathInputDestinationFolder: templateSegments{
+		pfPathInputTransferFolder: templateSegments{
 			"${{INPUT-DESTINATION}}",
 			"${{ITEM-SUB-PATH}}",
+			"${{DEJA-VU}}",
 			"${{SUPPLEMENT}}",
 			"${{TRASH-LABEL}}",
 		},
@@ -167,11 +175,12 @@ func (f *PathFinder) Transfer(info *pathInfo) (folder, file string) {
 	)
 
 	folder = func() string {
-		segments := pfTemplates[pfPathInputDestinationFolder]
+		segments := pfTemplates[pfPathInputTransferFolder]
 
 		return pfTemplates.evaluate(pfFieldValues{
 			"${{INPUT-DESTINATION}}": to,
 			"${{ITEM-SUB-PATH}}":     info.item.Extension.SubPath,
+			"${{DEJA-VU}}":           DejaVu,
 			"${{SUPPLEMENT}}":        f.supplement(),
 			"${{TRASH-LABEL}}":       f.statics.trash,
 		}, segments...)
@@ -227,7 +236,7 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 	)
 
 	folder = func() string {
-		segments := pfTemplates[pfPathInputDestinationFolder]
+		segments := pfTemplates[pfPathInputTransferFolder]
 
 		return lo.TernaryF(f.transparentInput && f.arity == 1,
 			func() string {

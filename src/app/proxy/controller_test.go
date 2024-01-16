@@ -6,10 +6,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
+	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/cfg"
 
 	"github.com/snivilised/pixa/src/app/mocks"
@@ -20,11 +23,13 @@ import (
 
 const (
 	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
+	perm                        = 0o766
 )
 
 type controllerTE struct {
 	given        string
 	should       string
+	exists       bool
 	args         []string
 	outputFlag   string
 	trashFlag    string
@@ -92,7 +97,6 @@ var _ = Describe("SamplerController", Ordered, func() {
 				mockAdvancedReader,
 				mockLoggingReader,
 			)
-
 			directory := helpers.Path(root, entry.relative)
 			options := []string{
 				helpers.ShrinkCommandName, directory,
@@ -100,6 +104,14 @@ var _ = Describe("SamplerController", Ordered, func() {
 			}
 			args := options
 			args = append(args, entry.args...)
+
+			if entry.exists {
+				location := filepath.Join(directory, entry.intermediate, entry.supplement)
+				if err := vfs.MkdirAll(location, perm); err != nil {
+					Fail(errors.Wrap(err, err.Error()).Error())
+				}
+			}
+
 			if entry.outputFlag != "" {
 				output := helpers.Path(root, entry.outputFlag)
 				args = append(args, "--output", output)
@@ -139,7 +151,8 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 			if entry.inputs != nil {
 				intermediate := helpers.Path(root, entry.intermediate)
-				supplement := helpers.Path(intermediate, entry.supplement)
+				dejaVuSupplement := filepath.Join(proxy.DejaVu, entry.supplement)
+				supplement := helpers.Path(intermediate, dejaVuSupplement)
 
 				for _, original := range entry.inputs {
 					originalPath := filepath.Join(supplement, original)
@@ -353,5 +366,60 @@ var _ = Describe("SamplerController", Ordered, func() {
 				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run transparent adhoc and target already exists",
+				should:   "sample(first) with glob filter, result file takes place of input",
+				exists:   true,
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--sample",
+					"--no-files", "4",
+					"--files", "*Backyard-Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First4,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "ADHOC/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+			},
+		}),
 	)
+})
+
+var _ = Describe("end to end", Ordered, func() {
+	Context("REAL", func() {
+		XIt("should: tinkle the ivories", func() {
+			// pixa shrink ~/dev/test/pics --profile blur --sample --no-files 1 --files "screen*" --dry-run
+			args := []string{
+				"shrink",
+				"/Users/plastikfan/dev/test/pics",
+				"--profile", "blur",
+				"--sample",
+				"--no-files", "1",
+				"--files", "screen*",
+			}
+			configPath := utils.ResolvePath("~/snivilised/pixa")
+			bootstrap := command.Bootstrap{
+				Vfs: storage.UseNativeFS(),
+			}
+			tester := helpers.CommandTester{
+				Args: args,
+				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
+					co.Detector = &helpers.DetectorStub{}
+					co.Program = &helpers.ExecutorStub{
+						Name: helpers.ProgName,
+					}
+					co.Config.Name = "pixa"
+					co.Config.ConfigPath = configPath
+				}),
+			}
+			_, err := tester.Execute()
+			Expect(err).Error().To(BeNil(),
+				fmt.Sprintf("execution result non nil (%v)", err),
+			)
+		})
+	})
 })
