@@ -93,7 +93,6 @@ func (c *controller) adhocSequence(
 		thirdPartyCL: changed,
 		sourcePath:   pi.item.Path,
 		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
-		// journalPath: ,
 	}
 
 	return Sequence{step}

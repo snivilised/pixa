@@ -25,6 +25,8 @@ var (
 
 	BackyardWorldsPlanet9Scan01Last4 []string
 
+	BackyardWorldsPlanet9Scan02 []string
+
 	ProfilesConfigData cfg.ProfilesConfigMap
 	SchemesConfigData  cfg.SchemesConfig
 	SamplerConfigData  cfg.SamplerConfig
@@ -63,6 +65,11 @@ func init() {
 		"04_Backyard-Worlds-Planet-9_s01.jpg",
 		"05_Backyard-Worlds-Planet-9_s01.jpg",
 		"06_Backyard-Worlds-Planet-9_s01.jpg",
+	}
+
+	BackyardWorldsPlanet9Scan02 = []string{
+		"Backyard-Worlds-Planet-9_s02.jpg",
+		"Backyard-Worlds-Planet-9_s02.png",
 	}
 
 	ProfilesConfigData = cfg.ProfilesConfigMap{

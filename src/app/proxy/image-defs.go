@@ -14,7 +14,9 @@ var (
 )
 
 const (
-	DejaVu = "$pixa$"
+	DejaVu           = "$pixa$"
+	journalExtension = ".txt"
+	journalTag       = ".$"
 )
 
 type RootParameterSet struct { // should contain RootCommandInputs

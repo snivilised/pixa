@@ -91,7 +91,7 @@ func init() {
 		NoProgramRetries: defaultNoProgramRetries,
 		LabelsCFG: MsLabelsConfig{
 			Adhoc:   "ADHOC",
-			Journal: ".$journal",
+			Journal: "journal",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},

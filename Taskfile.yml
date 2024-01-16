@@ -35,6 +35,19 @@ tasks:
     cmds:
       - cmd: rm -rf {{.DIST_DIR}}/*
 
+  # NB: this clean task is very aggressive. It will not only remove
+  # old versions of packages, it removes all of them, even the
+  # current versions in use. You can use the download task to
+  # refresh the pkg cache.
+  #
+  clean:
+    cmds:
+      - go clean
+
+  clean-t:
+    cmds:
+      - go clean -testcache
+
   build_generic:
     vars:
       APPLICATION_ENTRY: ./src/app/main
@@ -73,6 +86,16 @@ tasks:
     cmds:
       - task: build_generic
         vars: { TARGET_OS: darwin, TARGET_ARCH: amd64 }
+
+  # === mod-cache =============================================
+
+  clean-cache:
+    cmds:
+      - go clean -modcache
+
+  download:
+    cmds:
+      - go mod download
 
   # === test ==================================================
 

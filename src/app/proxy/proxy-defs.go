@@ -6,7 +6,6 @@ import (
 )
 
 type SharedControllerInfo struct {
-	Options     *nav.TraverseOptions
 	program     Executor
 	profiles    cfg.ProfilesConfig
 	schemes     cfg.SchemesConfig

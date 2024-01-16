@@ -87,7 +87,7 @@ func (fm *FileManager) Setup(pi *pathInfo) (destination string, err error) {
 }
 
 func (fm *FileManager) Tidy(pi *pathInfo) error {
-	journalFile := fm.Finder.JournalFile(pi.item)
+	journalFile := fm.Finder.JournalFullPath(pi.item)
 
 	if !fm.vfs.FileExists(journalFile) {
 		return fmt.Errorf("journal file '%v' not found", journalFile)

@@ -31,7 +31,7 @@ advanced:
   labels:
     adhoc: ADHOC
     legacy: .LEGACY
-    journal-suffix: .$journal.txt
+    journal-suffix: journal
     trash: TRASH
   extensions:
     suffixes-csv: "jpg,jpeg,png"
