@@ -9,7 +9,13 @@ import (
 	"github.com/snivilised/cobrass/src/store"
 )
 
-var booleanValues = []string{"false", "true"}
+var (
+	booleanValues = []string{"false", "true"}
+)
+
+const (
+	DejaVu = "$pixa$"
+)
 
 type RootParameterSet struct { // should contain RootCommandInputs
 	Directory  string

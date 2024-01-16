@@ -26,8 +26,8 @@ func summariseAfter(result *nav.TraverseResult, err error) {
 	folders := result.Metrics.Count(nav.MetricNoFoldersInvokedEn)
 	summary := fmt.Sprintf("files: %v, folders: %v", files, folders)
 	message := lo.Ternary(err == nil,
-		fmt.Sprintf("navigation completed ok (%v) 💝 [%v]", summary, measure),
-		fmt.Sprintf("error occurred during navigation (%v)💔 [%v]", err, measure),
+		fmt.Sprintf("🚩 navigation completed ok (%v) 💝 [%v]", summary, measure),
+		fmt.Sprintf("🚩 error occurred during navigation (%v)💔 [%v]", err, measure),
 	)
 	fmt.Println(message)
 }
@@ -131,6 +131,9 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		if e.Inputs.ParamSet.Native.NoFolders > 0 {
 			o.Store.Sampling.NoOf.Folders = e.Inputs.ParamSet.Native.NoFolders
 		}
+
+		o.Store.Behaviours.Cascade.Skim = e.Inputs.CascadeFam.Native.Skim
+		o.Store.Behaviours.Cascade.Depth = e.Inputs.CascadeFam.Native.Depth
 	}
 
 	// TODO: get the controller type properly, instead of hard coding to Sampler

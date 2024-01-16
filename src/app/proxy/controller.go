@@ -120,6 +120,9 @@ func (c *controller) Run(item *nav.TraverseItem, sequence Sequence) error {
 
 	iterator := collections.ForwardRunIt[Step, error](sequence, zero)
 	each := func(step Step) error {
+		// profile here on pi not set when profile set on command line
+		// but thats ok, since a profile sequence is created and the
+		// executive step itself does have the profile.
 		return step.Run(&c.private.pi)
 	}
 	while := func(_ Step, e error) bool {

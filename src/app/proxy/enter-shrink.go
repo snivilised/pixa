@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"path"
 	"strings"
@@ -28,10 +29,11 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "LookAhead: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			journalPath := e.FileManager.Finder.JournalFile(item)
-			err := e.FileManager.Create(journalPath)
+			if strings.Contains(item.Path, DejaVu) {
+				return fs.SkipDir
+			}
 
-			return err
+			return e.FileManager.Create(e.FileManager.Finder.JournalFile(item))
 		},
 	}
 }
@@ -141,6 +143,10 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Principal: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
+			if strings.Contains(item.Path, DejaVu) {
+				return fs.SkipDir
+			}
+
 			depth := item.Extension.Depth
 
 			e.Logger.Debug("🌀🌀 Shrink Principle Callback",
@@ -153,6 +159,9 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 
 			return controller.OnNewShrinkItem(item)
 		},
+	}
+	o.Notify.OnBegin = func(_ *nav.NavigationState) {
+		fmt.Printf("===> 🛡️  beginning traversal ...\n")
 	}
 }
 
@@ -197,15 +206,7 @@ func (e *ShrinkEntry) createFinder() *PathFinder {
 }
 
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
-	o.Notify.OnBegin = func(_ *nav.NavigationState) {
-		fmt.Printf("===> 🛡️  beginning traversal ...\n")
-	}
 	o.Notify.OnEnd = func(result *nav.TraverseResult) {
-		fmt.Printf("===> 🚩  finished traversal - files: '%v', folders: '%v'\n",
-			result.Metrics.Count(nav.MetricNoFilesInvokedEn),
-			result.Metrics.Count(nav.MetricNoFoldersInvokedEn),
-		)
-
 		e.Logger.Info("finished traversal",
 			slog.Int("files", int(result.Metrics.Count(nav.MetricNoFilesInvokedEn))),
 			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))),
@@ -266,6 +267,10 @@ func (e *ShrinkEntry) navigateWithLookAhead(
 }
 
 func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
+	if strings.HasPrefix(item.Extension.Name, DejaVu) {
+		return fs.SkipDir
+	}
+
 	depth := item.Extension.Depth
 
 	e.Logger.Debug("🎙️🎙️ Shrink Restore Callback",
