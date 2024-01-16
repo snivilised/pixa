@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/samber/lo"
@@ -47,9 +48,10 @@ type EntryBase struct {
 	SchemesCFG  cfg.SchemesConfig
 	SamplerCFG  cfg.SamplerConfig
 	AdvancedCFG cfg.AdvancedConfig
-	Logger      *slog.Logger
+	Log         *slog.Logger
 	Vfs         storage.VirtualFS
 	FileManager *FileManager
+	FilterSetup *filterSetup
 }
 
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
@@ -66,7 +68,12 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		}
 
 		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
-			return item.Name() != ".DS_Store"
+			name := item.Name()
+
+			// todo: get rid of ".$journal" hard-coding and get it form config
+			// using finder.statics
+			//
+			return name != ".DS_Store" && !strings.Contains(name, ".$journal") && !strings.HasPrefix(name, ".")
 		}), nil
 	}
 
@@ -141,14 +148,14 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	//
 	if e.Registry == nil {
 		e.Registry = NewControllerRegistry(&SharedControllerInfo{
-			Options:  e.Options,
+			// Options:  e.Options,
 			program:  e.Program,
 			profiles: e.ProfilesCFG,
 			sampler:  e.SamplerCFG,
 		})
 	}
 
-	o.Monitor.Log = e.Logger
+	o.Monitor.Log = e.Log
 }
 
 func (e *EntryBase) navigate(
@@ -157,7 +164,7 @@ func (e *EntryBase) navigate(
 	resumption *nav.Resumption,
 	after ...afterFunc,
 ) error {
-	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal", e.Logger)
+	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal", e.Log)
 	wgan.Add(1, navigatorRoutineName)
 
 	ctx, cancel := context.WithCancel(context.Background())

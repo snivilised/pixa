@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
@@ -32,114 +31,16 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 			if strings.Contains(item.Path, DejaVu) {
 				return fs.SkipDir
 			}
+			journal := e.FileManager.Finder.JournalFullPath(item)
 
-			return e.FileManager.Create(e.FileManager.Finder.JournalFile(item))
+			return e.FileManager.Create(journal)
 		},
 	}
-}
-
-func (e *ShrinkEntry) getFilterDefs() *nav.FilterDefinitions {
-	// the filter we expect the user to provide does not include the file suffix,
-	// it only applies to the base name and we define the suffix part of the filter
-	// internally.
-	//
-	var (
-		file, folder  *nav.FilterDef
-		defs          *nav.FilterDefinitions
-		folderDefined = true
-		pattern       string
-		suffixes      = e.AdvancedCFG.Extensions().Suffixes()
-	)
-
-	switch {
-	case e.Inputs.PolyFam.Native.Files != "":
-		pattern = fmt.Sprintf("%v|%v", e.Inputs.PolyFam.Native.Files, suffixes)
-
-		file = &nav.FilterDef{
-			Type:        nav.FilterTypeExtendedGlobEn,
-			Description: fmt.Sprintf("--files(F): '%v'", pattern),
-			Pattern:     pattern,
-			Scope:       nav.ScopeFileEn,
-		}
-
-	case e.Inputs.PolyFam.Native.FilesRexEx != "":
-		// we make the regex non case specific and also use a dot ta match
-		// any character before the suffix. Perhaps we need extendio to define
-		// an extended regex filter that has similar suffix functionality to
-		// the extended glob
-		//
-		pattern = fmt.Sprintf("(?i).%v.*(jpe?g|png)$", e.Inputs.PolyFam.Native.FilesRexEx)
-
-		file = &nav.FilterDef{
-			Type:        nav.FilterTypeRegexEn,
-			Description: fmt.Sprintf("--files-rx(X): '%v'", pattern),
-			Pattern:     pattern,
-			Scope:       nav.ScopeFileEn,
-		}
-
-	default:
-		pattern = fmt.Sprintf("*|%v", suffixes)
-		file = &nav.FilterDef{
-			Type:        nav.FilterTypeExtendedGlobEn,
-			Description: fmt.Sprintf("default extended glob filter: '%v'", pattern),
-			Pattern:     pattern,
-			Scope:       nav.ScopeFileEn,
-		}
-	}
-
-	switch {
-	case e.Inputs.Root.FoldersFam.Native.FoldersGlob != "":
-		pattern = e.Inputs.Root.FoldersFam.Native.FoldersRexEx
-		folder = &nav.FilterDef{
-			Type:        nav.FilterTypeGlobEn,
-			Description: fmt.Sprintf("--folders-gb(Z): '%v'", pattern),
-			Pattern:     pattern,
-			Scope:       nav.ScopeFolderEn | nav.ScopeLeafEn,
-		}
-
-	case e.Inputs.Root.FoldersFam.Native.FoldersRexEx != "":
-		pattern = e.Inputs.Root.FoldersFam.Native.FoldersRexEx
-		folder = &nav.FilterDef{
-			Type:        nav.FilterTypeRegexEn,
-			Description: fmt.Sprintf("--folders-rx(Y): '%v'", pattern),
-			Pattern:     pattern,
-			Scope:       nav.ScopeFolderEn | nav.ScopeLeafEn,
-		}
-
-	default:
-		folderDefined = false
-	}
-
-	switch {
-	case folderDefined:
-		defs = &nav.FilterDefinitions{
-			Node: nav.FilterDef{
-				Type: nav.FilterTypePolyEn,
-				Poly: &nav.PolyFilterDef{
-					File:   *file,
-					Folder: *folder,
-				},
-			},
-		}
-
-	default:
-		defs = &nav.FilterDefinitions{
-			Node: *file,
-		}
-	}
-
-	return lo.TernaryF(pattern != "",
-		func() *nav.FilterDefinitions {
-			return defs
-		},
-		func() *nav.FilterDefinitions {
-			return nil
-		},
-	)
 }
 
 func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	e.ConfigureOptions(o)
+
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Principal: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
@@ -149,7 +50,7 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 
 			depth := item.Extension.Depth
 
-			e.Logger.Debug("🌀🌀 Shrink Principle Callback",
+			e.Log.Debug("🌀🌀 Shrink Principle Callback",
 				slog.String("path", item.Extension.SubPath),
 				slog.Int("depth", depth),
 			)
@@ -165,76 +66,17 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	}
 }
 
-func (e *ShrinkEntry) createFinder() *PathFinder {
-	extensions := e.AdvancedCFG.Extensions()
-	finder := &PathFinder{
-		Scheme:          e.Inputs.Root.ProfileFam.Native.Scheme,
-		ExplicitProfile: e.Inputs.Root.ProfileFam.Native.Profile,
-		arity:           1,
-		statics: &staticInfo{
-			adhoc:   e.AdvancedCFG.AdhocLabel(),
-			journal: e.AdvancedCFG.JournalLabel(),
-			legacy:  e.AdvancedCFG.LegacyLabel(),
-			trash:   e.AdvancedCFG.TrashLabel(),
-		},
-		ext: &extensionTransformation{
-			transformers: strings.Split(extensions.Transforms(), ","),
-			remap:        extensions.Map(),
-		},
-	}
-
-	if finder.Scheme != "" {
-		schemeCFG, _ := e.SchemesCFG.Scheme(finder.Scheme)
-		finder.arity = len(schemeCFG.Profiles())
-	}
-
-	if e.Inputs.ParamSet.Native.OutputPath != "" {
-		finder.Output = e.Inputs.ParamSet.Native.OutputPath
-	} else {
-		finder.transparentInput = true
-	}
-
-	if e.Inputs.ParamSet.Native.TrashPath != "" {
-		finder.Trash = e.Inputs.ParamSet.Native.TrashPath
-	}
-
-	if !strings.HasSuffix(finder.statics.journal, ".txt") {
-		finder.statics.journal += ".txt"
-	}
-
-	return finder
-}
-
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
+	e.EntryBase.ConfigureOptions(o)
+
 	o.Notify.OnEnd = func(result *nav.TraverseResult) {
-		e.Logger.Info("finished traversal",
+		e.Log.Info("finished traversal",
 			slog.Int("files", int(result.Metrics.Count(nav.MetricNoFilesInvokedEn))),
 			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))),
 		)
 	}
 	o.Store.Subscription = nav.SubscribeFiles
-
-	e.EntryBase.ConfigureOptions(o)
-
-	finder := e.createFinder()
-	e.FileManager = &FileManager{
-		vfs:    e.Vfs,
-		Finder: finder,
-	}
-
-	e.Registry = NewControllerRegistry(&SharedControllerInfo{
-		Options:     e.Options,
-		program:     e.Program,
-		profiles:    e.ProfilesCFG,
-		schemes:     e.SchemesCFG,
-		sampler:     e.SamplerCFG,
-		advanced:    e.AdvancedCFG,
-		Inputs:      e.Inputs,
-		finder:      finder,
-		fileManager: e.FileManager,
-	})
-
-	o.Store.FilterDefs = e.getFilterDefs()
+	o.Store.FilterDefs = e.FilterSetup.getDefs(e.FileManager.Finder.statics)
 }
 
 func clearResumeFromWith(with nav.CreateNewRunnerWith) nav.CreateNewRunnerWith {
@@ -273,7 +115,7 @@ func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 
 	depth := item.Extension.Depth
 
-	e.Logger.Debug("🎙️🎙️ Shrink Restore Callback",
+	e.Log.Debug("🎙️🎙️ Shrink Restore Callback",
 		slog.String("path", item.Extension.SubPath),
 		slog.Int("depth", depth),
 	)
@@ -327,6 +169,11 @@ type ShrinkParams struct {
 func EnterShrink(
 	params *ShrinkParams,
 ) error {
+	finder := newPathFinder(params.Inputs, params.AdvancedCFG, params.SchemesCFG)
+	fileManager := &FileManager{
+		vfs:    params.Vfs,
+		Finder: finder,
+	}
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
 			Inputs:      params.Inputs.Root,
@@ -336,11 +183,29 @@ func EnterShrink(
 			SchemesCFG:  params.SchemesCFG,
 			SamplerCFG:  params.SamplerCFG,
 			AdvancedCFG: params.AdvancedCFG,
-			Logger:      params.Logger,
+			Log:         params.Logger,
 			Vfs:         params.Vfs,
+			FileManager: fileManager,
+			FilterSetup: &filterSetup{
+				inputs: params.Inputs,
+				config: params.AdvancedCFG,
+			},
+			Registry: NewControllerRegistry(&SharedControllerInfo{
+				program:     params.Program,
+				profiles:    params.ProfilesCFG,
+				schemes:     params.SchemesCFG,
+				sampler:     params.SamplerCFG,
+				advanced:    params.AdvancedCFG,
+				Inputs:      params.Inputs,
+				finder:      fileManager.Finder,
+				fileManager: fileManager,
+			}),
 		},
 		Inputs: params.Inputs,
 	}
+
+	// do some initial setup(prepare) here, like create the finder,
+	// before the navigate
 
 	return entry.run(params.Config)
 }

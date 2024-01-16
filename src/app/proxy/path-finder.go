@@ -64,11 +64,9 @@ func init() {
 		pfPathTxInputDestinationFolder: templateSegments{
 			"${{OUTPUT-ROOT}}",
 		},
-
 		pfPathInputDestinationFileOriginalExt: templateSegments{
 			"${{ITEM-FULL-NAME}}",
 		},
-
 		pfPathResultFolder: templateSegments{
 			"${{OUTPUT-ROOT}}",
 			"${{ITEM-SUB-PATH}}",
@@ -120,13 +118,6 @@ func (tc pfTemplatesCollection) evaluate(
 	return filepath.Clean(result)
 }
 
-type staticInfo struct {
-	adhoc   string
-	journal string
-	legacy  string
-	trash   string
-}
-
 type extensionTransformation struct {
 	transformers []string
 	remap        map[string]string
@@ -153,10 +144,14 @@ type PathFinder struct {
 	ext              *extensionTransformation
 }
 
-func (f *PathFinder) JournalFile(item *nav.TraverseItem) string {
-	file := FilenameWithoutExtension(item.Extension.Name) + f.statics.journal
+func (f *PathFinder) JournalFullPath(item *nav.TraverseItem) string {
+	file := f.statics.JournalLocation(
+		item.Extension.Name, item.Extension.Parent,
+	)
 
-	return filepath.Join(item.Extension.Parent, file)
+	// ---> fmt.Printf("🔥🔥🔥 JOURNAL-FILE: '%v'\n", file)
+
+	return file
 }
 
 // Transfer creates a path for the input; should return empty

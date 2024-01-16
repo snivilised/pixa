@@ -23,6 +23,7 @@ import (
 
 const (
 	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
+	BackyardWorldsPlanet9Scan02 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02"
 	perm                        = 0o766
 )
 
@@ -165,6 +166,209 @@ var _ = Describe("SamplerController", Ordered, func() {
 				entry.given, entry.should,
 			)
 		},
+
+		// full run
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run transparent adhoc",
+				should:   "full run with glob filter, result file takes place of input",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "ADHOC/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run transparent adhoc",
+				should:   "full run with regex filter, result file takes place of input",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files-rx", "Backyard-Worlds",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "ADHOC/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run transparent with profile",
+				should:   "full run with glob filter, result file takes place of input",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--profile", "adaptive",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "adaptive/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run, profile",
+				should:   "full run with regex filter using the defined profile",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"--files-rx", "Backyard-Worlds",
+					"--profile", "adaptive",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "adaptive/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run transparent with scheme with single profile",
+				should:   "full run with glob filter, result file takes place of input",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--scheme", "singleton",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "singleton/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run non transparent adhoc",
+				should:   "full run with glob filter, input moved to alternative location",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				trashFlag:    "discard",
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "discard",
+				supplement:   "ADHOC/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run non transparent with profile",
+				should:   "full run with glob filter, input moved to alternative location",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--profile", "adaptive",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				trashFlag:    "discard",
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "discard",
+				supplement:   "adaptive/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "run non transparent scheme single with profile",
+				should:   "full run with glob filter, input moved to alternative location",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--scheme", "singleton",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				trashFlag:    "discard",
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "discard",
+				supplement:   "singleton/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run, scheme",
+				should:   "full run, all profiles in the scheme",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--strip",
+					"--interlace", "plane",
+					"--quality", "85",
+					"--scheme", "blur-sf",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "blur-sf/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "full run transparent adhoc and target already exists",
+				should:   "full run with glob filter, result file takes place of input",
+				exists:   true,
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "ADHOC/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		Entry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "directory contains files with same name different extensions",
+				should:   "create journal file include file extension",
+				relative: BackyardWorldsPlanet9Scan02,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				expected:     helpers.BackyardWorldsPlanet9Scan02,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02",
+				supplement:   "ADHOC/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan02,
+			},
+		}),
+
+		// sample run
 
 		Entry(nil, &samplerTE{
 			controllerTE: controllerTE{
@@ -397,8 +601,8 @@ var _ = Describe("end to end", Ordered, func() {
 				"shrink",
 				"/Users/plastikfan/dev/test/pics",
 				"--profile", "blur",
-				"--sample",
-				"--no-files", "1",
+				// "--sample",
+				// "--no-files", "1",
 				"--files", "screen*",
 			}
 			configPath := utils.ResolvePath("~/snivilised/pixa")
@@ -416,6 +620,7 @@ var _ = Describe("end to end", Ordered, func() {
 					co.Config.ConfigPath = configPath
 				}),
 			}
+
 			_, err := tester.Execute()
 			Expect(err).Error().To(BeNil(),
 				fmt.Sprintf("execution result non nil (%v)", err),
