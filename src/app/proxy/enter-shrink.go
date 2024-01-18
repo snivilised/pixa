@@ -204,8 +204,5 @@ func EnterShrink(
 		Inputs: params.Inputs,
 	}
 
-	// do some initial setup(prepare) here, like create the finder,
-	// before the navigate
-
 	return entry.run(params.Config)
 }

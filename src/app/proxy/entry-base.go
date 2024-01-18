@@ -69,11 +69,9 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 
 		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
 			name := item.Name()
+			withoutExt := e.FileManager.Finder.statics.meta.withoutExt
 
-			// todo: get rid of ".$journal" hard-coding and get it form config
-			// using finder.statics
-			//
-			return name != ".DS_Store" && !strings.Contains(name, ".$journal") && !strings.HasPrefix(name, ".")
+			return !strings.HasPrefix(name, ".") && !strings.Contains(name, withoutExt)
 		}), nil
 	}
 
@@ -148,7 +146,6 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	//
 	if e.Registry == nil {
 		e.Registry = NewControllerRegistry(&SharedControllerInfo{
-			// Options:  e.Options,
 			program:  e.Program,
 			profiles: e.ProfilesCFG,
 			sampler:  e.SamplerCFG,
