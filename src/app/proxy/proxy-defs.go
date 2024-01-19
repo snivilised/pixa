@@ -6,7 +6,7 @@ import (
 )
 
 type SharedControllerInfo struct {
-	program     Executor
+	agent       ExecutionAgent
 	profiles    cfg.ProfilesConfig
 	schemes     cfg.SchemesConfig
 	sampler     cfg.SamplerConfig

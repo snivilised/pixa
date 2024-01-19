@@ -26,8 +26,6 @@ sampler:
   folders: 1
 advanced:
   abort-on-error: false
-  program-timeout: "20s"
-  no-program-retries: 0
   labels:
     adhoc: ADHOC
     legacy: .LEGACY
@@ -38,6 +36,10 @@ advanced:
     transforms-csv: lower
     map:
       jpeg: jpg
+  executable:
+    program-name: dummy
+    timeout: "20s"
+    no-retries: 0
 logging:
   log-path: "~/snivilised/pixa/pixa.log"
   max-size-in-mb: 10

@@ -46,15 +46,20 @@ type (
 		Map() map[string]string
 	}
 
-	AdvancedConfig interface {
-		AbortOnError() bool
+	ExecutableConfig interface {
+		Symbol() string
 		ProgramTimeout() (duration time.Duration, err error)
 		NoRetries() uint
+	}
+
+	AdvancedConfig interface {
+		AbortOnError() bool
 		AdhocLabel() string
 		JournalLabel() string
 		LegacyLabel() string
 		TrashLabel() string
 		Extensions() ExtensionsConfig
+		Executable() ExecutableConfig
 	}
 
 	AdvancedConfigReader interface {

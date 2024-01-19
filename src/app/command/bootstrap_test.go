@@ -93,9 +93,6 @@ var _ = Describe("Bootstrap", Ordered, func() {
 			}
 			rootCmd := bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 				co.Detector = &DetectorStub{}
-				co.Program = &ExecutorStub{
-					Name: "magick",
-				}
 				co.Config.Name = helpers.PixaConfigTestFilename
 				co.Config.ConfigPath = configPath
 				co.Config.Viper = &configuration.GlobalViperConfig{}

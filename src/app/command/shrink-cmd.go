@@ -53,7 +53,6 @@ var shrinkShortFlags = cobrass.KnownByCollection{
 	"files":      "F", // family: filter
 	"files-gb":   "G", // family: filter
 	"files-rx":   "X", // family: filter
-	"folders":    "F", // family: filter
 	"folders-gb": "Z", // family: filter
 	"folders-rx": "Y", // family: filter
 	"profile":    "P", // family: profile
@@ -136,7 +135,6 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 					appErr = proxy.EnterShrink(
 						&proxy.ShrinkParams{
 							Inputs:      inputs,
-							Program:     b.OptionsInfo.Program,
 							Config:      b.OptionsInfo.Config.Viper,
 							ProfilesCFG: b.ProfilesCFG,
 							SchemesCFG:  b.SchemesCFG,

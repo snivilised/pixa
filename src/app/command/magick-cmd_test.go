@@ -70,9 +70,6 @@ var _ = Describe("MagickCmd", Ordered, func() {
 				Args: []string{"mag"},
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &DetectorStub{}
-					co.Program = &helpers.ExecutorStub{
-						Name: helpers.ProgName,
-					}
 					co.Config.Name = helpers.PixaConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}

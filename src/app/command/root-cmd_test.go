@@ -43,9 +43,6 @@ var _ = Describe("RootCmd", Ordered, func() {
 		tester = helpers.CommandTester{
 			Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 				co.Detector = &DetectorStub{}
-				co.Program = &ExecutorStub{
-					Name: "magick",
-				}
 				co.Config.Name = helpers.PixaConfigTestFilename
 				co.Config.ConfigPath = configPath
 			}),

@@ -49,10 +49,10 @@ func (c *controller) profileSequence(
 	pi *pathInfo,
 ) Sequence {
 	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
-	cl := c.composeProfileCL(pi.profile, changed)
-	step := &executionStep{
+	combined := c.composeProfileCL(pi.profile, changed)
+	step := &controllerStep{
 		shared:       c.shared,
-		thirdPartyCL: cl,
+		thirdPartyCL: combined,
 		sourcePath:   pi.item.Path,
 		profile:      pi.profile,
 		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
@@ -69,10 +69,10 @@ func (c *controller) schemeSequence(
 	sequence := make(Sequence, 0, len(schemeCfg.Profiles()))
 
 	for _, current := range schemeCfg.Profiles() {
-		cl := c.composeProfileCL(current, changed)
-		step := &executionStep{
+		combined := c.composeProfileCL(current, changed)
+		step := &controllerStep{
 			shared:       c.shared,
-			thirdPartyCL: cl,
+			thirdPartyCL: combined,
 			sourcePath:   pi.item.Path,
 			profile:      current,
 			outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
@@ -88,7 +88,7 @@ func (c *controller) adhocSequence(
 	pi *pathInfo,
 ) Sequence {
 	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
-	step := &executionStep{
+	step := &controllerStep{
 		shared:       c.shared,
 		thirdPartyCL: changed,
 		sourcePath:   pi.item.Path,

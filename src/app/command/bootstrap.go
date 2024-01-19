@@ -91,7 +91,6 @@ type Bootstrap struct {
 
 type ConfigureOptionsInfo struct {
 	Detector LocaleDetector
-	Program  proxy.Executor
 	Config   ConfigInfo
 }
 
@@ -105,9 +104,6 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 
 	b.OptionsInfo = ConfigureOptionsInfo{
 		Detector: &Jabber{},
-		Program: &ProgramExecutor{ // 💥 TEMPORARILY OVERRIDDEN WITH DUMMY
-			Name: "magick",
-		},
 		Config: ConfigInfo{
 			Name:       ApplicationName,
 			ConfigType: "yaml",
@@ -123,25 +119,11 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 		},
 	}
 
-	if _, err := b.OptionsInfo.Program.Look(); err != nil {
-		b.OptionsInfo.Program = &DummyExecutor{
-			Name: b.OptionsInfo.Program.ProgName(),
-		}
-	}
-
 	for _, fo := range options {
 		fo(&b.OptionsInfo)
 	}
 
 	b.configure()
-
-	// JUST TEMPORARY: make the executor the dummy for safety
-	//
-	b.OptionsInfo.Program = &DummyExecutor{
-		Name: "magick",
-	}
-
-	fmt.Printf("===> 💥💥💥 USING DUMMY EXECUTOR !!!!\n")
 
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
@@ -175,7 +157,11 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 
 				// ---> execute root core
 				//
-				return proxy.EnterRoot(inputs, b.OptionsInfo.Program, b.OptionsInfo.Config.Viper)
+
+				return proxy.EnterRoot(
+					inputs,
+					b.OptionsInfo.Config.Viper,
+				)
 			},
 		},
 	)

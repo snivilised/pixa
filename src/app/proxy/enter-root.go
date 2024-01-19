@@ -14,12 +14,6 @@ type configProfile struct {
 	args []string
 }
 
-type Executor interface {
-	ProgName() string
-	Look() (string, error)
-	Execute(args ...string) error
-}
-
 const (
 	DefaultJobsChSize = 10
 )
@@ -50,7 +44,7 @@ func (e *RootEntry) principalFn(item *nav.TraverseItem) error {
 		item.Path,
 	)
 
-	return e.Program.Execute("--version")
+	return nil
 }
 
 func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
@@ -112,16 +106,14 @@ func composeWith(inputs *RootCommandInputs) nav.CreateNewRunnerWith {
 
 func EnterRoot(
 	inputs *RootCommandInputs,
-	program Executor,
 	config configuration.ViperConfig,
 ) error {
 	fmt.Printf("---> 📁📁📁 Directory: '%v'\n", inputs.ParamSet.Native.Directory)
 
 	entry := &RootEntry{
 		EntryBase: EntryBase{
-			Inputs:  inputs,
-			Program: program,
-			Config:  config,
+			Inputs: inputs,
+			Config: config,
 		},
 	}
 

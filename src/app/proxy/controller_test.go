@@ -129,9 +129,6 @@ var _ = Describe("SamplerController", Ordered, func() {
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &helpers.DetectorStub{}
-					co.Program = &helpers.ExecutorStub{
-						Name: helpers.ProgName,
-					}
 					co.Config.Name = helpers.PixaConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}
@@ -613,9 +610,6 @@ var _ = Describe("end to end", Ordered, func() {
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &helpers.DetectorStub{}
-					co.Program = &helpers.ExecutorStub{
-						Name: helpers.ProgName,
-					}
 					co.Config.Name = "pixa"
 					co.Config.ConfigPath = configPath
 				}),

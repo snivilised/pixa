@@ -101,24 +101,33 @@ func (c *MsExtensionsConfig) Map() map[string]string {
 	return c.Remap
 }
 
+type MsExecutableConfig struct {
+	ProgramName      string `mapstructure:"program-name"`
+	Timeout          string `mapstructure:"timeout"`
+	NoProgramRetries uint   `mapstructure:"no-retries"`
+}
+
+func (c *MsExecutableConfig) Symbol() string {
+	return c.ProgramName
+}
+
+func (c *MsExecutableConfig) ProgramTimeout() (duration time.Duration, err error) {
+	return time.ParseDuration(c.Timeout)
+}
+
+func (c *MsExecutableConfig) NoRetries() uint {
+	return c.NoProgramRetries
+}
+
 type MsAdvancedConfig struct {
-	Abort            bool               `mapstructure:"abort-on-error"`
-	Timeout          string             `mapstructure:"program-timeout"`
-	NoProgramRetries uint               `mapstructure:"no-program-retries"`
-	LabelsCFG        MsLabelsConfig     `mapstructure:"labels"`
-	ExtensionsCFG    MsExtensionsConfig `mapstructure:"extensions"`
+	Abort         bool               `mapstructure:"abort-on-error"`
+	LabelsCFG     MsLabelsConfig     `mapstructure:"labels"`
+	ExtensionsCFG MsExtensionsConfig `mapstructure:"extensions"`
+	ExecutableCFG MsExecutableConfig `mapstructure:"executable"`
 }
 
 func (c *MsAdvancedConfig) AbortOnError() bool {
 	return c.Abort
-}
-
-func (c *MsAdvancedConfig) ProgramTimeout() (duration time.Duration, err error) {
-	return time.ParseDuration(c.Timeout)
-}
-
-func (c *MsAdvancedConfig) NoRetries() uint {
-	return c.NoProgramRetries
 }
 
 func (c *MsAdvancedConfig) AdhocLabel() string {
@@ -139,6 +148,10 @@ func (c *MsAdvancedConfig) TrashLabel() string {
 
 func (c *MsAdvancedConfig) Extensions() ExtensionsConfig {
 	return &c.ExtensionsCFG
+}
+
+func (c *MsAdvancedConfig) Executable() ExecutableConfig {
+	return &c.ExecutableCFG
 }
 
 type MsLoggingConfig struct {

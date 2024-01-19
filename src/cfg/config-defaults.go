@@ -86,9 +86,7 @@ func init() {
 	}
 
 	DefaultAdvancedConfig = &MsAdvancedConfig{
-		Abort:            false,
-		Timeout:          "10s",
-		NoProgramRetries: defaultNoProgramRetries,
+		Abort: false,
 		LabelsCFG: MsLabelsConfig{
 			Adhoc:   "ADHOC",
 			Journal: "journal",
@@ -98,6 +96,11 @@ func init() {
 		ExtensionsCFG: MsExtensionsConfig{
 			FileSuffixes:  "jpg,jpeg,png",
 			TransformsCSV: "lower",
+		},
+		ExecutableCFG: MsExecutableConfig{
+			ProgramName:      "magick",
+			Timeout:          "10s",
+			NoProgramRetries: defaultNoProgramRetries,
 		},
 	}
 

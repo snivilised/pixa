@@ -89,6 +89,11 @@ var (
 		"xcf", "xpm", "xwd",
 		"yuv",
 	}
+
+	permittedPrograms = []string{
+		"dummy",
+		"magick",
+	}
 )
 
 type MsAdvancedConfigReader struct{}
@@ -108,6 +113,18 @@ func (r *MsAdvancedConfigReader) validateSuffixes(suffixes []string, from string
 	if len(invalid) > 0 {
 		keys := maps.Keys(invalid)
 		err = fmt.Errorf("invalid formats found (%v): '%v'", from, strings.Join(keys, ","))
+	}
+
+	return err
+}
+
+func (r *MsAdvancedConfigReader) validateProgramName(name string) error {
+	var (
+		err error
+	)
+
+	if !slices.Contains(permittedPrograms, name) {
+		err = fmt.Errorf("invalid program name found: '%v'", name)
 	}
 
 	return err
@@ -137,6 +154,10 @@ func (r *MsAdvancedConfigReader) Read(viper configuration.ViperConfig) (Advanced
 		})
 
 		err = r.validateSuffixes(suffixes, "extensions.suffixes")
+	}
+
+	if err == nil {
+		err = r.validateProgramName(advancedCFG.ExecutableCFG.ProgramName)
 	}
 
 	return &advancedCFG, err

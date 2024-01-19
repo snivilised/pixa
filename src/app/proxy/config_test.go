@@ -55,9 +55,6 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *configTE,
 		Args: append(options, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &helpers.DetectorStub{}
-			co.Program = &helpers.ExecutorStub{
-				Name: helpers.ProgName,
-			}
 			co.Config.Name = helpers.PixaConfigTestFilename
 			co.Config.ConfigPath = configPath
 			co.Config.Viper = &configuration.GlobalViperConfig{}
