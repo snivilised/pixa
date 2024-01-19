@@ -1,5 +1,4 @@
-// #nosec G204
-package command
+package proxy
 
 import (
 	"fmt"
@@ -25,6 +24,7 @@ func (e *ProgramExecutor) Execute(args ...string) error {
 		strings.Join(args, " "),
 	)
 
+	// #nosec G204 // prog(e.Name) is pre-vetted
 	cmd := exec.Command(e.Name, args...)
 	err := cmd.Start()
 

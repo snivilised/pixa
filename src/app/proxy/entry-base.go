@@ -40,7 +40,7 @@ type EntryBase struct {
 	// with the rest going into cobrass.clif
 	//
 	Inputs      *RootCommandInputs
-	Program     Executor
+	Agent       ExecutionAgent
 	Config      configuration.ViperConfig
 	Options     *nav.TraverseOptions
 	Registry    *ControllerRegistry
@@ -146,7 +146,6 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	//
 	if e.Registry == nil {
 		e.Registry = NewControllerRegistry(&SharedControllerInfo{
-			program:  e.Program,
 			profiles: e.ProfilesCFG,
 			sampler:  e.SamplerCFG,
 		})

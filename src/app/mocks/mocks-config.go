@@ -375,6 +375,72 @@ func (mr *MockExtensionsConfigMockRecorder) Transforms() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transforms", reflect.TypeOf((*MockExtensionsConfig)(nil).Transforms))
 }
 
+// MockExecutableConfig is a mock of ExecutableConfig interface.
+type MockExecutableConfig struct {
+	ctrl     *gomock.Controller
+	recorder *MockExecutableConfigMockRecorder
+}
+
+// MockExecutableConfigMockRecorder is the mock recorder for MockExecutableConfig.
+type MockExecutableConfigMockRecorder struct {
+	mock *MockExecutableConfig
+}
+
+// NewMockExecutableConfig creates a new mock instance.
+func NewMockExecutableConfig(ctrl *gomock.Controller) *MockExecutableConfig {
+	mock := &MockExecutableConfig{ctrl: ctrl}
+	mock.recorder = &MockExecutableConfigMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockExecutableConfig) EXPECT() *MockExecutableConfigMockRecorder {
+	return m.recorder
+}
+
+// NoRetries mocks base method.
+func (m *MockExecutableConfig) NoRetries() uint {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NoRetries")
+	ret0, _ := ret[0].(uint)
+	return ret0
+}
+
+// NoRetries indicates an expected call of NoRetries.
+func (mr *MockExecutableConfigMockRecorder) NoRetries() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoRetries", reflect.TypeOf((*MockExecutableConfig)(nil).NoRetries))
+}
+
+// ProgramTimeout mocks base method.
+func (m *MockExecutableConfig) ProgramTimeout() (time.Duration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProgramTimeout")
+	ret0, _ := ret[0].(time.Duration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProgramTimeout indicates an expected call of ProgramTimeout.
+func (mr *MockExecutableConfigMockRecorder) ProgramTimeout() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProgramTimeout", reflect.TypeOf((*MockExecutableConfig)(nil).ProgramTimeout))
+}
+
+// Symbol mocks base method.
+func (m *MockExecutableConfig) Symbol() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Symbol")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Symbol indicates an expected call of Symbol.
+func (mr *MockExecutableConfigMockRecorder) Symbol() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Symbol", reflect.TypeOf((*MockExecutableConfig)(nil).Symbol))
+}
+
 // MockAdvancedConfig is a mock of AdvancedConfig interface.
 type MockAdvancedConfig struct {
 	ctrl     *gomock.Controller
@@ -426,6 +492,20 @@ func (mr *MockAdvancedConfigMockRecorder) AdhocLabel() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdhocLabel", reflect.TypeOf((*MockAdvancedConfig)(nil).AdhocLabel))
 }
 
+// Executable mocks base method.
+func (m *MockAdvancedConfig) Executable() cfg.ExecutableConfig {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Executable")
+	ret0, _ := ret[0].(cfg.ExecutableConfig)
+	return ret0
+}
+
+// Executable indicates an expected call of Executable.
+func (mr *MockAdvancedConfigMockRecorder) Executable() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Executable", reflect.TypeOf((*MockAdvancedConfig)(nil).Executable))
+}
+
 // Extensions mocks base method.
 func (m *MockAdvancedConfig) Extensions() cfg.ExtensionsConfig {
 	m.ctrl.T.Helper()
@@ -466,35 +546,6 @@ func (m *MockAdvancedConfig) LegacyLabel() string {
 func (mr *MockAdvancedConfigMockRecorder) LegacyLabel() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LegacyLabel", reflect.TypeOf((*MockAdvancedConfig)(nil).LegacyLabel))
-}
-
-// NoRetries mocks base method.
-func (m *MockAdvancedConfig) NoRetries() uint {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NoRetries")
-	ret0, _ := ret[0].(uint)
-	return ret0
-}
-
-// NoRetries indicates an expected call of NoRetries.
-func (mr *MockAdvancedConfigMockRecorder) NoRetries() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NoRetries", reflect.TypeOf((*MockAdvancedConfig)(nil).NoRetries))
-}
-
-// ProgramTimeout mocks base method.
-func (m *MockAdvancedConfig) ProgramTimeout() (time.Duration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProgramTimeout")
-	ret0, _ := ret[0].(time.Duration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProgramTimeout indicates an expected call of ProgramTimeout.
-func (mr *MockAdvancedConfigMockRecorder) ProgramTimeout() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProgramTimeout", reflect.TypeOf((*MockAdvancedConfig)(nil).ProgramTimeout))
 }
 
 // TrashLabel mocks base method.

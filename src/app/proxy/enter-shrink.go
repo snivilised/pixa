@@ -156,7 +156,6 @@ func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {
 
 type ShrinkParams struct {
 	Inputs      *ShrinkCommandInputs
-	Program     Executor
 	Config      configuration.ViperConfig
 	ProfilesCFG cfg.ProfilesConfig
 	SchemesCFG  cfg.SchemesConfig
@@ -169,6 +168,10 @@ type ShrinkParams struct {
 func EnterShrink(
 	params *ShrinkParams,
 ) error {
+	agent := newAgent(
+		params.AdvancedCFG,
+		params.Inputs.ParamSet.Native.KnownBy,
+	)
 	finder := newPathFinder(params.Inputs, params.AdvancedCFG, params.SchemesCFG)
 	fileManager := &FileManager{
 		vfs:    params.Vfs,
@@ -177,7 +180,7 @@ func EnterShrink(
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
 			Inputs:      params.Inputs.Root,
-			Program:     params.Program,
+			Agent:       agent,
 			Config:      params.Config,
 			ProfilesCFG: params.ProfilesCFG,
 			SchemesCFG:  params.SchemesCFG,
@@ -191,7 +194,7 @@ func EnterShrink(
 				config: params.AdvancedCFG,
 			},
 			Registry: NewControllerRegistry(&SharedControllerInfo{
-				program:     params.Program,
+				agent:       agent,
 				profiles:    params.ProfilesCFG,
 				schemes:     params.SchemesCFG,
 				sampler:     params.SamplerCFG,

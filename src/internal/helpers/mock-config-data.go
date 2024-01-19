@@ -5,9 +5,6 @@ import (
 	"github.com/snivilised/pixa/src/cfg"
 )
 
-// need to re-think this mock data as this is currently sub-optimal
-// because of the unintended duplication of functionality
-
 const (
 	noSampleFiles   = 2
 	noSampleFolders = 1
@@ -113,12 +110,10 @@ func init() {
 	}
 
 	AdvancedConfigData = &cfg.MsAdvancedConfig{
-		Abort:            false,
-		Timeout:          "10s",
-		NoProgramRetries: noRetries,
+		Abort: false,
 		LabelsCFG: cfg.MsLabelsConfig{
 			Adhoc:   "ADHOC",
-			Journal: ".$journal.txt",
+			Journal: "journal",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
 		},
@@ -128,6 +123,11 @@ func init() {
 			Remap: map[string]string{
 				"jpeg": "jpg",
 			},
+		},
+		ExecutableCFG: cfg.MsExecutableConfig{
+			ProgramName:      "dummy",
+			Timeout:          "10s",
+			NoProgramRetries: noRetries,
 		},
 	}
 
