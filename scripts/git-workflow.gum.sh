@@ -1,10 +1,30 @@
 #!/usr/bin/env bash
 
+# some snippets:
+#
+# gum confirm "Commit changes?" && git commit -m "$SUMMARY" -m "$DESCRIPTION"
+
+# 🍭 gum utility
+#
+
+#
+# 🍭 end gum utility
+
 # 🍯 git dev workflow commands; This script makes use of nerdfonts.com glyphs, eg 
 #
 
+# === 🥥 git-operations ========================================================
+
 function get-def-branch() {
   echo master
+}
+
+function gad() {
+  if [ -z "$(git status -s -uno | grep -v '^ ' | awk '{print $2}')" ]; then
+      gum confirm "Stage all?" && git add .
+  fi
+
+  return 0
 }
 
 function get-tracking-branch() {
@@ -26,8 +46,35 @@ function check-upstream-branch() {
   return 0
 }
 
+# === 🥥 prompt ================================================================
+
+function _prompt() {
+  # gum confirm exits with status 0 if confirmed and status 1 if cancelled
+  # message="$1"
+  # result=$(gum confirm "$message")
+
+  # return "$result"
+
+  message="$1"
+  gum confirm "$message"
+
+  return $?
+}
+
+function _prompt-are-you-sure {
+  _prompt "are you sure? 👾"
+  result=$?
+
+  if [ ! "$result" -eq 0 ]; then
+    echo "⛔ Aborted!"
+  fi
+
+  return $result
+}
+
 # this may no longer be required, becaause the gum confirm can be
-# integrated into teh call site
+# integrated into the call site; or define a prompt_ wrapper function
+#
 are-you-sure() { # 
   echo "👾 Are you sure❓ (type 'y' to confirm)"
   # $(gum input --placeholder "scope")
@@ -36,37 +83,38 @@ are-you-sure() { # 
 
   read -r squashed
 
-  if [ "$squashed" = "y" ]; then
-    return 0
-  else
+  if [ ! "$squashed" = "y" ]; then
     echo "⛔ Aborted!"
+
     return 1
   fi
+
+  return 0
 }
 
-start-feat() {
+# === 🥥 start-feat ============================================================
+
+function start-feat() {
   if [[ -n $1 ]]; then
     echo "===> 🚀 START FEATURE: '🎀 $1'"
+
     git checkout -b "$1"
-    return 0
   else
     echo "!!! 😕 Please specify a feature branch"
-  fi
-  return 1
-}
 
-end-feat() {
-  if ! are-you-sure "$1"; then
     return 1
   fi
 
+  return 0
+}
+
+# === 🥥 end-feat ==============================================================
+
+function _do-end-feat() {
   feature_branch=$(git_current_branch)
   default_branch=$(get-def-branch)
 
-  echo "About to end feature 🎁 '$feature_branch' ... have you squashed commits? (type 'y' to confirm)"
-  read -r squashed
-
-  if [ "$squashed" = "y" ]; then
+  if _prompt "About to end feature 🎁 '$feature_branch' ... have you squashed commits"; then
     echo "<=== ✨ END FEATURE: '$feature_branch'"
 
     if [ "$feature_branch" != master ] && [ "$feature_branch" != main ]; then
@@ -81,61 +129,73 @@ end-feat() {
       #
       git checkout "$default_branch"
       git pull origin "$default_branch"
-      echo "Done! ✔️"
+      echo "Done! ✅"
     else
       echo "!!! 😕 Not on a feature branch ($feature_branch)"
+
+      return 1
     fi
   else
     echo "⛔ Aborted!"
-  fi
-}
 
-push-feat() {
-  if ! are-you-sure "$1"; then
     return 1
   fi
 
+  return 0
+}
+
+function end-feat() {
+  _prompt-are-you-sure && _do-end-feat
+}
+
+# === 🥥 push-feat =============================================================
+
+function _do-push-feat() {
   current_branch=$(git_current_branch)
   default_branch=$(get-def-branch)
 
   if [ "$current_branch" = "$default_branch" ]; then
     echo "!!! ⛔ Aborted! still on default branch($default_branch) branch ($current_branch)"
+
     return 1
   fi
 
   if ! git push origin --set-upstream "$current_branch"; then
     echo "!!! ⛔ Aborted! Failed to push feature for branch: $current_branch"
+
     return 1
   fi
 
-  echo "pushed feature to $current_branch, ok! ✔️"
+  echo "pushed feature to $current_branch, ok! ✅"
+
   return 0
 }
+
+function push-feat() {
+  _prompt-are-you-sure && _do-push-feat
+}
+
+# === 🥥 check-tag =============================================================
 
 function check-tag() {
   rel_tag=$1
   if ! [[ $rel_tag =~ ^[0-9] ]]; then
     echo "!!! ⛔ Aborted! invalid tag"
+
     return 1
   fi
+
   return 0
 }
 
-# release <semantic-version>, !!! do not specify the v prefix, added automatically
-# should be run from the root directory otherwise relative paths won't work properly.
-function release() {
-  if ! are-you-sure "$1"; then
-    return 1
-  fi
+# === 🥥 do-release ============================================================
 
+function _do-release() {
   if [[ -n $1 ]]; then
     if ! check-tag "$1"; then
       return 1
     fi
 
-    # these string initialisers should probably e changed, don't
-    # need the surrounding quotes, but it works so why fiddle?
-    #
     raw_version=$1
     version_number=v$1
     current_branch=$(git_current_branch)
@@ -152,6 +212,7 @@ function release() {
 
     if [ "$current_branch" != "$default_branch" ]; then
       echo "!!! ⛔ Aborted! not on default($default_branch) branch; current($current_branch)"
+
       return 1
     fi
 
@@ -160,19 +221,22 @@ function release() {
 
     if ! git checkout -b "$release_branch"; then
       echo "!!! ⛔ Aborted! Failed to create the release branch: $release_branch"
+
       return 1
     fi
 
     if [ -e ./VERSION ]; then      
       if ! echo "$version_number" > ./VERSION; then
         echo "!!! ⛔ Aborted! Failed to update VERSION file"
+
         return 1
       fi
 
       
       if ! git add ./VERSION; then
         echo "!!! ⛔ Aborted! Failed to git add VERSION file"
-        return
+
+        return 1
       fi
 
       if [ -e ./VERSION-PATH ]; then
@@ -181,37 +245,47 @@ function release() {
         
         if ! git add "$version_path"; then
           echo "!!! ⛔ Aborted! Failed to git add VERSION-PATH file ($version_path)"
-          return
+
+          return 1
         fi
       fi
 
       if ! git commit -m "Bump version to $version_number"; then
         echo "!!! ⛔ Aborted! Failed to commit VERSION file"
+
         return 1
       fi
       
       if ! git push origin --set-upstream "$release_branch"; then
         echo "!!! ⛔ Aborted! Failed to push release $version_number upstream"
+
         return 1
       fi
 
       echo "Done! ✅"
-      return 0
     else
       echo "!!! ⛔ Aborted! VERSION file is missing. (In root dir?)"
+
+      return 1
     fi
   else
     echo "!!! 😕 Please specify a semantic version to release"
-  fi
-  return 1
-}
 
-# tag-rel <semantic-version>, !!! do not specify the v prefix, added automatically
-tag-rel() {
-  if ! are-you-sure "$1"; then
     return 1
   fi
 
+  return 0
+}
+
+# release <semantic-version>, !!! do not specify the v prefix, added automatically
+# should be run from the root directory otherwise relative paths won't work properly.
+function release() {
+  _prompt-are-you-sure && _do-release "$1"
+}
+
+# === 🥥 tag-rel ===============================================================
+
+function _do-tag-rel() {
   if [[ -n "$1" ]]; then
     version_number="v$1"
     current_branch=$(git_current_branch)
@@ -219,6 +293,7 @@ tag-rel() {
 
     if [ "$current_branch" != "$default_branch" ]; then
       echo "!!! ⛔ Aborted! not on default($default_branch) branch; current($current_branch)"
+
       return 1
     fi
 
@@ -227,19 +302,31 @@ tag-rel() {
     
     if ! git tag -a "$version_number" -m "Release $version_number"; then
       echo "!!! ⛔ Aborted! Failed to create annotated tag: $version_number"
+
       return 1
     fi
 
     
     if ! git push origin "$version_number"; then
       echo "!!! ⛔ Aborted! Failed to push tag: $version_number"
+
       return 1
     fi
 
     echo "Done! ✅"
-    return 0
   else
     echo "!!! 😕 Please specify a release semantic version to tag"
+
+    reurn 1
   fi
-  return 1
+
+  return 0
 }
+
+# tag-rel <semantic-version>, !!! do not specify the v prefix, added automatically
+function tag-rel() {
+  _prompt-are-you-sure && _do-tag-rel "$1"
+}
+
+#
+# 🍯 end git dev workflow commands
