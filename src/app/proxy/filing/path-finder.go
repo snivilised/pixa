@@ -1,4 +1,4 @@
-package proxy
+package filing
 
 import (
 	"path/filepath"
@@ -6,7 +6,69 @@ import (
 
 	"github.com/samber/lo"
 	"github.com/snivilised/extendio/xfs/nav"
+	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/pixa/src/cfg"
 )
+
+func NewFinder(
+	inputs *common.ShrinkCommandInputs,
+	advancedCFG cfg.AdvancedConfig,
+	schemesCFG cfg.SchemesConfig,
+) common.PathFinder {
+	extensions := advancedCFG.Extensions()
+	finder := &PathFinder{
+		scheme:          inputs.Root.ProfileFam.Native.Scheme,
+		ExplicitProfile: inputs.Root.ProfileFam.Native.Profile,
+		Arity:           1,
+		statics: &common.StaticInfo{
+			Adhoc:  advancedCFG.AdhocLabel(),
+			Legacy: advancedCFG.LegacyLabel(),
+			Trash:  advancedCFG.TrashLabel(),
+		},
+		Ext: &ExtensionTransformation{
+			Transformers: strings.Split(extensions.Transforms(), ","),
+			Remap:        extensions.Map(),
+		},
+	}
+
+	if finder.scheme != "" {
+		schemeCFG, _ := schemesCFG.Scheme(finder.scheme)
+		finder.Arity = len(schemeCFG.Profiles())
+	}
+
+	if inputs.ParamSet.Native.OutputPath != "" {
+		finder.Output = inputs.ParamSet.Native.OutputPath
+	} else {
+		finder.transparentInput = true
+	}
+
+	if inputs.ParamSet.Native.TrashPath != "" {
+		finder.Trash = inputs.ParamSet.Native.TrashPath
+	}
+
+	journal := advancedCFG.JournalLabel()
+
+	if !strings.HasSuffix(journal, common.JournalExtension) {
+		journal += common.JournalExtension
+	}
+
+	if !strings.HasPrefix(journal, common.JournalTag) {
+		journal = common.JournalTag + journal
+	}
+
+	withoutExt := strings.TrimSuffix(journal, common.JournalExtension)
+	core := strings.TrimPrefix(withoutExt, common.JournalTag)
+
+	finder.statics.Meta = common.JournalMetaInfo{
+		Core:       core,
+		Journal:    journal,
+		WithoutExt: withoutExt,
+		Extension:  common.JournalExtension,
+		Tag:        common.JournalTag,
+	}
+
+	return finder
+}
 
 type pfPath uint
 
@@ -118,15 +180,15 @@ func (tc pfTemplatesCollection) evaluate(
 	return filepath.Clean(result)
 }
 
-type extensionTransformation struct {
-	transformers []string
-	remap        map[string]string
+type ExtensionTransformation struct {
+	Transformers []string
+	Remap        map[string]string
 }
 
 // PathFinder provides the common paths required, but its the controller that know
 // the specific paths based around this common framework
 type PathFinder struct {
-	Scheme          string
+	scheme          string
 	ExplicitProfile string
 	// Origin is the parent of the item (item.Parent)
 	//
@@ -138,10 +200,10 @@ type PathFinder struct {
 	// - full: (inline) -- item.parent
 	Output           string
 	Trash            string
-	arity            int
+	Arity            int
+	Ext              *ExtensionTransformation
 	transparentInput bool
-	statics          *staticInfo
-	ext              *extensionTransformation
+	statics          *common.StaticInfo
 }
 
 func (f *PathFinder) JournalFullPath(item *nav.TraverseItem) string {
@@ -154,18 +216,26 @@ func (f *PathFinder) JournalFullPath(item *nav.TraverseItem) string {
 	return file
 }
 
+func (f *PathFinder) Statics() *common.StaticInfo {
+	return f.statics
+}
+
+func (f *PathFinder) Scheme() string {
+	return f.scheme
+}
+
 // Transfer creates a path for the input; should return empty
 // string for the folder, if no move is required (ie non transparent).
 // The FileManager will only call this function when the input
 // is not transparent. When the --Trash option is present, it will
 // determine the destination path for the input.
-func (f *PathFinder) Transfer(info *pathInfo) (folder, file string) {
+func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 	to := lo.TernaryF(f.Trash != "",
 		func() string {
 			return f.Trash
 		},
 		func() string {
-			return info.origin
+			return info.Origin
 		},
 	)
 
@@ -174,10 +244,10 @@ func (f *PathFinder) Transfer(info *pathInfo) (folder, file string) {
 
 		return pfTemplates.evaluate(pfFieldValues{
 			"${{INPUT-DESTINATION}}": to,
-			"${{ITEM-SUB-PATH}}":     info.item.Extension.SubPath,
+			"${{ITEM-SUB-PATH}}":     info.Item.Extension.SubPath,
 			"${{DEJA-VU}}":           DejaVu,
 			"${{SUPPLEMENT}}":        f.supplement(),
-			"${{TRASH-LABEL}}":       f.statics.trash,
+			"${{TRASH-LABEL}}":       f.statics.Trash,
 		}, segments...)
 	}()
 
@@ -185,7 +255,7 @@ func (f *PathFinder) Transfer(info *pathInfo) (folder, file string) {
 		segments := pfTemplates[pfPathInputDestinationFileOriginalExt]
 
 		return pfTemplates.evaluate(pfFieldValues{
-			"${{ITEM-FULL-NAME}}": info.item.Extension.Name,
+			"${{ITEM-FULL-NAME}}": info.Item.Extension.Name,
 		}, segments...)
 	}()
 
@@ -196,14 +266,14 @@ func (f *PathFinder) mutateExtension(file string) string {
 	extension := filepath.Ext(file)
 	withoutDot := extension[1:]
 
-	if _, found := f.ext.remap[withoutDot]; found {
-		extension = "." + f.ext.remap[withoutDot]
+	if _, found := f.Ext.Remap[withoutDot]; found {
+		extension = "." + f.Ext.Remap[withoutDot]
 	}
 
-	if len(f.ext.transformers) > 0 {
+	if len(f.Ext.Transformers) > 0 {
 		base := FilenameWithoutExtension(file)
 
-		for _, transform := range f.ext.transformers {
+		for _, transform := range f.Ext.Transformers {
 			switch transform {
 			case "lower":
 				extension = strings.ToLower(extension)
@@ -220,20 +290,20 @@ func (f *PathFinder) mutateExtension(file string) string {
 
 // Result creates a path for each result so should be called by the
 // execution step
-func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
+func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 	to := lo.TernaryF(f.Output != "",
 		func() string {
 			return f.Output
 		},
 		func() string {
-			return info.origin
+			return info.Origin
 		},
 	)
 
 	folder = func() string {
 		segments := pfTemplates[pfPathInputTransferFolder]
 
-		return lo.TernaryF(f.transparentInput && f.arity == 1,
+		return lo.TernaryF(f.transparentInput && f.Arity == 1,
 			func() string {
 				// The result file has to be in the same folder
 				// as the input
@@ -241,7 +311,7 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 				segments = pfTemplates[pfPathTxInputDestinationFolder]
 
 				return pfTemplates.evaluate(pfFieldValues{
-					"${{OUTPUT-ROOT}}": info.origin,
+					"${{OUTPUT-ROOT}}": info.Origin,
 				}, segments...)
 			},
 			func() string {
@@ -253,7 +323,7 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 				return pfTemplates.evaluate(pfFieldValues{
 					"${{OUTPUT-ROOT}}":   to,
 					"${{SUPPLEMENT}}":    f.supplement(),
-					"${{ITEM-SUB-PATH}}": info.item.Extension.SubPath,
+					"${{ITEM-SUB-PATH}}": info.Item.Extension.SubPath,
 				}, segments...)
 			},
 		)
@@ -266,7 +336,7 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 		segments := pfTemplates[pfPathResultFile]
 
 		return pfTemplates.evaluate(pfFieldValues{
-			"${{RESULT-NAME}}": info.item.Extension.Name,
+			"${{RESULT-NAME}}": info.Item.Extension.Name,
 		}, segments...)
 	}()
 
@@ -274,13 +344,17 @@ func (f *PathFinder) Result(info *pathInfo) (folder, file string) {
 }
 
 func (f *PathFinder) supplement() string {
-	return lo.TernaryF(f.Scheme == "" && f.ExplicitProfile == "",
+	return lo.TernaryF(f.scheme == "" && f.ExplicitProfile == "",
 		func() string {
-			adhocLabel := f.statics.adhoc
+			adhocLabel := f.statics.Adhoc
 			return adhocLabel
 		},
 		func() string {
-			return filepath.Join(f.Scheme, f.ExplicitProfile)
+			return filepath.Join(f.scheme, f.ExplicitProfile)
 		},
 	)
+}
+
+func (f *PathFinder) TransparentInput() bool {
+	return f.transparentInput
 }

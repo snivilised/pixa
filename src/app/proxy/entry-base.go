@@ -14,7 +14,8 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/lorax/boost"
-	"github.com/snivilised/pixa/src/cfg"
+	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/pixa/src/app/proxy/orc"
 )
 
 type afterFunc func(*nav.TraverseResult, error)
@@ -39,18 +40,15 @@ type EntryBase struct {
 	// navigation such as Options)
 	// with the rest going into cobrass.clif
 	//
-	Inputs      *RootCommandInputs
-	Agent       ExecutionAgent
-	Config      configuration.ViperConfig
+	Inputs      *common.RootCommandInputs
+	Agent       common.ExecutionAgent
+	Viper       configuration.ViperConfig
 	Options     *nav.TraverseOptions
-	Registry    *ControllerRegistry
-	ProfilesCFG cfg.ProfilesConfig
-	SchemesCFG  cfg.SchemesConfig
-	SamplerCFG  cfg.SamplerConfig
-	AdvancedCFG cfg.AdvancedConfig
+	Registry    *orc.ControllerRegistry
+	Configs     *common.Configs
 	Log         *slog.Logger
 	Vfs         storage.VirtualFS
-	FileManager *FileManager
+	FileManager common.FileManager
 	FilterSetup *filterSetup
 }
 
@@ -69,7 +67,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 
 		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
 			name := item.Name()
-			withoutExt := e.FileManager.Finder.statics.meta.withoutExt
+			withoutExt := e.FileManager.Finder().Statics().Meta.WithoutExt
 
 			return !strings.HasPrefix(name, ".") && !strings.Contains(name, withoutExt)
 		}), nil
@@ -145,10 +143,9 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	// This should not be here; move to root
 	//
 	if e.Registry == nil {
-		e.Registry = NewControllerRegistry(&SharedControllerInfo{
-			profiles: e.ProfilesCFG,
-			sampler:  e.SamplerCFG,
-		})
+		e.Registry = orc.NewRegistry(&common.SharedControllerInfo{},
+			e.Configs,
+		)
 	}
 
 	o.Monitor.Log = e.Log

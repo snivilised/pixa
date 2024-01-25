@@ -1,4 +1,4 @@
-package proxy
+package ipc
 
 import (
 	"fmt"

@@ -8,7 +8,7 @@ import (
 	"github.com/snivilised/cobrass/src/store"
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -32,7 +32,7 @@ func Execute() error {
 
 func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	rootCommand := container.Root()
-	paramSet := assistant.NewParamSet[proxy.RootParameterSet](rootCommand)
+	paramSet := assistant.NewParamSet[common.RootParameterSet](rootCommand)
 
 	// --sample (pending: sampling-family)
 	//
@@ -143,11 +143,11 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	container.MustRegisterParamSet(CascadeFamName, cascadeFam)
 }
 
-func (b *Bootstrap) getRootInputs() *proxy.RootCommandInputs {
-	return &proxy.RootCommandInputs{
+func (b *Bootstrap) getRootInputs() *common.RootCommandInputs {
+	return &common.RootCommandInputs{
 		ParamSet: b.Container.MustGetParamSet(
 			RootPsName,
-		).(*assistant.ParamSet[proxy.RootParameterSet]),
+		).(*assistant.ParamSet[common.RootParameterSet]),
 		PreviewFam: b.Container.MustGetParamSet(
 			PreviewFamName,
 		).(*assistant.ParamSet[store.PreviewParameterSet]),

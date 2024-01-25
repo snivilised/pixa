@@ -5,15 +5,16 @@ import (
 
 	"github.com/samber/lo"
 	"github.com/snivilised/extendio/xfs/nav"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
 )
 
 type filterSetup struct {
-	inputs *ShrinkCommandInputs
+	inputs *common.ShrinkCommandInputs
 	config cfg.AdvancedConfig
 }
 
-func (s *filterSetup) getDefs(statics *staticInfo) *nav.FilterDefinitions {
+func (s *filterSetup) getDefs(statics *common.StaticInfo) *nav.FilterDefinitions {
 	// the filter we expect the user to provide does not include the file suffix,
 	// it only applies to the base name and we define the suffix part of the filter
 	// internally.

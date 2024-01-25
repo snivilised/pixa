@@ -1,6 +1,8 @@
-package proxy
+package ipc
 
-import "github.com/snivilised/cobrass/src/clif"
+import (
+	"github.com/snivilised/cobrass/src/clif"
+)
 
 type magickAgent struct {
 	baseAgent

@@ -12,7 +12,7 @@ import (
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
 
 	"github.com/snivilised/pixa/src/app/mocks"
@@ -47,7 +47,7 @@ type samplerTE struct {
 	scheme string
 }
 
-var _ = Describe("SamplerController", Ordered, func() {
+var _ = Describe("pixa", Ordered, func() {
 	var (
 		repo               string
 		l10nPath           string
@@ -89,7 +89,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 		ctrl.Finish()
 	})
 
-	DescribeTable("sampler",
+	DescribeTable("run",
 		func(entry *samplerTE) {
 			helpers.DoMockConfigs(config,
 				mockProfilesReader,
@@ -149,7 +149,7 @@ var _ = Describe("SamplerController", Ordered, func() {
 
 			if entry.inputs != nil {
 				intermediate := helpers.Path(root, entry.intermediate)
-				dejaVuSupplement := filepath.Join(proxy.DejaVu, entry.supplement)
+				dejaVuSupplement := filepath.Join(common.DejaVu, entry.supplement)
 				supplement := helpers.Path(intermediate, dejaVuSupplement)
 
 				for _, original := range entry.inputs {

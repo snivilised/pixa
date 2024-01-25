@@ -1,23 +1,10 @@
-package proxy
+package orc
 
 import (
 	"path/filepath"
 
 	"github.com/snivilised/cobrass/src/clif"
-)
-
-// Step
-type (
-	RunStepInfo struct {
-		Source string
-	}
-
-	Step interface {
-		Run(pi *pathInfo) error
-	}
-
-	// Sequence
-	Sequence []Step
+	"github.com/snivilised/pixa/src/app/proxy/common"
 )
 
 // controllerStep uses the agent to combine parameters together so that the program
@@ -25,7 +12,7 @@ type (
 // output file names; this is the responsibility of the controller, which uses
 // the path-finder to accomplish that task.
 type controllerStep struct {
-	shared       *SharedControllerInfo
+	shared       *common.SharedControllerInfo
 	thirdPartyCL clif.ThirdPartyCommandLine
 	profile      string
 	sourcePath   string
@@ -34,8 +21,8 @@ type controllerStep struct {
 }
 
 // Run
-func (s *controllerStep) Run(pi *pathInfo) error {
-	folder, file := s.shared.finder.Result(pi)
+func (s *controllerStep) Run(pi *common.PathInfo) error {
+	folder, file := s.shared.Finder.Result(pi)
 	destination := filepath.Join(folder, file)
 
 	// if transparent, then we need to ask the fm to move the
@@ -43,7 +30,7 @@ func (s *controllerStep) Run(pi *pathInfo) error {
 	// during setup? See, which mean setup in not working properly in
 	// this scenario.
 
-	return s.shared.agent.Invoke(
-		s.thirdPartyCL, pi.runStep.Source, destination,
+	return s.shared.Agent.Invoke(
+		s.thirdPartyCL, pi.RunStep.Source, destination,
 	)
 }

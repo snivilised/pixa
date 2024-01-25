@@ -1,23 +1,22 @@
-package proxy
+package ipc
 
 import (
-	"fmt"
-
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
 )
 
 type baseAgent struct {
 	knownBy clif.KnownByCollection
-	program Executor
+	program common.Executor
 }
 
-func newAgent(
+func New(
 	advanced cfg.AdvancedConfig,
 	knownBy clif.KnownByCollection,
-) ExecutionAgent {
+) (common.ExecutionAgent, error) {
 	var (
-		agent ExecutionAgent
+		agent common.ExecutionAgent
 		// dummy uses the same agent as magick
 		//
 		dummy = &magickAgent{
@@ -28,6 +27,7 @@ func newAgent(
 				},
 			},
 		}
+		err error
 	)
 
 	switch advanced.Executable().Symbol() {
@@ -42,16 +42,16 @@ func newAgent(
 		}
 
 		if !agent.IsInstalled() {
-			fmt.Printf("===> 💥💥💥 REVERTING TO DUMMY EXECUTOR !!!!\n")
+			err = ErrUsingDummyExecutor
 
 			agent = dummy
 		}
 
 	case "dummy":
-		fmt.Printf("===> 🚫 USING DUMMY EXECUTOR !!!!\n")
+		err = ErrUsingDummyExecutor
 
 		agent = dummy
 	}
 
-	return agent
+	return agent, err
 }

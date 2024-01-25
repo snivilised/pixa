@@ -8,6 +8,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/lorax/boost"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 )
 
 type configProfile struct {
@@ -94,7 +95,7 @@ func (e *RootEntry) run() error {
 	)
 }
 
-func composeWith(inputs *RootCommandInputs) nav.CreateNewRunnerWith {
+func composeWith(inputs *common.RootCommandInputs) nav.CreateNewRunnerWith {
 	with := nav.RunnerDefault
 
 	if inputs.WorkerPoolFam.Native.CPU || inputs.WorkerPoolFam.Native.NoWorkers >= 0 {
@@ -105,7 +106,7 @@ func composeWith(inputs *RootCommandInputs) nav.CreateNewRunnerWith {
 }
 
 func EnterRoot(
-	inputs *RootCommandInputs,
+	inputs *common.RootCommandInputs,
 	config configuration.ViperConfig,
 ) error {
 	fmt.Printf("---> 📁📁📁 Directory: '%v'\n", inputs.ParamSet.Native.Directory)
@@ -113,7 +114,7 @@ func EnterRoot(
 	entry := &RootEntry{
 		EntryBase: EntryBase{
 			Inputs: inputs,
-			Config: config,
+			Viper:  config,
 		},
 	}
 
