@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -75,7 +76,7 @@ func newShrinkFlagInfoWithShort[T any](usage string, defaultValue T) *assistant.
 	return assistant.NewFlagInfo(usage, short, defaultValue)
 }
 
-type shrinkParameterSetPtr = *assistant.ParamSet[proxy.ShrinkParameterSet]
+type shrinkParameterSetPtr = *assistant.ParamSet[common.ShrinkParameterSet]
 
 func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	shrinkCommand := &cobra.Command{
@@ -94,7 +95,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			if validationErr := shrinkPS.Validate(); validationErr == nil {
 				// optionally invoke cross field validation
 				//
-				if xvErr := shrinkPS.CrossValidate(func(ps *proxy.ShrinkParameterSet) error {
+				if xvErr := shrinkPS.CrossValidate(func(ps *common.ShrinkParameterSet) error {
 					// cross validation not currently required
 					//
 					return nil
@@ -132,16 +133,19 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 						}
 					}
 
+					configs := common.Configs{
+						Profiles: b.ProfilesCFG,
+						Schemes:  b.SchemesCFG,
+						Sampler:  b.SamplerCFG,
+						Advanced: b.AdvancedCFG,
+					}
 					appErr = proxy.EnterShrink(
 						&proxy.ShrinkParams{
-							Inputs:      inputs,
-							Config:      b.OptionsInfo.Config.Viper,
-							ProfilesCFG: b.ProfilesCFG,
-							SchemesCFG:  b.SchemesCFG,
-							SamplerCFG:  b.SamplerCFG,
-							AdvancedCFG: b.AdvancedCFG,
-							Logger:      b.logger(),
-							Vfs:         b.Vfs,
+							Inputs:  inputs,
+							Viper:   b.OptionsInfo.Config.Viper,
+							Configs: &configs,
+							Logger:  b.logger(),
+							Vfs:     b.Vfs,
 						},
 					)
 				} else {
@@ -155,7 +159,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		},
 	}
 
-	paramSet := assistant.NewParamSet[proxy.ShrinkParameterSet](shrinkCommand)
+	paramSet := assistant.NewParamSet[common.ShrinkParameterSet](shrinkCommand)
 
 	// --output(o)
 	//
@@ -221,7 +225,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultSamplingFactor = "4:2:0"
 	)
 
-	paramSet.Native.ThirdPartySet.SamplingFactorEn = proxy.SamplingFactorEnumInfo.NewValue()
+	paramSet.Native.ThirdPartySet.SamplingFactorEn = common.SamplingFactorEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
@@ -230,8 +234,8 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		),
 		&paramSet.Native.ThirdPartySet.SamplingFactorEn.Source,
 		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(proxy.SamplingFactorEnumInfo.IsValid(value)) {
-				acceptableSet := proxy.SamplingFactorEnumInfo.AcceptablePrimes()
+			if f.Changed && !(common.SamplingFactorEnumInfo.IsValid(value)) {
+				acceptableSet := common.SamplingFactorEnumInfo.AcceptablePrimes()
 
 				return i18n.NewInvalidSamplingFactorError(value, acceptableSet)
 			}
@@ -245,7 +249,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		defaultInterlace = "plane"
 	)
 
-	paramSet.Native.ThirdPartySet.InterlaceEn = proxy.InterlaceEnumInfo.NewValue()
+	paramSet.Native.ThirdPartySet.InterlaceEn = common.InterlaceEnumInfo.NewValue()
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
@@ -254,8 +258,8 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		),
 		&paramSet.Native.ThirdPartySet.InterlaceEn.Source,
 		func(value string, f *pflag.Flag) error {
-			if f.Changed && !(proxy.InterlaceEnumInfo.IsValid(value)) {
-				acceptableSet := proxy.InterlaceEnumInfo.AcceptablePrimes()
+			if f.Changed && !(common.InterlaceEnumInfo.IsValid(value)) {
+				acceptableSet := common.InterlaceEnumInfo.AcceptablePrimes()
 
 				return i18n.NewInterlaceError(value, acceptableSet)
 			}
@@ -337,12 +341,12 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	return shrinkCommand
 }
 
-func (b *Bootstrap) getShrinkInputs() *proxy.ShrinkCommandInputs {
-	return &proxy.ShrinkCommandInputs{
+func (b *Bootstrap) getShrinkInputs() *common.ShrinkCommandInputs {
+	return &common.ShrinkCommandInputs{
 		Root: b.getRootInputs(),
 		ParamSet: b.Container.MustGetParamSet(
 			shrinkPsName,
-		).(*assistant.ParamSet[proxy.ShrinkParameterSet]),
+		).(*assistant.ParamSet[common.ShrinkParameterSet]),
 		PolyFam: b.Container.MustGetParamSet(
 			polyFamName,
 		).(*assistant.ParamSet[store.PolyFilterParameterSet]),

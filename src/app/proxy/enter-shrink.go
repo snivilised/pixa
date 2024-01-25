@@ -4,23 +4,21 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
-	"path"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/pixa/src/cfg"
+	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/pixa/src/app/proxy/filing"
+	"github.com/snivilised/pixa/src/app/proxy/ipc"
+	"github.com/snivilised/pixa/src/app/proxy/orc"
 )
 
 type ShrinkEntry struct {
 	EntryBase
-	Inputs *ShrinkCommandInputs
-}
-
-func FilenameWithoutExtension(name string) string {
-	return strings.TrimSuffix(name, path.Ext(name))
+	Inputs *common.ShrinkCommandInputs
 }
 
 func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
@@ -28,10 +26,10 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "LookAhead: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			if strings.Contains(item.Path, DejaVu) {
+			if strings.Contains(item.Path, common.DejaVu) {
 				return fs.SkipDir
 			}
-			journal := e.FileManager.Finder.JournalFullPath(item)
+			journal := e.FileManager.Finder().JournalFullPath(item)
 
 			return e.FileManager.Create(journal)
 		},
@@ -44,7 +42,7 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Principal: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			if strings.Contains(item.Path, DejaVu) {
+			if strings.Contains(item.Path, common.DejaVu) {
 				return fs.SkipDir
 			}
 
@@ -76,7 +74,7 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 		)
 	}
 	o.Store.Subscription = nav.SubscribeFiles
-	o.Store.FilterDefs = e.FilterSetup.getDefs(e.FileManager.Finder.statics)
+	o.Store.FilterDefs = e.FilterSetup.getDefs(e.FileManager.Finder().Statics())
 }
 
 func clearResumeFromWith(with nav.CreateNewRunnerWith) nav.CreateNewRunnerWith {
@@ -109,7 +107,7 @@ func (e *ShrinkEntry) navigateWithLookAhead(
 }
 
 func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
-	if strings.HasPrefix(item.Extension.Name, DejaVu) {
+	if strings.HasPrefix(item.Extension.Name, common.DejaVu) {
 		return fs.SkipDir
 	}
 
@@ -155,57 +153,58 @@ func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {
 }
 
 type ShrinkParams struct {
-	Inputs      *ShrinkCommandInputs
-	Config      configuration.ViperConfig
-	ProfilesCFG cfg.ProfilesConfig
-	SchemesCFG  cfg.SchemesConfig
-	SamplerCFG  cfg.SamplerConfig
-	AdvancedCFG cfg.AdvancedConfig
-	Logger      *slog.Logger
-	Vfs         storage.VirtualFS
+	Inputs  *common.ShrinkCommandInputs
+	Viper   configuration.ViperConfig
+	Configs *common.Configs
+	Logger  *slog.Logger
+	Vfs     storage.VirtualFS
 }
 
 func EnterShrink(
 	params *ShrinkParams,
 ) error {
-	agent := newAgent(
-		params.AdvancedCFG,
-		params.Inputs.ParamSet.Native.KnownBy,
+	var (
+		agent common.ExecutionAgent
+		err   error
 	)
-	finder := newPathFinder(params.Inputs, params.AdvancedCFG, params.SchemesCFG)
-	fileManager := &FileManager{
-		vfs:    params.Vfs,
-		Finder: finder,
+
+	if agent, err = ipc.New(
+		params.Configs.Advanced,
+		params.Inputs.ParamSet.Native.KnownBy,
+	); err != nil {
+		if errors.Is(err, ipc.ErrUsingDummyExecutor) {
+			// todo: notify ui via bubbletea
+			//
+			fmt.Printf("===> 💥💥💥 REVERTING TO DUMMY EXECUTOR !!!!\n")
+		}
 	}
+
+	finder := filing.NewFinder(params.Inputs, params.Configs.Advanced, params.Configs.Schemes)
+	fileManager := filing.NewManager(params.Vfs, finder)
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
 			Inputs:      params.Inputs.Root,
 			Agent:       agent,
-			Config:      params.Config,
-			ProfilesCFG: params.ProfilesCFG,
-			SchemesCFG:  params.SchemesCFG,
-			SamplerCFG:  params.SamplerCFG,
-			AdvancedCFG: params.AdvancedCFG,
+			Viper:       params.Viper,
+			Configs:     params.Configs,
 			Log:         params.Logger,
 			Vfs:         params.Vfs,
 			FileManager: fileManager,
 			FilterSetup: &filterSetup{
 				inputs: params.Inputs,
-				config: params.AdvancedCFG,
+				config: params.Configs.Advanced,
 			},
-			Registry: NewControllerRegistry(&SharedControllerInfo{
-				agent:       agent,
-				profiles:    params.ProfilesCFG,
-				schemes:     params.SchemesCFG,
-				sampler:     params.SamplerCFG,
-				advanced:    params.AdvancedCFG,
+			Registry: orc.NewRegistry(&common.SharedControllerInfo{
+				Agent:       agent,
 				Inputs:      params.Inputs,
-				finder:      fileManager.Finder,
-				fileManager: fileManager,
-			}),
+				Finder:      fileManager.Finder(),
+				FileManager: fileManager,
+			},
+				params.Configs,
+			),
 		},
 		Inputs: params.Inputs,
 	}
 
-	return entry.run(params.Config)
+	return entry.run(params.Viper)
 }

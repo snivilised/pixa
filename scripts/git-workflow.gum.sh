@@ -183,6 +183,19 @@ function check-upstream-branch() {
 #
 # 🍭 end gum utility
 
+# todo: we need a new version of gcan, which will check the number of commits
+# on the branch, if here are non, we abort. This will protect against the
+# possiblity of merging with commits not on the current branch.
+
+# this is the correct command:
+# git log master..ref/decompose-proxy --pretty=oneline | wc -l
+# obviosuly, change the branch to the current branch so:
+#
+# git log master..ref/$feature_branch --pretty=oneline | wc -l
+# 
+# the way to do his safely, is to show the number of commits first,
+# then prompt for a cnfirmation; this way the user gets a way to check it
+#
 # this is currently un-tested, so needs to be checked first
 # also, add a conform prompt
 # function _do_start-interactive-rebase() {

@@ -1,46 +1,20 @@
-package proxy
+package common
 
 import (
-	"fmt"
-
 	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant"
-	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/cobrass/src/store"
 )
 
-var (
-	booleanValues = []string{"false", "true"}
-)
-
-const (
-	DejaVu           = "$pixa$"
-	journalExtension = ".txt"
-	journalTag       = ".$"
-)
-
-type RootParameterSet struct { // should contain RootCommandInputs
-	Directory  string
-	IsSampling bool
-	NoFiles    uint
-	NoFolders  uint
-	Last       bool
-}
-
 type (
-	ProfilesFlagOptionAsAnyPair = map[string]any
-	ProfilesConfigMap           map[string]clif.ChangedFlagsMap
-)
-
-func (pc ProfilesConfigMap) Validate(name string) error {
-	if name != "" {
-		if _, found := pc[name]; !found {
-			return fmt.Errorf("no such profile: '%v'", name)
-		}
+	RootParameterSet struct { // should contain RootCommandInputs
+		Directory  string
+		IsSampling bool
+		NoFiles    uint
+		NoFolders  uint
+		Last       bool
 	}
-
-	return nil
-}
+)
 
 type InterlaceEnum int
 
@@ -136,24 +110,4 @@ type ShrinkCommandInputs struct {
 	Root     *RootCommandInputs
 	ParamSet *assistant.ParamSet[ShrinkParameterSet]
 	PolyFam  *assistant.ParamSet[store.PolyFilterParameterSet]
-}
-
-type ExecutionAgent interface {
-	// IsInstalled determines whether the underlying program is installed
-	IsInstalled() bool
-
-	// Invoke returns the command line args required for the executor to
-	// run correctly. Only the source and destination are required because
-	// they are the dynamic args that change for each invocation. All the
-	// other flags that come directly from the command line/config possibly
-	// via a profile are static, which means the concrete agent will already
-	// have those and merely has to formulate the complete command line in
-	// the correct order required by the third party program.
-	Invoke(thirdPartyCL clif.ThirdPartyCommandLine, source, destination string) error
-}
-
-type Executor interface {
-	ProgName() string
-	Look() (string, error)
-	Execute(args ...string) error
 }
