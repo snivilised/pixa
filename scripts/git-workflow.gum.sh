@@ -90,7 +90,7 @@ function _b() { # branch
 
 function _e() { # error
   text=$1
-  colour=#ffcfd2
+  colour=#f63e02
   _text "⛔ $text" "$colour"
 }
 
@@ -138,7 +138,7 @@ function _r() { # remedy
 
 function _w() { # warning
   text=$1
-  colour=#f63e02
+  colour=#ffcfd2
   _text "$text" "$colour"
 }
 
@@ -183,43 +183,58 @@ function check-upstream-branch() {
 #
 # 🍭 end gum utility
 
-# todo: we need a new version of gcan, which will check the number of commits
-# on the branch, if here are non, we abort. This will protect against the
-# possiblity of merging with commits not on the current branch.
+# === 🥥 interactive-rebase ====================================================
 
-# this is the correct command:
-# git log master..ref/decompose-proxy --pretty=oneline | wc -l
-# obviosuly, change the branch to the current branch so:
-#
-# git log master..ref/$feature_branch --pretty=oneline | wc -l
-# 
-# the way to do his safely, is to show the number of commits first,
-# then prompt for a cnfirmation; this way the user gets a way to check it
-#
-# this is currently un-tested, so needs to be checked first
-# also, add a conform prompt
-# function _do_start-interactive-rebase() {
-#   # Get the number of commits on the current branch
-#   num_commits=$(git rev-list --count HEAD)
+function _do_start-interactive-rebase() {
+  num_commits=$(($1))
 
-#   # Check if there are commits to rebase
-#   if [ "$num_commits" -gt 0 ]; then
-#       # Start interactive rebase for all commits on the current branch
-#       git rebase -i HEAD~"$num_commits"
-#   else
-#       gym style "$(_w 'No commits to rebase.')"
+  git rebase -i HEAD~"$num_commits"
+}
 
-#       return 1
-#   fi
+function start-rebase() {
+  feature_branch=$(git branch --show-current)
+  num_commits=$(git log master.."$feature_branch" --pretty=oneline | wc -l)
+  minimum=2
+  display_commits="$num_commits"
 
-#   return 0
-# }
+  if [[ $num_commits -lt $minimum ]]; then
+    # whenever time permits, this could be expanded to list all
+    # the commits that are to be squashed and put them into
+    # a bubbles table.
+    # 
+    gum style "$(_e "Not enought commits ($(_i "$display_commits")) " \
+      "for rebase on branch '$(_b "$feature_branch")', Aborted!")"
+  
+    return 1
+  fi
 
-# function start-interactive-rebase() {
-#   _prompt-are-you-sure && (_do_start-interactive-rebase || gum style "$(_a "interactive rebase cancelled")")
-# }
+  _prompt-are-you-sure-with-context \
+    "$(gum style "found $(_i "$display_commits") commits on branch '$(_b "$feature_branch")'")" && \
+      (_do_start-interactive-rebase "$num_commits" || gum style "$(_e "Aborted!")")
 
-# Call the function
+  return 0
+}
+
+# === 🥥 gcan(git-commit-amend-no-edit) ========================================
+
+function gcan() {
+  feature_branch=$(git branch --show-current)
+  num_commits=$(git log master.."$feature_branch" --pretty=oneline | wc -l)
+  minimum=1
+  display_commits="$num_commits"
+
+  if [[ $num_commits -lt $minimum ]]; then
+    gum style "$(_e "Not enought commits, for commit amend on branch '$(_b "$feature_branch")', Aborted!")"
+
+    return 1
+  fi
+
+  last=$(git log -n 1 --pretty=format:"%s (HASH: '%h')" "$feature_branch")
+
+  _prompt-are-you-sure-with-context \
+    gum style "last commit: $(_i "$last")" && \
+      git commit --amend --no-edit -v
+}
 
 # === 🥥 prompt ================================================================
 
@@ -232,6 +247,19 @@ function _prompt() {
 
 function _prompt-are-you-sure {
   _prompt "are you sure? 👾"
+  result=$?
+
+  if [ ! "$result" -eq 0 ]; then
+    gum style "$(_e "Aborted!")"
+  fi
+
+  return $result
+}
+
+function _prompt-are-you-sure-with-context {
+  context="$1"
+
+  _prompt "$context, are you sure? 👾"
   result=$?
 
   if [ ! "$result" -eq 0 ]; then
