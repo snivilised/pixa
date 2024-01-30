@@ -52,14 +52,6 @@ var SamplingFactorEnumInfo = assistant.NewEnumInfo(assistant.AcceptableEnumValue
 	SamplingFactor2x1En: []string{"2x1", "21", "2"},
 })
 
-type ModeEnum int
-
-const (
-	_ ModeEnum = iota
-	ModeTidyEn
-	ModePreserveEn
-)
-
 // ThirdPartySet represents flags that are only of use to the third party application
 // being invoked (ie magick). These flags are of no significance to pixa, but we have
 // to define them explicitly, because of a deficiency in cobra in the way it handles
