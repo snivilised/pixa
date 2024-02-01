@@ -135,7 +135,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 			o.Store.Sampling.NoOf.Folders = e.Inputs.ParamSet.Native.NoFolders
 		}
 
-		o.Store.Behaviours.Cascade.Skim = e.Inputs.CascadeFam.Native.Skim
+		o.Store.Behaviours.Cascade.NoRecurse = e.Inputs.CascadeFam.Native.NoRecurse
 		o.Store.Behaviours.Cascade.Depth = e.Inputs.CascadeFam.Native.Depth
 	}
 

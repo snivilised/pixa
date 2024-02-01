@@ -128,7 +128,7 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	profileFam := assistant.NewParamSet[store.ProfileParameterSet](rootCommand)
 	profileFam.Native.BindAll(profileFam, rootCommand.PersistentFlags())
 
-	// family: cascade [--depth, --skim(K)]
+	// family: cascade [--depth, --no-recurse(N)]
 	//
 	cascadeFam := assistant.NewParamSet[store.CascadeParameterSet](rootCommand)
 	cascadeFam.Native.BindAll(cascadeFam, rootCommand.PersistentFlags())
