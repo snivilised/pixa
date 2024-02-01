@@ -33,7 +33,7 @@ var _ = Describe("RootCmd", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		vfs, _, _ = helpers.SetupTest(
+		vfs, _ = helpers.SetupTest(
 			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
 		)
 

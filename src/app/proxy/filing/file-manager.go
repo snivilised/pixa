@@ -34,9 +34,9 @@ func (fm *FileManager) Finder() common.PathFinder {
 	return fm.finder
 }
 
-func (fm *FileManager) Create(path string) error {
-	if fm.Vfs.FileExists(path) {
-		return nil
+func (fm *FileManager) Create(path string, overwrite bool) error {
+	if fm.Vfs.FileExists(path) && !overwrite {
+		return os.ErrExist
 	}
 
 	file, err := fm.Vfs.Create(path)

@@ -38,7 +38,7 @@ type (
 
 	FileManager interface {
 		Finder() PathFinder
-		Create(path string) error
+		Create(path string, overwrite bool) error
 		Setup(pi *PathInfo) (destination string, err error)
 		Tidy(pi *PathInfo) error
 	}

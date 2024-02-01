@@ -145,7 +145,7 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 	c.private.Pi = common.PathInfo{
 		Item:   item,
 		Origin: item.Parent.Path,
-		Scheme: c.shared.Finder.Scheme(),
+		Scheme: c.shared.FileManager.Finder().Scheme(),
 	}
 
 	// TODO: need to decide a proper policy for cleaning up

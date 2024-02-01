@@ -31,7 +31,7 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 			}
 			journal := e.FileManager.Finder().JournalFullPath(item)
 
-			return e.FileManager.Create(journal)
+			return e.FileManager.Create(journal, false)
 		},
 	}
 }
@@ -153,11 +153,10 @@ func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {
 }
 
 type ShrinkParams struct {
-	Inputs  *common.ShrinkCommandInputs
-	Viper   configuration.ViperConfig
-	Configs *common.Configs
-	Logger  *slog.Logger
-	Vfs     storage.VirtualFS
+	Inputs *common.ShrinkCommandInputs
+	Viper  configuration.ViperConfig
+	Logger *slog.Logger
+	Vfs    storage.VirtualFS
 }
 
 func EnterShrink(
@@ -168,10 +167,13 @@ func EnterShrink(
 		err   error
 	)
 
+	finder := filing.NewFinder(params.Inputs)
+	fileManager := filing.NewManager(params.Vfs, finder)
+
 	if agent, err = ipc.New(
-		params.Configs.Advanced,
+		params.Inputs.Root.Configs.Advanced,
 		params.Inputs.ParamSet.Native.KnownBy,
-		params.Vfs,
+		fileManager,
 		params.Inputs.Root.PreviewFam.Native.DryRun,
 	); err != nil {
 		if errors.Is(err, ipc.ErrUseDummyExecutor) {
@@ -180,42 +182,37 @@ func EnterShrink(
 			fmt.Printf("===> 💥💥💥 REVERTING TO DUMMY EXECUTOR !!!!\n")
 
 			agent = ipc.Pacify(
-				params.Configs.Advanced,
+				params.Inputs.Root.Configs.Advanced,
 				params.Inputs.ParamSet.Native.KnownBy,
-				params.Vfs,
+				fileManager,
 				ipc.PacifyWithDummy,
 			)
 		} else if errors.Is(err, ipc.ErrUnsupportedExecutor) {
 			fmt.Printf("===> 💥💥💥 Undefined EXECUTOR: '%v' !!!!\n",
-				params.Configs.Advanced.Executable().Symbol(),
+				params.Inputs.Root.Configs.Advanced.Executable().Symbol(),
 			)
 
 			return err
 		}
 	}
 
-	finder := filing.NewFinder(params.Inputs, params.Configs.Advanced, params.Configs.Schemes)
-	fileManager := filing.NewManager(params.Vfs, finder)
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
 			Inputs:      params.Inputs.Root,
 			Agent:       agent,
 			Viper:       params.Viper,
-			Configs:     params.Configs,
 			Log:         params.Logger,
 			Vfs:         params.Vfs,
 			FileManager: fileManager,
 			FilterSetup: &filterSetup{
 				inputs: params.Inputs,
-				config: params.Configs.Advanced,
 			},
 			Registry: orc.NewRegistry(&common.SharedControllerInfo{
 				Agent:       agent,
 				Inputs:      params.Inputs,
-				Finder:      fileManager.Finder(),
 				FileManager: fileManager,
 			},
-				params.Configs,
+				params.Inputs.Root.Configs,
 			),
 		},
 		Inputs: params.Inputs,

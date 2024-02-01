@@ -13,12 +13,9 @@ profiles:
     gaussian-blur: "0.25"
     adaptive-resize: "60"
 schemes:
-  blur-sf:
-    profiles: ["blur", "sf"]
-  adaptive-sf:
-    profiles: ["adaptive", "sf"]
-  adaptive-blur:
-    profiles: ["adaptive", "blur"]
+  blur-sf: ["blur", "sf"]
+  adaptive-sf: ["adaptive", "sf"]
+  adaptive-blur: ["adaptive", "blur"]
   singleton: ["adaptive"]
 sampler:
   files: 2

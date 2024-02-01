@@ -6,7 +6,6 @@ type (
 	SharedControllerInfo struct {
 		Agent       ExecutionAgent
 		Inputs      *ShrinkCommandInputs
-		Finder      PathFinder
 		FileManager FileManager
 	}
 

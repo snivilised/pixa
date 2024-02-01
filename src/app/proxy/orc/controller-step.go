@@ -22,7 +22,7 @@ type controllerStep struct {
 
 // Run
 func (s *controllerStep) Run(pi *common.PathInfo) error {
-	folder, file := s.shared.Finder.Result(pi)
+	folder, file := s.shared.FileManager.Finder().Result(pi)
 	destination := filepath.Join(folder, file)
 
 	// if transparent, then we need to ask the fm to move the

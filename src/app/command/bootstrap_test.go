@@ -4,13 +4,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/app/mocks"
-	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"go.uber.org/mock/gomock"
 	"golang.org/x/text/language"
 )
 
@@ -40,18 +36,10 @@ func (j *DetectorStub) Scan() language.Tag {
 var _ = Describe("Bootstrap", Ordered, func() {
 
 	var (
-		repo               string
-		l10nPath           string
-		configPath         string
-		config             configuration.ViperConfig
-		vfs                storage.VirtualFS
-		ctrl               *gomock.Controller
-		mockProfilesReader *mocks.MockProfilesConfigReader
-		mockSchemesReader  *mocks.MockSchemesConfigReader
-		mockSamplerReader  *mocks.MockSamplerConfigReader
-		mockAdvancedReader *mocks.MockAdvancedConfigReader
-		mockLoggingReader  *mocks.MockLoggingConfigReader
-		mockViperConfig    *cmocks.MockViperConfig
+		repo       string
+		l10nPath   string
+		configPath string
+		vfs        storage.VirtualFS
 	)
 
 	BeforeAll(func() {
@@ -61,29 +49,9 @@ var _ = Describe("Bootstrap", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		vfs, _, config = helpers.SetupTest(
+		vfs, _ = helpers.SetupTest(
 			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
 		)
-
-		ctrl = gomock.NewController(GinkgoT())
-		mockViperConfig = cmocks.NewMockViperConfig(ctrl)
-		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
-		mockSchemesReader = mocks.NewMockSchemesConfigReader(ctrl)
-		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
-		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
-		mockLoggingReader = mocks.NewMockLoggingConfigReader(ctrl)
-		helpers.DoMockReadInConfig(mockViperConfig)
-		helpers.DoMockConfigs(config,
-			mockProfilesReader,
-			mockSchemesReader,
-			mockSamplerReader,
-			mockAdvancedReader,
-			mockLoggingReader,
-		)
-	})
-
-	AfterEach(func() {
-		ctrl.Finish()
 	})
 
 	Context("given: root defined with magick sub-command", func() {
@@ -96,13 +64,6 @@ var _ = Describe("Bootstrap", Ordered, func() {
 				co.Config.Name = helpers.PixaConfigTestFilename
 				co.Config.ConfigPath = configPath
 				co.Config.Viper = &configuration.GlobalViperConfig{}
-				co.Config.Readers = cfg.ConfigReaders{
-					Profiles: mockProfilesReader,
-					Schemes:  mockSchemesReader,
-					Sampler:  mockSamplerReader,
-					Advanced: mockAdvancedReader,
-					Logging:  mockLoggingReader,
-				}
 			})
 
 			Expect(rootCmd).NotTo(BeNil())

@@ -14,9 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
-	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
-	"github.com/snivilised/pixa/src/app/mocks"
-	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/matchers"
 
@@ -99,7 +96,7 @@ func Log() string {
 func SetupTest(
 	index, configPath, l10nPath string,
 	silent bool,
-) (vfs storage.VirtualFS, root string, config configuration.ViperConfig) {
+) (vfs storage.VirtualFS, root string) {
 	var (
 		err error
 	)
@@ -112,7 +109,7 @@ func SetupTest(
 		ginkgo.Fail(err.Error())
 	}
 
-	if config, err = ReadGlobalConfig(configPath); err != nil {
+	if err = ReadGlobalConfig(configPath); err != nil {
 		ginkgo.Fail(err.Error())
 	}
 
@@ -120,7 +117,7 @@ func SetupTest(
 		ginkgo.Fail(err.Error())
 	}
 
-	return vfs, root, config
+	return vfs, root
 }
 
 func UseI18n(l10nPath string) error {
@@ -140,7 +137,7 @@ func UseI18n(l10nPath string) error {
 	})
 }
 
-func ReadGlobalConfig(configPath string) (*configuration.GlobalViperConfig, error) {
+func ReadGlobalConfig(configPath string) error {
 	var (
 		err error
 	)
@@ -155,7 +152,7 @@ func ReadGlobalConfig(configPath string) (*configuration.GlobalViperConfig, erro
 		err = errors.Wrap(e, "can't read config")
 	}
 
-	return config, err
+	return err
 }
 
 // MockConfigFile create a dummy config file in the file system specified
@@ -173,101 +170,6 @@ func MockConfigFile(vfs storage.VirtualFS, configPath string) error {
 	gomega.Expect(matchers.AsDirectory(configPath)).To(matchers.ExistInFS(vfs))
 
 	return err
-}
-
-func DoMockConfigs(
-	config configuration.ViperConfig,
-	profilesReader *mocks.MockProfilesConfigReader,
-	schemesReader *mocks.MockSchemesConfigReader,
-	samplerReader *mocks.MockSamplerConfigReader,
-	mockAdvancedReader *mocks.MockAdvancedConfigReader,
-	mockLoggingReader *mocks.MockLoggingConfigReader,
-) {
-	DoMockProfilesConfigsWith(ProfilesConfigData, config, profilesReader)
-	DoMockSchemesConfigWith(SchemesConfigData, config, schemesReader)
-	DoMockSamplerConfigWith(SamplerConfigData, config, samplerReader)
-	DoMockAdvancedConfigWith(AdvancedConfigData, config, mockAdvancedReader)
-	DoMockLoggingConfigWith(LoggingConfigData, config, mockLoggingReader)
-}
-
-func DoMockReadInConfig(config *cmocks.MockViperConfig) {
-	config.EXPECT().ReadInConfig().DoAndReturn(
-		func() error {
-			return nil
-		},
-	).AnyTimes()
-}
-
-func DoMockProfilesConfigsWith(
-	data cfg.ProfilesConfigMap,
-	config configuration.ViperConfig,
-	reader *mocks.MockProfilesConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (cfg.ProfilesConfig, error) {
-			stub := &cfg.MsProfilesConfig{
-				Profiles: data,
-			}
-
-			return stub, nil
-		},
-	).AnyTimes()
-}
-
-func DoMockSchemesConfigWith(
-	data cfg.SchemesConfig,
-	config configuration.ViperConfig,
-	reader *mocks.MockSchemesConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (cfg.SchemesConfig, error) {
-			stub := data
-
-			return stub, nil
-		},
-	).AnyTimes()
-}
-
-func DoMockSamplerConfigWith(
-	data cfg.SamplerConfig,
-	config configuration.ViperConfig,
-	reader *mocks.MockSamplerConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (cfg.SamplerConfig, error) {
-			stub := data
-
-			return stub, nil
-		},
-	).AnyTimes()
-}
-
-func DoMockAdvancedConfigWith(
-	data cfg.AdvancedConfig,
-	config configuration.ViperConfig,
-	reader *mocks.MockAdvancedConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (cfg.AdvancedConfig, error) {
-			stub := data
-
-			return stub, nil
-		},
-	).AnyTimes()
-}
-
-func DoMockLoggingConfigWith(
-	data cfg.LoggingConfig,
-	config configuration.ViperConfig,
-	reader *mocks.MockLoggingConfigReader,
-) {
-	reader.EXPECT().Read(config).DoAndReturn(
-		func(viper configuration.ViperConfig) (cfg.LoggingConfig, error) {
-			stub := data
-
-			return stub, nil
-		},
-	).AnyTimes()
 }
 
 func ResetFS(index string, silent bool) (vfs storage.VirtualFS, root string) {

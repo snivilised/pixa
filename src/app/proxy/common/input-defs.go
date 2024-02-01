@@ -96,6 +96,7 @@ type RootCommandInputs struct {
 	FoldersFam    *assistant.ParamSet[store.FoldersFilterParameterSet] // !!!
 	ProfileFam    *assistant.ParamSet[store.ProfileParameterSet]
 	CascadeFam    *assistant.ParamSet[store.CascadeParameterSet]
+	Configs       *Configs
 }
 
 type ShrinkCommandInputs struct {
