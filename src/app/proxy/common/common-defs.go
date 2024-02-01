@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/snivilised/cobrass/src/clif"
-	"github.com/snivilised/pixa/src/cfg"
 )
 
 type (
 	Configs struct {
-		Profiles cfg.ProfilesConfig
-		Schemes  cfg.SchemesConfig
-		Sampler  cfg.SamplerConfig
-		Advanced cfg.AdvancedConfig
+		Profiles ProfilesConfig
+		Schemes  SchemesConfig
+		Sampler  SamplerConfig
+		Advanced AdvancedConfig
+		Logging  LoggingConfig
 	}
 )
 

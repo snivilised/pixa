@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 )
 
 type (
-	defaultSchemes       map[string]SchemeConfig
+	defaultSchemes       map[string]common.SchemeConfig
 	defaultSchemesConfig struct {
 		schemes defaultSchemes
 	}

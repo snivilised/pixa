@@ -6,23 +6,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/pixa/src/app/command"
-	"github.com/snivilised/pixa/src/app/mocks"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"go.uber.org/mock/gomock"
 
 	"github.com/snivilised/extendio/xfs/storage"
 )
 
 var (
-	_ cfg.ProfilesConfig       = &cfg.MsProfilesConfig{}
-	_ cfg.SamplerConfig        = &cfg.MsSamplerConfig{}
-	_ cfg.ProfilesConfigReader = &cfg.MsProfilesConfigReader{}
-	_ cfg.SamplerConfigReader  = &cfg.MsSamplerConfigReader{}
-	_ cfg.AdvancedConfigReader = &cfg.MsAdvancedConfigReader{}
-	_ cfg.LoggingConfigReader  = &cfg.MsLoggingConfigReader{}
+	_ common.ProfilesConfig = &cfg.MsProfilesConfig{}
+	_ common.SamplerConfig  = &cfg.MsSamplerConfig{}
 )
 
 const (
@@ -44,9 +38,7 @@ type shrinkTE struct {
 	directory string
 }
 
-func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root string,
-	config configuration.ViperConfig,
-) {
+func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root string) {
 	bootstrap := command.Bootstrap{
 		Vfs: vfs,
 	}
@@ -66,40 +58,13 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 		args = append(args, entry.trashFlag, trash)
 	}
 
-	var (
-		ctrl               = gomock.NewController(GinkgoT())
-		mockViperConfig    = cmocks.NewMockViperConfig(ctrl)
-		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
-		mockSchemesReader  = mocks.NewMockSchemesConfigReader(ctrl)
-		mockSamplerReader  = mocks.NewMockSamplerConfigReader(ctrl)
-		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
-		mockLoggingReader  = mocks.NewMockLoggingConfigReader(ctrl)
-	)
-
-	helpers.DoMockReadInConfig(mockViperConfig)
-	helpers.DoMockConfigs(config,
-		mockProfilesReader,
-		mockSchemesReader,
-		mockSamplerReader,
-		mockAdvancedReader,
-		mockLoggingReader,
-	)
-
 	tester := helpers.CommandTester{
 		Args: append(args, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &DetectorStub{}
 			co.Config.Name = helpers.PixaConfigTestFilename
 			co.Config.ConfigPath = entry.configPath
-
 			co.Config.Viper = &configuration.GlobalViperConfig{}
-			co.Config.Readers = cfg.ConfigReaders{
-				Profiles: mockProfilesReader,
-				Schemes:  mockSchemesReader,
-				Sampler:  mockSamplerReader,
-				Advanced: mockAdvancedReader,
-				Logging:  mockLoggingReader,
-			}
 		}),
 	}
 
@@ -116,7 +81,6 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 		configPath string
 		root       string
 		vfs        storage.VirtualFS
-		config     configuration.ViperConfig
 	)
 
 	BeforeAll(func() {
@@ -126,7 +90,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		vfs, root, config = helpers.SetupTest(
+		vfs, root = helpers.SetupTest(
 			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
 		)
 	})
@@ -135,7 +99,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 		func(entry *shrinkTE) {
 			entry.directory = BackyardWorldsPlanet9Scan01
 			entry.configPath = configPath
-			expectValidShrinkCmdInvocation(vfs, entry, root, config)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		},
 		func(entry *shrinkTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v'", entry.message)
@@ -272,7 +236,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root, config)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
@@ -287,7 +251,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root, config)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 	})
 
@@ -304,7 +268,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root, config)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
@@ -319,7 +283,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root, config)
+			expectValidShrinkCmdInvocation(vfs, entry, root)
 		})
 	})
 })

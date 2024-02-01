@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
 )
 
@@ -25,10 +26,10 @@ var (
 	BackyardWorldsPlanet9Scan02 []string
 
 	ProfilesConfigData cfg.ProfilesConfigMap
-	SchemesConfigData  cfg.SchemesConfig
-	SamplerConfigData  cfg.SamplerConfig
-	AdvancedConfigData cfg.AdvancedConfig
-	LoggingConfigData  cfg.LoggingConfig
+	SchemesConfigData  common.SchemesConfig
+	SamplerConfigData  common.SamplerConfig
+	AdvancedConfigData common.AdvancedConfig
+	LoggingConfigData  common.LoggingConfig
 )
 
 func init() {

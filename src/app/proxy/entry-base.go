@@ -45,7 +45,6 @@ type EntryBase struct {
 	Viper       configuration.ViperConfig
 	Options     *nav.TraverseOptions
 	Registry    *orc.ControllerRegistry
-	Configs     *common.Configs
 	Log         *slog.Logger
 	Vfs         storage.VirtualFS
 	FileManager common.FileManager
@@ -144,7 +143,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	//
 	if e.Registry == nil {
 		e.Registry = orc.NewRegistry(&common.SharedControllerInfo{},
-			e.Configs,
+			e.Inputs.Configs,
 		)
 	}
 

@@ -7,24 +7,22 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/cfg"
 )
 
 func NewFinder(
 	inputs *common.ShrinkCommandInputs,
-	advancedCFG cfg.AdvancedConfig,
-	schemesCFG cfg.SchemesConfig,
 ) common.PathFinder {
-	extensions := advancedCFG.Extensions()
+	advanced := inputs.Root.Configs.Advanced
+	extensions := advanced.Extensions()
 	finder := &PathFinder{
 		scheme:          inputs.Root.ProfileFam.Native.Scheme,
 		ExplicitProfile: inputs.Root.ProfileFam.Native.Profile,
 		Arity:           1,
 		statics: &common.StaticInfo{
-			Adhoc:  advancedCFG.AdhocLabel(),
-			Legacy: advancedCFG.LegacyLabel(),
-			Trash:  advancedCFG.TrashLabel(),
-			Fake:   advancedCFG.FakeLabel(),
+			Adhoc:  advanced.AdhocLabel(),
+			Legacy: advanced.LegacyLabel(),
+			Trash:  advanced.TrashLabel(),
+			Fake:   advanced.FakeLabel(),
 		},
 		Ext: &ExtensionTransformation{
 			Transformers: strings.Split(extensions.Transforms(), ","),
@@ -32,8 +30,9 @@ func NewFinder(
 		},
 	}
 
+	schemes := inputs.Root.Configs.Schemes
 	if finder.scheme != "" {
-		schemeCFG, _ := schemesCFG.Scheme(finder.scheme)
+		schemeCFG, _ := schemes.Scheme(finder.scheme)
 		finder.Arity = len(schemeCFG.Profiles())
 	}
 
@@ -47,7 +46,7 @@ func NewFinder(
 		finder.Trash = inputs.ParamSet.Native.TrashPath
 	}
 
-	journal := advancedCFG.JournalLabel()
+	journal := advanced.JournalLabel()
 
 	if !strings.HasSuffix(journal, common.JournalExtension) {
 		journal += common.JournalExtension

@@ -23,6 +23,7 @@ import (
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/proxy"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/i18n"
 )
@@ -72,7 +73,6 @@ type ConfigInfo struct {
 	ConfigType string
 	ConfigPath string
 	Viper      configuration.ViperConfig
-	Readers    cfg.ConfigReaders
 }
 
 // Bootstrap represents construct that performs start up of the cli
@@ -81,11 +81,7 @@ type ConfigInfo struct {
 type Bootstrap struct {
 	Container   *assistant.CobraContainer
 	OptionsInfo ConfigureOptionsInfo
-	ProfilesCFG cfg.ProfilesConfig
-	SchemesCFG  cfg.SchemesConfig
-	SamplerCFG  cfg.SamplerConfig
-	AdvancedCFG cfg.AdvancedConfig
-	LoggingCFG  cfg.LoggingConfig
+	Configs     *common.Configs
 	Vfs         storage.VirtualFS
 }
 
@@ -109,13 +105,6 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			ConfigType: "yaml",
 			ConfigPath: filepath.Join(home, pixaRelativePath),
 			Viper:      &configuration.GlobalViperConfig{},
-			Readers: cfg.ConfigReaders{
-				Profiles: &cfg.MsProfilesConfigReader{},
-				Schemes:  &cfg.MsSchemesConfigReader{},
-				Sampler:  &cfg.MsSamplerConfigReader{},
-				Advanced: &cfg.MsAdvancedConfigReader{},
-				Logging:  &cfg.MsLoggingConfigReader{},
-			},
 		},
 	}
 
@@ -142,7 +131,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				}
 
 				if inputs.ProfileFam.Native.Profile != "" {
-					if _, found := b.ProfilesCFG.Profile(inputs.ProfileFam.Native.Profile); !found {
+					if _, found := b.Configs.Profiles.Profile(inputs.ProfileFam.Native.Profile); !found {
 						return fmt.Errorf(
 							"no such profile: '%v'", inputs.ProfileFam.Native.Profile,
 						)
@@ -150,7 +139,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				}
 
 				if scheme := inputs.ProfileFam.Native.Scheme; scheme != "" {
-					if err := b.SchemesCFG.Validate(scheme, b.ProfilesCFG); err != nil {
+					if err := b.Configs.Schemes.Validate(scheme, b.Configs.Profiles); err != nil {
 						return err
 					}
 				}
@@ -238,15 +227,13 @@ func handleLangSetting(config configuration.ViperConfig) {
 func (b *Bootstrap) viper() {
 	var (
 		err error
+		m   cfg.MsMasterConfig
 	)
+
+	b.Configs, err = m.Read(b.OptionsInfo.Config.Viper)
 
 	// TODO: this needs a refactor to handle errors better, we should be returning errors everywhere
 	// an error can occur, not selectively. this method is a perfect bad example.
-	b.ProfilesCFG, _ = b.OptionsInfo.Config.Readers.Profiles.Read(b.OptionsInfo.Config.Viper)
-	b.SchemesCFG, _ = b.OptionsInfo.Config.Readers.Schemes.Read(b.OptionsInfo.Config.Viper)
-	b.SamplerCFG, _ = b.OptionsInfo.Config.Readers.Sampler.Read(b.OptionsInfo.Config.Viper)
-	b.AdvancedCFG, err = b.OptionsInfo.Config.Readers.Advanced.Read(b.OptionsInfo.Config.Viper)
-	b.LoggingCFG, _ = b.OptionsInfo.Config.Readers.Logging.Read(b.OptionsInfo.Config.Viper)
 
 	if err != nil {
 		b.exit(err)
@@ -262,11 +249,13 @@ func (b *Bootstrap) level(raw string) zapcore.LevelEnabler {
 }
 
 func (b *Bootstrap) logger() *slog.Logger {
+	logging := b.Configs.Logging
+
 	noc := slog.New(zapslog.NewHandler(
 		zapcore.NewNopCore(), nil),
 	)
 
-	logPath := b.LoggingCFG.Path()
+	logPath := logging.Path()
 
 	if logPath == "" {
 		return noc
@@ -277,16 +266,16 @@ func (b *Bootstrap) logger() *slog.Logger {
 
 	sync := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,
-		MaxSize:    int(b.LoggingCFG.MaxSizeInMb()),
-		MaxBackups: int(b.LoggingCFG.MaxNoOfBackups()),
-		MaxAge:     int(b.LoggingCFG.MaxAgeInDays()),
+		MaxSize:    int(logging.MaxSizeInMb()),
+		MaxBackups: int(logging.MaxNoOfBackups()),
+		MaxAge:     int(logging.MaxAgeInDays()),
 	})
 	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.TimeEncoderOfLayout(b.LoggingCFG.TimeFormat())
+	config.EncodeTime = zapcore.TimeEncoderOfLayout(logging.TimeFormat())
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(config),
 		sync,
-		b.level(b.LoggingCFG.Level()),
+		b.level(logging.Level()),
 	)
 
 	return slog.New(zapslog.NewHandler(core, nil))

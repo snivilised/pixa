@@ -1,4 +1,4 @@
-package cfg
+package common
 
 import (
 	"time"
@@ -7,15 +7,13 @@ import (
 	"github.com/snivilised/cobrass/src/clif"
 )
 
-//go:generate mockgen -destination ../app/mocks/mocks-config.go -package mocks -source config.go
-
 type (
 	ProfilesConfig interface {
 		Profile(name string) (clif.ChangedFlagsMap, bool)
 	}
 
 	ProfilesConfigReader interface {
-		Read(configuration.ViperConfig) (ProfilesConfig, error)
+		Read(viper configuration.ViperConfig) (ProfilesConfig, error)
 	}
 
 	SchemeConfig interface {
@@ -28,7 +26,7 @@ type (
 	}
 
 	SchemesConfigReader interface {
-		Read(configuration.ViperConfig) (SchemesConfig, error)
+		Read(viper configuration.ViperConfig) (SchemesConfig, error)
 	}
 
 	SamplerConfig interface {
@@ -37,7 +35,7 @@ type (
 	}
 
 	SamplerConfigReader interface {
-		Read(configuration.ViperConfig) (SamplerConfig, error)
+		Read(viper configuration.ViperConfig) (SamplerConfig, error)
 	}
 
 	ExtensionsConfig interface {
@@ -64,7 +62,7 @@ type (
 	}
 
 	AdvancedConfigReader interface {
-		Read(configuration.ViperConfig) (AdvancedConfig, error)
+		Read(viper configuration.ViperConfig) (AdvancedConfig, error)
 	}
 
 	LoggingConfig interface {
@@ -77,6 +75,6 @@ type (
 	}
 
 	LoggingConfigReader interface {
-		Read(configuration.ViperConfig) (LoggingConfig, error)
+		Read(viper configuration.ViperConfig) (LoggingConfig, error)
 	}
 )

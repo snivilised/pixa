@@ -8,18 +8,14 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	cmocks "github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/app/proxy/filing"
-	"github.com/snivilised/pixa/src/cfg"
 
-	"github.com/snivilised/pixa/src/app/mocks"
 	"github.com/snivilised/pixa/src/internal/helpers"
 	"github.com/snivilised/pixa/src/internal/matchers"
-	"go.uber.org/mock/gomock"
 )
 
 const (
@@ -52,19 +48,11 @@ type samplerTE struct {
 
 var _ = Describe("pixa", Ordered, func() {
 	var (
-		repo               string
-		l10nPath           string
-		configPath         string
-		root               string
-		config             configuration.ViperConfig
-		vfs                storage.VirtualFS
-		ctrl               *gomock.Controller
-		mockProfilesReader *mocks.MockProfilesConfigReader
-		mockSchemesReader  *mocks.MockSchemesConfigReader
-		mockSamplerReader  *mocks.MockSamplerConfigReader
-		mockAdvancedReader *mocks.MockAdvancedConfigReader
-		mockLoggingReader  *mocks.MockLoggingConfigReader
-		mockViperConfig    *cmocks.MockViperConfig
+		repo       string
+		l10nPath   string
+		configPath string
+		root       string
+		vfs        storage.VirtualFS
 	)
 
 	BeforeAll(func() {
@@ -74,33 +62,13 @@ var _ = Describe("pixa", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		vfs, root, config = helpers.SetupTest(
+		vfs, root = helpers.SetupTest(
 			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
 		)
-
-		ctrl = gomock.NewController(GinkgoT())
-		mockViperConfig = cmocks.NewMockViperConfig(ctrl)
-		mockProfilesReader = mocks.NewMockProfilesConfigReader(ctrl)
-		mockSchemesReader = mocks.NewMockSchemesConfigReader(ctrl)
-		mockSamplerReader = mocks.NewMockSamplerConfigReader(ctrl)
-		mockAdvancedReader = mocks.NewMockAdvancedConfigReader(ctrl)
-		mockLoggingReader = mocks.NewMockLoggingConfigReader(ctrl)
-		helpers.DoMockReadInConfig(mockViperConfig)
-	})
-
-	AfterEach(func() {
-		ctrl.Finish()
 	})
 
 	DescribeTable("run",
 		func(entry *samplerTE) {
-			helpers.DoMockConfigs(config,
-				mockProfilesReader,
-				mockSchemesReader,
-				mockSamplerReader,
-				mockAdvancedReader,
-				mockLoggingReader,
-			)
 			directory := helpers.Path(root, entry.relative)
 			options := []string{
 				helpers.ShrinkCommandName, directory,
@@ -138,13 +106,6 @@ var _ = Describe("pixa", Ordered, func() {
 					co.Config.Name = helpers.PixaConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}
-					co.Config.Readers = cfg.ConfigReaders{
-						Profiles: mockProfilesReader,
-						Schemes:  mockSchemesReader,
-						Sampler:  mockSamplerReader,
-						Advanced: mockAdvancedReader,
-						Logging:  mockLoggingReader,
-					}
 				}),
 			}
 
@@ -161,7 +122,7 @@ var _ = Describe("pixa", Ordered, func() {
 					originalPath := filepath.Join(supplement, original)
 
 					if entry.withFake {
-						withFake := filing.ComposeFake(original, bootstrap.AdvancedCFG.FakeLabel())
+						withFake := filing.ComposeFake(original, bootstrap.Configs.Advanced.FakeLabel())
 						originalPath = filepath.Join(directory, withFake)
 					}
 

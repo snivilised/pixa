@@ -128,24 +128,17 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 					// the fall back manually here.
 					//
 					if inputs.Root.ParamSet.Native.IsSampling {
-						if !flagSet.Changed("no-files") && b.SamplerCFG.NoFiles() > 0 {
-							inputs.Root.ParamSet.Native.NoFiles = b.SamplerCFG.NoFiles()
+						if !flagSet.Changed("no-files") && b.Configs.Sampler.NoFiles() > 0 {
+							inputs.Root.ParamSet.Native.NoFiles = b.Configs.Sampler.NoFiles()
 						}
 					}
 
-					configs := common.Configs{
-						Profiles: b.ProfilesCFG,
-						Schemes:  b.SchemesCFG,
-						Sampler:  b.SamplerCFG,
-						Advanced: b.AdvancedCFG,
-					}
 					appErr = proxy.EnterShrink(
 						&proxy.ShrinkParams{
-							Inputs:  inputs,
-							Viper:   b.OptionsInfo.Config.Viper,
-							Configs: &configs,
-							Logger:  b.logger(),
-							Vfs:     b.Vfs,
+							Inputs: inputs,
+							Viper:  b.OptionsInfo.Config.Viper,
+							Logger: b.logger(),
+							Vfs:    b.Vfs,
 						},
 					)
 				} else {

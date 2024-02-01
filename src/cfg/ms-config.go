@@ -2,14 +2,23 @@ package cfg
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/samber/lo"
+	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 )
+
+// 📚 see https://sagikazarmark.hu/blog/decoding-custom-formats-with-viper/
+// for advanced configuration reading using mapstructure
+// and viper: https://github.com/spf13/viper
 
 type (
 	ProfilesFlagOptionAsAnyPair = map[string]any
 	ProfilesConfigMap           map[string]clif.ChangedFlagsMap
+	SchemesConfigMap            map[string][]string
 )
 
 type MsProfilesConfig struct {
@@ -30,16 +39,16 @@ func (c *MsSchemeConfig) Profiles() []string {
 	return c.ProfilesData
 }
 
-type MsSchemesConfig map[string]SchemeConfig
+type MsSchemesConfig map[string]common.SchemeConfig
 
-func (c MsSchemesConfig) Validate(name string, profiles ProfilesConfig) error {
+func (c MsSchemesConfig) Validate(name string, profiles common.ProfilesConfig) error {
 	if name == "" {
 		return nil
 	}
 
 	var (
 		found  bool
-		scheme SchemeConfig
+		scheme common.SchemeConfig
 	)
 
 	if scheme, found = c[name]; !found {
@@ -57,7 +66,7 @@ func (c MsSchemesConfig) Validate(name string, profiles ProfilesConfig) error {
 	return nil
 }
 
-func (c MsSchemesConfig) Scheme(name string) (SchemeConfig, bool) {
+func (c MsSchemesConfig) Scheme(name string) (common.SchemeConfig, bool) {
 	config, found := c[name]
 
 	return config, found
@@ -151,11 +160,11 @@ func (c *MsAdvancedConfig) FakeLabel() string {
 	return c.LabelsCFG.Fake
 }
 
-func (c *MsAdvancedConfig) Extensions() ExtensionsConfig {
+func (c *MsAdvancedConfig) Extensions() common.ExtensionsConfig {
 	return &c.ExtensionsCFG
 }
 
-func (c *MsAdvancedConfig) Executable() ExecutableConfig {
+func (c *MsAdvancedConfig) Executable() common.ExecutableConfig {
 	return &c.ExecutableCFG
 }
 
@@ -190,4 +199,77 @@ func (c *MsLoggingConfig) Level() string {
 
 func (c *MsLoggingConfig) TimeFormat() string {
 	return c.Format
+}
+
+type MsMasterConfig struct {
+	Profiles ProfilesConfigMap `mapstructure:"profiles"`
+	Schemes  SchemesConfigMap  `mapstructure:"schemes"`
+	Sampler  MsSamplerConfig   `mapstructure:"sampler"`
+	Advanced MsAdvancedConfig  `mapstructure:"advanced"`
+	Logging  MsLoggingConfig   `mapstructure:"logging"`
+}
+
+func (c *MsMasterConfig) Read(vc configuration.ViperConfig) (*common.Configs, error) {
+	if err := vc.Unmarshal(c); err != nil {
+		return nil, err
+	}
+
+	schemes := make(MsSchemesConfig)
+
+	for k, v := range c.Schemes {
+		schemes[k] = &MsSchemeConfig{
+			ProfilesData: v,
+		}
+	}
+
+	configs := &common.Configs{
+		Profiles: MsProfilesConfig{
+			Profiles: c.Profiles,
+		},
+		Schemes:  schemes,
+		Sampler:  &c.Sampler,
+		Advanced: &c.Advanced,
+		Logging:  &c.Logging,
+	}
+
+	return configs, c.validate(configs)
+}
+
+func (c *MsMasterConfig) validate(configs *common.Configs) error {
+	extensions := configs.Advanced.Extensions()
+	mappings := extensions.Map()
+	keys := lo.Keys(mappings)
+	values := lo.Values(mappings)
+
+	// In theory, we could could check that every scheme is valid,
+	// ie it only contains profiles that have been defined. However,
+	// if the current invocation does not refer to a scheme, then we
+	// are putting up a barrier unnecessarily. The command is best
+	// placed to perform that validation as it has access to the
+	// inputs and can act accordingly.
+
+	// extensions
+	//
+	if err := validateSuffixes(keys, "extensions.map/keys"); err != nil {
+		return err
+	}
+
+	if err := validateSuffixes(values, "extensions.map/values"); err != nil {
+		return err
+	}
+
+	suffixes := strings.Split(extensions.Suffixes(), ",")
+	suffixes = lo.Map(suffixes, func(s string, _ int) string {
+		return strings.TrimSpace(s)
+	})
+
+	if err := validateSuffixes(suffixes, "extensions.suffixes"); err != nil {
+		return err
+	}
+
+	// executable
+	//
+	executable := configs.Advanced.Executable()
+
+	return validateProgramName(executable.Symbol())
 }

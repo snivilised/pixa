@@ -6,12 +6,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/cfg"
 )
 
 type filterSetup struct {
 	inputs *common.ShrinkCommandInputs
-	config cfg.AdvancedConfig
 }
 
 func (s *filterSetup) getDefs(statics *common.StaticInfo) *nav.FilterDefinitions {
@@ -24,7 +22,7 @@ func (s *filterSetup) getDefs(statics *common.StaticInfo) *nav.FilterDefinitions
 		defs          *nav.FilterDefinitions
 		folderDefined = true
 		pattern       string
-		suffixes      = s.config.Extensions().Suffixes()
+		suffixes      = s.inputs.Root.Configs.Advanced.Extensions().Suffixes()
 	)
 
 	switch {

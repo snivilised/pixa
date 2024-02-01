@@ -2,9 +2,7 @@ package ipc
 
 import (
 	"github.com/snivilised/cobrass/src/clif"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/cfg"
 )
 
 const (
@@ -18,9 +16,9 @@ type baseAgent struct {
 }
 
 func New(
-	advanced cfg.AdvancedConfig,
+	advanced common.AdvancedConfig,
 	knownBy clif.KnownByCollection,
-	vfs storage.VirtualFS,
+	fm common.FileManager,
 	dryRun bool,
 ) (common.ExecutionAgent, error) {
 	var (
@@ -29,7 +27,7 @@ func New(
 	)
 
 	if dryRun {
-		return Pacify(advanced, knownBy, vfs, PacifyWithFake), nil
+		return Pacify(advanced, knownBy, fm, PacifyWithFake), nil
 	}
 
 	switch advanced.Executable().Symbol() {
@@ -48,10 +46,10 @@ func New(
 		}
 
 	case "dummy":
-		agent = Pacify(advanced, knownBy, vfs, PacifyWithDummy)
+		agent = Pacify(advanced, knownBy, fm, PacifyWithDummy)
 
 	case "fake":
-		agent = Pacify(advanced, knownBy, vfs, PacifyWithFake)
+		agent = Pacify(advanced, knownBy, fm, PacifyWithFake)
 
 	default:
 		err = ErrUnsupportedExecutor
@@ -61,9 +59,9 @@ func New(
 }
 
 func Pacify(
-	advanced cfg.AdvancedConfig,
+	advanced common.AdvancedConfig,
 	knownBy clif.KnownByCollection,
-	vfs storage.VirtualFS,
+	fm common.FileManager,
 	dummy bool,
 ) common.ExecutionAgent {
 	if dummy {
@@ -84,6 +82,6 @@ func Pacify(
 				Name: advanced.Executable().Symbol(),
 			},
 		},
-		vfs: vfs,
+		fm: fm,
 	}
 }
