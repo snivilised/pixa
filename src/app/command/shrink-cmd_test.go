@@ -221,24 +221,24 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 
 		Entry(nil, &shrinkTE{
 			commandTE: commandTE{
-				message: "vanilla with long form skim",
+				message: "vanilla with long form no-recurse",
 				args: []string{
 					"--strip",
 					"--interlace", "plane",
 					"--quality", "85",
-					"--skim",
+					"--no-recurse",
 				},
 			},
 		}),
 
 		Entry(nil, &shrinkTE{
 			commandTE: commandTE{
-				message: "vanilla with short form skim",
+				message: "vanilla with short form no-recurse",
 				args: []string{
 					"--strip",
 					"--interlace", "plane",
 					"--quality", "85",
-					"-K",
+					"-N",
 				},
 			},
 		}),
