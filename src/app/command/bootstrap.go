@@ -275,7 +275,7 @@ func (b *Bootstrap) logger() *slog.Logger {
 	logPath = utils.ResolvePath(logPath)
 	logPath, _ = utils.EnsurePathAt(logPath, defaultLogFilename, perm, b.Vfs)
 
-	ws := zapcore.AddSync(&lumberjack.Logger{
+	sync := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,
 		MaxSize:    int(b.LoggingCFG.MaxSizeInMb()),
 		MaxBackups: int(b.LoggingCFG.MaxNoOfBackups()),
@@ -285,7 +285,7 @@ func (b *Bootstrap) logger() *slog.Logger {
 	config.EncodeTime = zapcore.TimeEncoderOfLayout(b.LoggingCFG.TimeFormat())
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(config),
-		ws,
+		sync,
 		b.level(b.LoggingCFG.Level()),
 	)
 

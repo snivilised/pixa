@@ -171,11 +171,26 @@ func EnterShrink(
 	if agent, err = ipc.New(
 		params.Configs.Advanced,
 		params.Inputs.ParamSet.Native.KnownBy,
+		params.Vfs,
+		params.Inputs.Root.PreviewFam.Native.DryRun,
 	); err != nil {
-		if errors.Is(err, ipc.ErrUsingDummyExecutor) {
+		if errors.Is(err, ipc.ErrUseDummyExecutor) {
 			// todo: notify ui via bubbletea
 			//
 			fmt.Printf("===> 💥💥💥 REVERTING TO DUMMY EXECUTOR !!!!\n")
+
+			agent = ipc.Pacify(
+				params.Configs.Advanced,
+				params.Inputs.ParamSet.Native.KnownBy,
+				params.Vfs,
+				ipc.PacifyWithDummy,
+			)
+		} else if errors.Is(err, ipc.ErrUnsupportedExecutor) {
+			fmt.Printf("===> 💥💥💥 Undefined EXECUTOR: '%v' !!!!\n",
+				params.Configs.Advanced.Executable().Symbol(),
+			)
+
+			return err
 		}
 	}
 

@@ -92,6 +92,7 @@ func init() {
 			Journal: "journal",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
+			Fake:    ".FAKE",
 		},
 		ExtensionsCFG: MsExtensionsConfig{
 			FileSuffixes:  "jpg,jpeg,png",

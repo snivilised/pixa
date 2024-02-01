@@ -24,6 +24,7 @@ func NewFinder(
 			Adhoc:  advancedCFG.AdhocLabel(),
 			Legacy: advancedCFG.LegacyLabel(),
 			Trash:  advancedCFG.TrashLabel(),
+			Fake:   advancedCFG.FakeLabel(),
 		},
 		Ext: &ExtensionTransformation{
 			Transformers: strings.Split(extensions.Transforms(), ","),
@@ -65,6 +66,12 @@ func NewFinder(
 		WithoutExt: withoutExt,
 		Extension:  common.JournalExtension,
 		Tag:        common.JournalTag,
+	}
+
+	if inputs.Root.PreviewFam.Native.DryRun {
+		return &dryRunPathFinderDecorator{
+			decorated: finder,
+		}
 	}
 
 	return finder

@@ -11,6 +11,7 @@ type StaticInfo struct {
 	Meta   JournalMetaInfo
 	Legacy string
 	Trash  string
+	Fake   string
 }
 
 func (i *StaticInfo) JournalLocation(name, parent string) string {

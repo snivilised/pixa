@@ -81,6 +81,7 @@ type MsLabelsConfig struct {
 	Journal string `mapstructure:"journal-suffix"`
 	Legacy  string `mapstructure:"legacy"`
 	Trash   string `mapstructure:"trash"`
+	Fake    string `mapstructure:"fake"`
 }
 
 type MsExtensionsConfig struct {
@@ -144,6 +145,10 @@ func (c *MsAdvancedConfig) LegacyLabel() string {
 
 func (c *MsAdvancedConfig) TrashLabel() string {
 	return c.LabelsCFG.Trash
+}
+
+func (c *MsAdvancedConfig) FakeLabel() string {
+	return c.LabelsCFG.Fake
 }
 
 func (c *MsAdvancedConfig) Extensions() ExtensionsConfig {

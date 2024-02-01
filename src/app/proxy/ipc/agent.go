@@ -2,8 +2,14 @@ package ipc
 
 import (
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/cfg"
+)
+
+const (
+	PacifyWithDummy = true
+	PacifyWithFake  = false
 )
 
 type baseAgent struct {
@@ -14,21 +20,17 @@ type baseAgent struct {
 func New(
 	advanced cfg.AdvancedConfig,
 	knownBy clif.KnownByCollection,
+	vfs storage.VirtualFS,
+	dryRun bool,
 ) (common.ExecutionAgent, error) {
 	var (
 		agent common.ExecutionAgent
-		// dummy uses the same agent as magick
-		//
-		dummy = &magickAgent{
-			baseAgent{
-				knownBy: knownBy,
-				program: &DummyExecutor{
-					Name: advanced.Executable().Symbol(),
-				},
-			},
-		}
-		err error
+		err   error
 	)
+
+	if dryRun {
+		return Pacify(advanced, knownBy, vfs, PacifyWithFake), nil
+	}
 
 	switch advanced.Executable().Symbol() {
 	case "magick":
@@ -42,16 +44,46 @@ func New(
 		}
 
 		if !agent.IsInstalled() {
-			err = ErrUsingDummyExecutor
-
-			agent = dummy
+			err = ErrUseDummyExecutor
 		}
 
 	case "dummy":
-		err = ErrUsingDummyExecutor
+		agent = Pacify(advanced, knownBy, vfs, PacifyWithDummy)
 
-		agent = dummy
+	case "fake":
+		agent = Pacify(advanced, knownBy, vfs, PacifyWithFake)
+
+	default:
+		err = ErrUnsupportedExecutor
 	}
 
 	return agent, err
+}
+
+func Pacify(
+	advanced cfg.AdvancedConfig,
+	knownBy clif.KnownByCollection,
+	vfs storage.VirtualFS,
+	dummy bool,
+) common.ExecutionAgent {
+	if dummy {
+		return &magickAgent{
+			baseAgent{
+				knownBy: knownBy,
+				program: &ProgramExecutor{
+					Name: advanced.Executable().Symbol(),
+				},
+			},
+		}
+	}
+
+	return &fakeAgent{
+		baseAgent: baseAgent{
+			knownBy: knownBy,
+			program: &ProgramExecutor{
+				Name: advanced.Executable().Symbol(),
+			},
+		},
+		vfs: vfs,
+	}
 }
