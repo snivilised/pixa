@@ -58,6 +58,7 @@ type (
 		JournalLabel() string
 		LegacyLabel() string
 		TrashLabel() string
+		FakeLabel() string
 		Extensions() ExtensionsConfig
 		Executable() ExecutableConfig
 	}

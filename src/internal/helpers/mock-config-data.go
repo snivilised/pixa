@@ -116,6 +116,7 @@ func init() {
 			Journal: "journal",
 			Legacy:  ".LEGACY",
 			Trash:   "TRASH",
+			Fake:    ".FAKE",
 		},
 		ExtensionsCFG: cfg.MsExtensionsConfig{
 			FileSuffixes:  "jpg,jpeg,png",
@@ -125,7 +126,7 @@ func init() {
 			},
 		},
 		ExecutableCFG: cfg.MsExecutableConfig{
-			ProgramName:      "dummy",
+			ProgramName:      "fake",
 			Timeout:          "10s",
 			NoProgramRetries: noRetries,
 		},

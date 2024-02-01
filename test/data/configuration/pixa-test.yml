@@ -4,7 +4,6 @@ profiles:
     interlace: "plane"
     gaussian-blur: "0.05"
   sf:
-    dry-run: true
     strip: true
     interlace: "plane"
     sampling-factor: "4:2:0"
@@ -26,11 +25,13 @@ sampler:
   folders: 1
 advanced:
   abort-on-error: false
+  overwrite-on-collision: false
   labels:
     adhoc: ADHOC
     legacy: .LEGACY
     journal-suffix: journal
     trash: TRASH
+    fake: .FAKE
   extensions:
     suffixes-csv: "jpg,jpeg,png"
     transforms-csv: lower

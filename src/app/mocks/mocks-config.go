@@ -520,6 +520,20 @@ func (mr *MockAdvancedConfigMockRecorder) Extensions() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Extensions", reflect.TypeOf((*MockAdvancedConfig)(nil).Extensions))
 }
 
+// FakeLabel mocks base method.
+func (m *MockAdvancedConfig) FakeLabel() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FakeLabel")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// FakeLabel indicates an expected call of FakeLabel.
+func (mr *MockAdvancedConfigMockRecorder) FakeLabel() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FakeLabel", reflect.TypeOf((*MockAdvancedConfig)(nil).FakeLabel))
+}
+
 // JournalLabel mocks base method.
 func (m *MockAdvancedConfig) JournalLabel() string {
 	m.ctrl.T.Helper()
