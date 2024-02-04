@@ -96,12 +96,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			ConfigType: "yaml",
 			Viper:      vc,
 		},
-		Configurator: cfg.ConfigRunner{
-			ViperConfig:     vc,
-			ConfigInfo:      &ci,
-			SourceID:        SourceID,
-			ApplicationName: ApplicationName,
-		},
+		Configurator: cfg.New(vc, &ci, SourceID, ApplicationName),
 	}
 
 	for _, fo := range options {

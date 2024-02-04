@@ -15,31 +15,44 @@ import (
 	"golang.org/x/text/language"
 )
 
-type ConfigRunner struct {
-	ViperConfig     configuration.ViperConfig
-	ConfigInfo      *common.ConfigInfo
-	SourceID        string
-	ApplicationName string
+func New(vc configuration.ViperConfig,
+	ci *common.ConfigInfo,
+	sourceID string,
+	applicationName string,
+) common.ConfigRunner {
+	return &configRunner{
+		vc:              vc,
+		ci:              ci,
+		sourceID:        sourceID,
+		applicationName: applicationName,
+	}
 }
 
-func (c ConfigRunner) Run() error {
-	c.ViperConfig.SetConfigName(c.ConfigInfo.Name)
-	c.ViperConfig.SetConfigType(c.ConfigInfo.ConfigType)
-	c.ViperConfig.AddConfigPath(c.path())
-	c.ViperConfig.AutomaticEnv()
+type configRunner struct {
+	vc              configuration.ViperConfig
+	ci              *common.ConfigInfo
+	sourceID        string
+	applicationName string
+}
 
-	err := c.ViperConfig.ReadInConfig()
+func (c configRunner) Run() error {
+	c.vc.SetConfigName(c.ci.Name)
+	c.vc.SetConfigType(c.ci.ConfigType)
+	c.vc.AddConfigPath(c.path())
+	c.vc.AutomaticEnv()
 
-	c.handleLangSetting(c.ViperConfig)
+	err := c.vc.ReadInConfig()
+
+	c.handleLangSetting(c.vc)
 
 	return err
 }
 
-func (c ConfigRunner) path() string {
-	configPath := c.ConfigInfo.ConfigPath
+func (c configRunner) path() string {
+	configPath := c.ci.ConfigPath
 
 	if configPath == "" {
-		configPath, _ = c.ViperConfig.Get("PIXA-HOME").(string)
+		configPath, _ = c.vc.Get("PIXA-HOME").(string)
 
 		fmt.Printf("---> ✨ PIXA-HOME found in environment: '%v'\n", configPath)
 	}
@@ -55,7 +68,7 @@ func (c ConfigRunner) path() string {
 	return configPath
 }
 
-func (c ConfigRunner) handleLangSetting(config configuration.ViperConfig) {
+func (c configRunner) handleLangSetting(config configuration.ViperConfig) {
 	tag := lo.TernaryF(config.InConfig("lang"),
 		func() language.Tag {
 			lang := viper.GetString("lang")
@@ -77,8 +90,8 @@ func (c ConfigRunner) handleLangSetting(config configuration.ViperConfig) {
 		uo.Tag = tag
 		uo.From = xi18n.LoadFrom{
 			Sources: xi18n.TranslationFiles{
-				c.SourceID: xi18n.TranslationSource{
-					Name: c.ApplicationName,
+				c.sourceID: xi18n.TranslationSource{
+					Name: c.applicationName,
 				},
 				ci18n.CobrassSourceID: xi18n.TranslationSource{
 					Name: "cobrass",
