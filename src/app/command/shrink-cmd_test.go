@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
+	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/internal/helpers"
 
 	"github.com/snivilised/extendio/xfs/storage"

@@ -2,8 +2,8 @@ package helpers
 
 import (
 	"github.com/snivilised/cobrass/src/clif"
+	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/cfg"
 )
 
 const (

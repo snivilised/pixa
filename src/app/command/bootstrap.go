@@ -6,13 +6,9 @@ import (
 	"os"
 
 	"github.com/cubiest/jibberjabber"
-	"github.com/natefinch/lumberjack"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"go.uber.org/zap/exp/zapslog"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/text/language"
 
 	"github.com/snivilised/cobrass/src/assistant"
@@ -21,9 +17,10 @@ import (
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
+	"github.com/snivilised/pixa/src/app/cfg"
+	"github.com/snivilised/pixa/src/app/plog"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/cfg"
 	"github.com/snivilised/pixa/src/i18n"
 )
 
@@ -71,6 +68,7 @@ type Bootstrap struct {
 	OptionsInfo ConfigureOptionsInfo
 	Configs     *common.Configs
 	Vfs         storage.VirtualFS
+	Logger      *slog.Logger
 }
 
 type ConfigureOptionsInfo struct {
@@ -98,9 +96,11 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			ConfigType: "yaml",
 			Viper:      vc,
 		},
-		Configurator: configRunner{
-			vc: vc,
-			ci: &ci,
+		Configurator: cfg.ConfigRunner{
+			ViperConfig:     vc,
+			ConfigInfo:      &ci,
+			SourceID:        SourceID,
+			ApplicationName: ApplicationName,
 		},
 	}
 
@@ -109,6 +109,8 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	}
 
 	b.configure()
+	b.viper()
+	b.Logger = plog.New(b.Configs.Logging, b.Vfs)
 
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
@@ -159,7 +161,15 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 }
 
 func (b *Bootstrap) configure() {
-	_ = b.OptionsInfo.Configurator.Run()
+	if err := b.OptionsInfo.Configurator.Run(); err != nil {
+		msg := xi18n.Text(i18n.UsingConfigFileTemplData{
+			ConfigFileName: b.OptionsInfo.Config.Viper.ConfigFileUsed(),
+		})
+
+		fmt.Fprintln(os.Stderr, msg)
+
+		fmt.Printf("💥 error reading config path: '%v' \n", err)
+	}
 }
 
 func handleLangSetting(config configuration.ViperConfig) {
@@ -214,47 +224,6 @@ func (b *Bootstrap) viper() {
 	if err != nil {
 		b.exit(err)
 	}
-}
-
-func (b *Bootstrap) level(raw string) zapcore.LevelEnabler {
-	if l, err := zapcore.ParseLevel(raw); err == nil {
-		return l
-	}
-
-	return zapcore.InfoLevel
-}
-
-func (b *Bootstrap) logger() *slog.Logger {
-	logging := b.Configs.Logging
-
-	noc := slog.New(zapslog.NewHandler(
-		zapcore.NewNopCore(), nil),
-	)
-
-	logPath := logging.Path()
-
-	if logPath == "" {
-		return noc
-	}
-
-	logPath = utils.ResolvePath(logPath)
-	logPath, _ = utils.EnsurePathAt(logPath, defaultLogFilename, perm, b.Vfs)
-
-	sync := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   logPath,
-		MaxSize:    int(logging.MaxSizeInMb()),
-		MaxBackups: int(logging.MaxNoOfBackups()),
-		MaxAge:     int(logging.MaxAgeInDays()),
-	})
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.TimeEncoderOfLayout(logging.TimeFormat())
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(config),
-		sync,
-		b.level(logging.Level()),
-	)
-
-	return slog.New(zapslog.NewHandler(core, nil))
 }
 
 func (b *Bootstrap) exit(err error) {
