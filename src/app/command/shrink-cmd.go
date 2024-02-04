@@ -137,7 +137,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 						&proxy.ShrinkParams{
 							Inputs: inputs,
 							Viper:  b.OptionsInfo.Config.Viper,
-							Logger: b.logger(),
+							Logger: b.Logger,
 							Vfs:    b.Vfs,
 						},
 					)
@@ -302,8 +302,6 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	polyFam.Native.BindAll(polyFam)
 
 	paramSet.Native.KnownBy = thirdPartyFlags
-
-	b.viper()
 
 	// 📌 A note about cobra args validation: cmd.ValidArgs lets you define
 	// a list of all allowable tokens for positional args. Just define
