@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
 
 	"github.com/cubiest/jibberjabber"
 	"github.com/natefinch/lumberjack"
@@ -31,10 +30,6 @@ import (
 const (
 	defaultLogFilename = "pixa.log"
 	perm               = 0o766
-)
-
-var (
-	pixaRelativePath = filepath.Join("snivilised", "pixa")
 )
 
 type LocaleDetector interface {
@@ -68,13 +63,6 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type ConfigInfo struct {
-	Name       string
-	ConfigType string
-	ConfigPath string
-	Viper      configuration.ViperConfig
-}
-
 // Bootstrap represents construct that performs start up of the cli
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
@@ -86,8 +74,9 @@ type Bootstrap struct {
 }
 
 type ConfigureOptionsInfo struct {
-	Detector LocaleDetector
-	Config   ConfigInfo
+	Detector     LocaleDetector
+	Config       common.ConfigInfo
+	Configurator common.ConfigRunner
 }
 
 type ConfigureOptionFn func(*ConfigureOptionsInfo)
@@ -95,16 +84,23 @@ type ConfigureOptionFn func(*ConfigureOptionsInfo)
 // Root builds the command tree and returns the root command, ready
 // to be executed.
 func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
-	home, err := os.UserHomeDir()
-	cobra.CheckErr(err)
+	vc := &configuration.GlobalViperConfig{}
+	ci := common.ConfigInfo{
+		Name:       ApplicationName,
+		ConfigType: "yaml",
+		Viper:      vc,
+	}
 
 	b.OptionsInfo = ConfigureOptionsInfo{
 		Detector: &Jabber{},
-		Config: ConfigInfo{
+		Config: common.ConfigInfo{
 			Name:       ApplicationName,
 			ConfigType: "yaml",
-			ConfigPath: filepath.Join(home, pixaRelativePath),
-			Viper:      &configuration.GlobalViperConfig{},
+			Viper:      vc,
+		},
+		Configurator: configRunner{
+			vc: vc,
+			ci: &ci,
 		},
 	}
 
@@ -163,27 +159,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 }
 
 func (b *Bootstrap) configure() {
-	vc := b.OptionsInfo.Config.Viper
-	ci := b.OptionsInfo.Config
-
-	vc.SetConfigName(ci.Name)
-	vc.SetConfigType(ci.ConfigType)
-	vc.AddConfigPath(ci.ConfigPath)
-	vc.AutomaticEnv()
-
-	err := vc.ReadInConfig()
-
-	handleLangSetting(vc)
-
-	if err != nil {
-		msg := xi18n.Text(i18n.UsingConfigFileTemplData{
-			ConfigFileName: vc.ConfigFileUsed(),
-		})
-
-		fmt.Fprintln(os.Stderr, msg)
-
-		fmt.Printf("💥 error reading config path: '%v' \n", err)
-	}
+	_ = b.OptionsInfo.Configurator.Run()
 }
 
 func handleLangSetting(config configuration.ViperConfig) {
