@@ -1,6 +1,7 @@
 package cfg
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,24 +9,47 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
+	"github.com/snivilised/extendio/collections"
 	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 )
 
-func New(vc configuration.ViperConfig,
+var (
+	//go:embed default-pixa.yml
+	defaultConfig string
+)
+
+const (
+	WritePerm = os.FileMode(0o766)
+)
+
+type (
+	tryReadConfigFn func() error
+)
+
+func GetDefaultConfigContent() string {
+	return defaultConfig
+}
+
+func New(
 	ci *common.ConfigInfo,
 	sourceID string,
 	applicationName string,
-) common.ConfigRunner {
+	vfs storage.VirtualFS,
+) (common.ConfigRunner, error) {
+	home, err := os.UserHomeDir()
+
 	return &configRunner{
-		vc:              vc,
+		vc:              ci.Viper,
 		ci:              ci,
 		sourceID:        sourceID,
 		applicationName: applicationName,
-	}
+		home:            home,
+		vfs:             vfs,
+	}, err
 }
 
 type configRunner struct {
@@ -33,42 +57,109 @@ type configRunner struct {
 	ci              *common.ConfigInfo
 	sourceID        string
 	applicationName string
+	home            string
+	vfs             storage.VirtualFS
 }
 
-func (c configRunner) Run() error {
+func (c *configRunner) DefaultPath() string {
+	return filepath.Join(c.home, filepath.Join("snivilised", "pixa"))
+}
+
+func (c *configRunner) Run() error {
 	c.vc.SetConfigName(c.ci.Name)
 	c.vc.SetConfigType(c.ci.ConfigType)
-	c.vc.AddConfigPath(c.path())
 	c.vc.AutomaticEnv()
+	c.vc.AddConfigPath(c.path())
 
-	err := c.vc.ReadInConfig()
+	err := c.read()
 
 	c.handleLangSetting(c.vc)
 
 	return err
 }
 
-func (c configRunner) path() string {
+func (c *configRunner) path() string {
 	configPath := c.ci.ConfigPath
 
 	if configPath == "" {
-		configPath, _ = c.vc.Get("PIXA-HOME").(string)
-
-		fmt.Printf("---> ✨ PIXA-HOME found in environment: '%v'\n", configPath)
+		configPath, _ = c.vc.Get("PIXA_HOME").(string)
 	}
 
 	if configPath == "" {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		defaultPath := filepath.Join("snivilised", "pixa")
-		configPath = filepath.Join(home, defaultPath)
+		configPath = c.DefaultPath()
+	} else {
+		fmt.Printf("---> ✨ PIXA_HOME found in environment: '%v'\n", configPath)
 	}
 
 	return configPath
 }
 
-func (c configRunner) handleLangSetting(config configuration.ViperConfig) {
+func (c *configRunner) read() error {
+	var (
+		err error
+	)
+	// the returned error from vc.ReadInConfig() does not support standard
+	// golang error identity via errors.Is, so we are forced to assume
+	// that if we get an error, it is viper.ConfigFileNotFoundError
+	//
+	sequence := []tryReadConfigFn{
+		func() error {
+			// don't need to do anything here, as we use the config
+			// as originally requested.
+			//
+			return nil
+		},
+		func() error {
+			// try the home path
+			//
+			c.vc.AddConfigPath(c.home)
+
+			return nil
+		},
+		func() error {
+			// not found in home, therefore export default to
+			// home path, which has already been added in previous
+			// attempt.
+			//
+			err = c.export()
+
+			return err
+		},
+	}
+
+	iterator := collections.ForwardRunIt[tryReadConfigFn, error](sequence, nil)
+	each := func(fn tryReadConfigFn) error {
+		if e := fn(); e != nil {
+			return e
+		}
+
+		return c.vc.ReadInConfig()
+	}
+	while := func(fn tryReadConfigFn, e error) bool {
+		return e != nil
+	}
+	iterator.RunAll(each, while)
+
+	return err
+}
+
+func (c *configRunner) export() error {
+	path := c.DefaultPath()
+	file := filepath.Join(path, "pixa.yml")
+	content := []byte(defaultConfig)
+
+	if !c.vfs.FileExists(file) {
+		if err := c.vfs.MkdirAll(path, WritePerm); err != nil {
+			return err
+		}
+
+		return c.vfs.WriteFile(file, content, WritePerm)
+	}
+
+	return nil
+}
+
+func (c *configRunner) handleLangSetting(config configuration.ViperConfig) {
 	tag := lo.TernaryF(config.InConfig("lang"),
 		func() language.Tag {
 			lang := viper.GetString("lang")
