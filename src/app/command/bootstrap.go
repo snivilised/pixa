@@ -26,7 +26,6 @@ import (
 
 const (
 	defaultLogFilename = "pixa.log"
-	perm               = 0o766
 )
 
 type LocaleDetector interface {
@@ -72,9 +71,9 @@ type Bootstrap struct {
 }
 
 type ConfigureOptionsInfo struct {
-	Detector     LocaleDetector
-	Config       common.ConfigInfo
-	Configurator common.ConfigRunner
+	Detector LocaleDetector
+	Config   common.ConfigInfo
+	Runner   common.ConfigRunner
 }
 
 type ConfigureOptionFn func(*ConfigureOptionsInfo)
@@ -89,14 +88,19 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 		Viper:      vc,
 	}
 
+	runner, err := cfg.New(&ci, SourceID, ApplicationName, b.Vfs)
+	if err != nil {
+		// not being able to access the default path is pretty catastrophic,
+		// so will terminate immediately if this happens.
+		//
+		fmt.Println("---> 🔥 can't access home path, terminating.")
+		os.Exit(1)
+	}
+
 	b.OptionsInfo = ConfigureOptionsInfo{
 		Detector: &Jabber{},
-		Config: common.ConfigInfo{
-			Name:       ApplicationName,
-			ConfigType: "yaml",
-			Viper:      vc,
-		},
-		Configurator: cfg.New(vc, &ci, SourceID, ApplicationName),
+		Config:   ci,
+		Runner:   runner,
 	}
 
 	for _, fo := range options {
@@ -156,14 +160,14 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 }
 
 func (b *Bootstrap) configure() {
-	if err := b.OptionsInfo.Configurator.Run(); err != nil {
+	if err := b.OptionsInfo.Runner.Run(); err != nil {
 		msg := xi18n.Text(i18n.UsingConfigFileTemplData{
 			ConfigFileName: b.OptionsInfo.Config.Viper.ConfigFileUsed(),
 		})
 
 		fmt.Fprintln(os.Stderr, msg)
-
 		fmt.Printf("💥 error reading config path: '%v' \n", err)
+		b.exit(err)
 	}
 }
 

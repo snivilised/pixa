@@ -1,6 +1,8 @@
 package common
 
 import (
+	"io/fs"
+
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
@@ -42,4 +44,16 @@ type (
 		Setup(pi *PathInfo) (destination string, err error)
 		Tidy(pi *PathInfo) error
 	}
+
+	permissions struct {
+		Write fs.FileMode
+	}
 )
+
+const (
+	write = 0o766
+)
+
+var Permissions = permissions{
+	Write: write,
+}
