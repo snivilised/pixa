@@ -11,6 +11,7 @@ require (
 	github.com/snivilised/lorax v0.4.4
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
+	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.26.0
 	go.uber.org/zap/exp v0.2.0
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a

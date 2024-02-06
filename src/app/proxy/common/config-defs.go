@@ -43,6 +43,7 @@ type (
 type (
 	ConfigRunner interface {
 		Run() error
+		DefaultPath() string
 	}
 
 	ProfilesConfig interface {

@@ -14,7 +14,6 @@ import (
 
 const (
 	defaultLogFilename = "pixa.log"
-	perm               = 0o766
 )
 
 func New(lc common.LoggingConfig, vfs storage.VirtualFS) *slog.Logger {
@@ -29,7 +28,7 @@ func New(lc common.LoggingConfig, vfs storage.VirtualFS) *slog.Logger {
 	}
 
 	logPath = utils.ResolvePath(logPath)
-	logPath, _ = utils.EnsurePathAt(logPath, defaultLogFilename, perm, vfs)
+	logPath, _ = utils.EnsurePathAt(logPath, defaultLogFilename, int(common.Permissions.Write), vfs)
 
 	sync := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,
