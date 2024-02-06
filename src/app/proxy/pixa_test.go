@@ -21,7 +21,6 @@ import (
 const (
 	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
 	BackyardWorldsPlanet9Scan02 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02"
-	perm                        = 0o766
 )
 
 type controllerTE struct {
@@ -71,7 +70,7 @@ var _ = Describe("pixa", Ordered, func() {
 		func(entry *samplerTE) {
 			directory := helpers.Path(root, entry.relative)
 			options := []string{
-				helpers.ShrinkCommandName, directory,
+				common.Definitions.Commands.Shrink, directory,
 			}
 
 			args := options
@@ -79,7 +78,7 @@ var _ = Describe("pixa", Ordered, func() {
 
 			if entry.exists {
 				location := filepath.Join(directory, entry.intermediate, entry.supplement)
-				if err := vfs.MkdirAll(location, perm); err != nil {
+				if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
 					Fail(errors.Wrap(err, err.Error()).Error())
 				}
 			}
@@ -103,7 +102,7 @@ var _ = Describe("pixa", Ordered, func() {
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &helpers.DetectorStub{}
-					co.Config.Name = helpers.PixaConfigTestFilename
+					co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}
 				}),
@@ -115,7 +114,7 @@ var _ = Describe("pixa", Ordered, func() {
 			)
 
 			if entry.mandatory != nil && entry.dry {
-				dejaVuSupplement := filepath.Join(common.DejaVu, entry.supplement)
+				dejaVuSupplement := filepath.Join(common.Definitions.Filing.DejaVu, entry.supplement)
 				supplement := helpers.Path(entry.intermediate, dejaVuSupplement)
 
 				for _, original := range entry.mandatory {
@@ -643,7 +642,7 @@ var _ = Describe("end to end", Ordered, func() {
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &helpers.DetectorStub{}
-					co.Config.Name = "pixa"
+					co.Config.Name = common.Definitions.Pixa.AppName
 					co.Config.ConfigPath = configPath
 				}),
 			}

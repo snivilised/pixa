@@ -6,6 +6,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
 	"golang.org/x/text/language"
 )
@@ -61,7 +62,7 @@ var _ = Describe("Bootstrap", Ordered, func() {
 			}
 			rootCmd := bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 				co.Detector = &DetectorStub{}
-				co.Config.Name = helpers.PixaConfigTestFilename
+				co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 				co.Config.ConfigPath = configPath
 				co.Config.Viper = &configuration.GlobalViperConfig{}
 			})

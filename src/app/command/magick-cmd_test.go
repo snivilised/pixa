@@ -8,6 +8,7 @@ import (
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/command"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
 )
 
@@ -42,7 +43,7 @@ var _ = Describe("MagickCmd", Ordered, func() {
 				Args: []string{"mag"},
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &DetectorStub{}
-					co.Config.Name = helpers.PixaConfigTestFilename
+					co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}
 				}),

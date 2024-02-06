@@ -112,7 +112,9 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 					shrinkPS.Native.ThirdPartySet.LongChangedCL = changed
 
 					fmt.Printf("%v %v Running shrink, with args: '%v'\n",
-						AppEmoji, ApplicationName, strings.Join(args, "/"),
+						common.Definitions.Pixa.Emoji,
+						common.Definitions.Pixa.AppName,
+						strings.Join(args, "/"),
 					)
 
 					inputs := b.getShrinkInputs()

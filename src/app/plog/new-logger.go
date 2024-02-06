@@ -12,10 +12,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const (
-	defaultLogFilename = "pixa.log"
-)
-
 func New(lc common.LoggingConfig, vfs storage.VirtualFS) *slog.Logger {
 	noc := slog.New(zapslog.NewHandler(
 		zapcore.NewNopCore(), nil),
@@ -28,7 +24,12 @@ func New(lc common.LoggingConfig, vfs storage.VirtualFS) *slog.Logger {
 	}
 
 	logPath = utils.ResolvePath(logPath)
-	logPath, _ = utils.EnsurePathAt(logPath, defaultLogFilename, int(common.Permissions.Write), vfs)
+	logPath, _ = utils.EnsurePathAt(
+		logPath,
+		common.Definitions.Defaults.Logging.LogFilename,
+		int(common.Permissions.Write),
+		vfs,
+	)
 
 	sync := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,

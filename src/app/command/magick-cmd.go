@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/snivilised/cobrass/src/assistant"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -44,7 +45,10 @@ func (b *Bootstrap) buildMagickCommand(container *assistant.CobraContainer) *cob
 					})
 
 					fmt.Printf("%v %v Running magick, with options: '%v', args: '%v'\n",
-						AppEmoji, ApplicationName, options, strings.Join(args, "/"),
+						common.Definitions.Pixa.Emoji,
+						common.Definitions.Pixa.AppName,
+						options,
+						strings.Join(args, "/"),
 					)
 					// ---> execute application core with the parameter set (native)
 					//

@@ -26,7 +26,7 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "LookAhead: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			if strings.Contains(item.Path, common.DejaVu) {
+			if strings.Contains(item.Path, common.Definitions.Filing.DejaVu) {
 				return fs.SkipDir
 			}
 			journal := e.FileManager.Finder().JournalFullPath(item)
@@ -42,7 +42,7 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Principal: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			if strings.Contains(item.Path, common.DejaVu) {
+			if strings.Contains(item.Path, common.Definitions.Filing.DejaVu) {
 				return fs.SkipDir
 			}
 
@@ -107,7 +107,7 @@ func (e *ShrinkEntry) navigateWithLookAhead(
 }
 
 func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
-	if strings.HasPrefix(item.Extension.Name, common.DejaVu) {
+	if strings.HasPrefix(item.Extension.Name, common.Definitions.Filing.DejaVu) {
 		return fs.SkipDir
 	}
 

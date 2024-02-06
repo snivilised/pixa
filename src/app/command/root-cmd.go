@@ -13,9 +13,6 @@ import (
 )
 
 const (
-	AppEmoji          = "🧙"
-	ApplicationName   = "pixa"
-	SourceID          = "github.com/snivilised/pixa"
 	RootPsName        = "root-ps"
 	PreviewFamName    = "preview-family"
 	WorkerPoolFamName = "worker-pool-family"

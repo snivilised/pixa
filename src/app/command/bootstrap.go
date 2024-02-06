@@ -24,10 +24,6 @@ import (
 	"github.com/snivilised/pixa/src/i18n"
 )
 
-const (
-	defaultLogFilename = "pixa.log"
-)
-
 type LocaleDetector interface {
 	Scan() language.Tag
 }
@@ -83,12 +79,18 @@ type ConfigureOptionFn func(*ConfigureOptionsInfo)
 func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	vc := &configuration.GlobalViperConfig{}
 	ci := common.ConfigInfo{
-		Name:       ApplicationName,
-		ConfigType: "yaml",
+		Name:       common.Definitions.Pixa.AppName,
+		ConfigType: common.Definitions.Pixa.ConfigType,
 		Viper:      vc,
 	}
 
-	runner, err := cfg.New(&ci, SourceID, ApplicationName, b.Vfs)
+	runner, err := cfg.New(
+		&ci,
+		common.Definitions.Pixa.SourceID,
+		common.Definitions.Pixa.AppName,
+		b.Vfs,
+	)
+
 	if err != nil {
 		// not being able to access the default path is pretty catastrophic,
 		// so will terminate immediately if this happens.
@@ -193,8 +195,8 @@ func handleLangSetting(config configuration.ViperConfig) {
 		uo.Tag = tag
 		uo.From = xi18n.LoadFrom{
 			Sources: xi18n.TranslationFiles{
-				SourceID: xi18n.TranslationSource{
-					Name: ApplicationName,
+				common.Definitions.Pixa.SourceID: xi18n.TranslationSource{
+					Name: common.Definitions.Pixa.AppName,
 				},
 				ci18n.CobrassSourceID: xi18n.TranslationSource{
 					Name: "cobrass",
