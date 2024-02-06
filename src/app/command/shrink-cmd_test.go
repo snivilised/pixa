@@ -44,7 +44,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 	}
 
 	directory := helpers.Path(root, entry.directory)
-	args := append([]string{helpers.ShrinkCommandName, directory}, []string{
+	args := append([]string{common.Definitions.Commands.Shrink, directory}, []string{
 		"--dry-run",
 	}...)
 
@@ -62,7 +62,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 		Args: append(args, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &DetectorStub{}
-			co.Config.Name = helpers.PixaConfigTestFilename
+			co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 			co.Config.ConfigPath = entry.configPath
 			co.Config.Viper = &configuration.GlobalViperConfig{}
 		}),

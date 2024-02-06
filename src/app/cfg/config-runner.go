@@ -58,7 +58,7 @@ type configRunner struct {
 }
 
 func (c *configRunner) DefaultPath() string {
-	return filepath.Join(c.home, filepath.Join("snivilised", "pixa"))
+	return filepath.Join(c.home, common.Definitions.Pixa.SubPath)
 }
 
 func (c *configRunner) Run() error {
@@ -78,7 +78,7 @@ func (c *configRunner) path() string {
 	configPath := c.ci.ConfigPath
 
 	if configPath == "" {
-		configPath, _ = c.vc.Get("PIXA_HOME").(string)
+		configPath, _ = c.vc.Get(common.Definitions.Environment.Home).(string)
 	}
 
 	if configPath == "" {
@@ -141,7 +141,7 @@ func (c *configRunner) read() error {
 
 func (c *configRunner) export() error {
 	path := c.DefaultPath()
-	file := filepath.Join(path, "pixa.yml")
+	file := filepath.Join(path, common.Definitions.Pixa.ConfigType)
 	content := []byte(defaultConfig)
 
 	if !c.vfs.FileExists(file) {

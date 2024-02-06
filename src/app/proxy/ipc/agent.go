@@ -31,7 +31,7 @@ func New(
 	}
 
 	switch advanced.Executable().Symbol() {
-	case "magick":
+	case common.Definitions.ThirdParty.Magick:
 		agent = &magickAgent{
 			baseAgent{
 				knownBy: knownBy,
@@ -45,10 +45,10 @@ func New(
 			err = ErrUseDummyExecutor
 		}
 
-	case "dummy":
+	case common.Definitions.ThirdParty.Dummy:
 		agent = Pacify(advanced, knownBy, fm, PacifyWithDummy)
 
-	case "fake":
+	case common.Definitions.ThirdParty.Fake:
 		agent = Pacify(advanced, knownBy, fm, PacifyWithFake)
 
 	default:

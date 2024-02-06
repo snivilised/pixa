@@ -17,9 +17,8 @@ import (
 )
 
 var (
-	sourceID        = "github.com/snivilised/pixa"
-	applicationName = "pixa"
-	environment     = "PIXA_HOME"
+	sourceID    = "github.com/snivilised/pixa"
+	environment = "PIXA_HOME"
 )
 
 type runnerTE struct {
@@ -56,8 +55,8 @@ var _ = Describe("ConfigRunner", func() {
 	DescribeTable("mocked",
 		func(entry *runnerTE) {
 			ci := common.ConfigInfo{
-				Name:       "pixa",
-				ConfigType: "yaml",
+				Name:       common.Definitions.Pixa.AppName,
+				ConfigType: common.Definitions.Pixa.ConfigType,
 				ConfigPath: entry.path,
 				Viper:      mock,
 			}
@@ -74,7 +73,7 @@ var _ = Describe("ConfigRunner", func() {
 			mock.EXPECT().InConfig(gomock.Any()).AnyTimes()
 			mock.EXPECT().GetString(gomock.Any()).AnyTimes()
 
-			runner, err := cfg.New(&ci, sourceID, applicationName, vfs)
+			runner, err := cfg.New(&ci, sourceID, common.Definitions.Pixa.AppName, vfs)
 			if entry.created != nil {
 				entry.created(entry, runner)
 			}
@@ -140,7 +139,10 @@ var _ = Describe("ConfigRunner", func() {
 				})
 			},
 			created: func(_ *runnerTE, runner common.ConfigRunner) {
-				name := fmt.Sprintf("%v.%v", helpers.PixaConfigTestFilename, helpers.PixaConfigType)
+				name := fmt.Sprintf("%v.%v",
+					common.Definitions.Pixa.ConfigTestFilename,
+					common.Definitions.Pixa.ConfigType,
+				)
 				path := filepath.Join(runner.DefaultPath(), name)
 				content := []byte(cfg.GetDefaultConfigContent())
 

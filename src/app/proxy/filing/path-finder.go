@@ -48,23 +48,23 @@ func NewFinder(
 
 	journal := advanced.JournalLabel()
 
-	if !strings.HasSuffix(journal, common.JournalExtension) {
-		journal += common.JournalExtension
+	if !strings.HasSuffix(journal, common.Definitions.Filing.JournalExt) {
+		journal += common.Definitions.Filing.JournalExt
 	}
 
-	if !strings.HasPrefix(journal, common.JournalTag) {
-		journal = common.JournalTag + journal
+	if !strings.HasPrefix(journal, common.Definitions.Filing.JournalTag) {
+		journal = common.Definitions.Filing.JournalTag + journal
 	}
 
-	withoutExt := strings.TrimSuffix(journal, common.JournalExtension)
-	core := strings.TrimPrefix(withoutExt, common.JournalTag)
+	withoutExt := strings.TrimSuffix(journal, common.Definitions.Filing.JournalExt)
+	core := strings.TrimPrefix(withoutExt, common.Definitions.Filing.JournalTag)
 
 	finder.statics.Meta = common.JournalMetaInfo{
 		Core:       core,
 		Journal:    journal,
 		WithoutExt: withoutExt,
-		Extension:  common.JournalExtension,
-		Tag:        common.JournalTag,
+		Extension:  common.Definitions.Filing.JournalExt,
+		Tag:        common.Definitions.Filing.JournalTag,
 	}
 
 	if inputs.Root.PreviewFam.Native.DryRun {

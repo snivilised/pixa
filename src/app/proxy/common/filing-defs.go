@@ -6,12 +6,6 @@ import (
 	"github.com/snivilised/extendio/xfs/nav"
 )
 
-const (
-	DejaVu           = "$pixa$"
-	JournalExtension = ".txt"
-	JournalTag       = ".$"
-)
-
 type (
 	JournalMetaInfo struct {
 		Core       string // without any decoration
@@ -46,14 +40,20 @@ type (
 	}
 
 	permissions struct {
-		Write fs.FileMode
+		Write       fs.FileMode
+		Faydeaudeau fs.FileMode
+		Beezledub   fs.FileMode
 	}
 )
 
 const (
-	write = 0o766
+	write       = 0o766
+	faydeaudeau = 0o777
+	beezledub   = 0o666
 )
 
 var Permissions = permissions{
-	Write: write,
+	Write:       write,
+	Faydeaudeau: faydeaudeau,
+	Beezledub:   beezledub,
 }

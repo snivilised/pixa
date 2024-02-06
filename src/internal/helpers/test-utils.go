@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
+	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/matchers"
 
@@ -23,14 +24,8 @@ import (
 )
 
 const (
-	PixaConfigTestFilename = "pixa-test"
-	PixaConfigType         = "yml"
-	ShrinkCommandName      = "shrink"
-	ProgName               = "magick"
-	Faydeaudeau            = os.FileMode(0o777)
-	Beezledub              = os.FileMode(0o666)
-	Silent                 = true
-	Verbose                = false
+	Silent  = true
+	Verbose = false
 )
 
 func Path(parent, relative string) string {
@@ -144,8 +139,8 @@ func ReadGlobalConfig(configPath string) error {
 
 	config := &configuration.GlobalViperConfig{}
 
-	config.SetConfigType(PixaConfigType)
-	config.SetConfigName(PixaConfigTestFilename)
+	config.SetConfigType(common.Definitions.Pixa.ConfigType)
+	config.SetConfigName(common.Definitions.Pixa.ConfigTestFilename)
 	config.AddConfigPath(configPath)
 
 	if e := config.ReadInConfig(); e != nil {
@@ -161,9 +156,11 @@ func MockConfigFile(vfs storage.VirtualFS, configPath string) error {
 		err error
 	)
 
-	_ = vfs.MkdirAll(configPath, Beezledub)
+	_ = vfs.MkdirAll(configPath, common.Permissions.Beezledub)
 
-	if _, err = vfs.Create(filepath.Join(configPath, PixaConfigTestFilename)); err != nil {
+	if _, err = vfs.Create(
+		filepath.Join(configPath, common.Definitions.Pixa.ConfigTestFilename),
+	); err != nil {
 		ginkgo.Fail(fmt.Sprintf("🔥 can't create dummy config (err: '%v')", err))
 	}
 
