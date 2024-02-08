@@ -70,62 +70,6 @@ func (td RootCmdLangUsageTemplData) Message() *i18n.Message {
 	}
 }
 
-// RootCmdSampleUsageTemplData
-// 🧊
-type RootCmdSampleUsageTemplData struct {
-	pixaTemplData
-}
-
-func (td RootCmdSampleUsageTemplData) Message() *i18n.Message {
-	return &i18n.Message{
-		ID:          "root-command-sample.param-usage",
-		Description: "root command sample usage; activates sampling",
-		Other:       "sample is a flag that activates sampling",
-	}
-}
-
-// RootCmdNoFilesUsageTemplData
-// 🧊
-type RootCmdNoFilesUsageTemplData struct {
-	pixaTemplData
-}
-
-func (td RootCmdNoFilesUsageTemplData) Message() *i18n.Message {
-	return &i18n.Message{
-		ID:          "root-command-no-files.param-usage",
-		Description: "root command files usage; no of files in sample set",
-		Other:       "files specifies the number of files to sample",
-	}
-}
-
-// RootCmdNoFoldersUsageTemplData
-// 🧊
-type RootCmdNoFoldersUsageTemplData struct {
-	pixaTemplData
-}
-
-func (td RootCmdNoFoldersUsageTemplData) Message() *i18n.Message {
-	return &i18n.Message{
-		ID:          "root-command-no-folders.param-usage",
-		Description: "root command folders usage; no of folders in sample set",
-		Other:       "folders specifies the number of folders to sample",
-	}
-}
-
-// RootCmdSampleUsageTemplData
-// 🧊
-type RootCmdLastUsageTemplData struct {
-	pixaTemplData
-}
-
-func (td RootCmdLastUsageTemplData) Message() *i18n.Message {
-	return &i18n.Message{
-		ID:          "root-command-last.param-usage",
-		Description: "root command last usage; indicates which n items are to be sampled",
-		Other:       "last is a flag that indicates which n items are to be sampled",
-	}
-}
-
 // RootCmdFolderRexExParamUsageTemplData
 // 🧊
 type RootCmdFolderRexExParamUsageTemplData struct {

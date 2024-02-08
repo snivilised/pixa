@@ -18,8 +18,6 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy/orc"
 )
 
-type afterFunc func(*nav.TraverseResult, error)
-
 func summariseAfter(result *nav.TraverseResult, err error) {
 	measure := fmt.Sprintf("started: '%v', elapsed: '%v'",
 		result.Session.StartedAt().Format(time.RFC1123), result.Session.Elapsed(),
@@ -42,6 +40,7 @@ type EntryBase struct {
 	//
 	Inputs      *common.RootCommandInputs
 	Agent       common.ExecutionAgent
+	Interaction common.UserInteraction
 	Viper       configuration.ViperConfig
 	Options     *nav.TraverseOptions
 	Registry    *orc.ControllerRegistry
@@ -150,11 +149,11 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	o.Monitor.Log = e.Log
 }
 
-func (e *EntryBase) navigate(
+func (e *EntryBase) navigateLegacy(
 	optionsFn nav.TraverseOptionFn,
 	with nav.CreateNewRunnerWith,
 	resumption *nav.Resumption,
-	after ...afterFunc,
+	after ...common.AfterFunc,
 ) error {
 	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal", e.Log)
 	wgan.Add(1, navigatorRoutineName)

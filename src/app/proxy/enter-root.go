@@ -86,7 +86,7 @@ func (e *RootEntry) run() error {
 		}
 	}
 
-	return e.navigate(
+	return e.navigateLegacy(
 		principal,
 		runnerWith,
 		nilResumption,

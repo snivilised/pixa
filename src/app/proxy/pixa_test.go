@@ -71,6 +71,7 @@ var _ = Describe("pixa", Ordered, func() {
 			directory := helpers.Path(root, entry.relative)
 			options := []string{
 				common.Definitions.Commands.Shrink, directory,
+				"--no-tui",
 			}
 
 			args := options

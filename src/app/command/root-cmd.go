@@ -6,19 +6,19 @@ package command
 import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
-	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/i18n"
 )
 
 const (
-	RootPsName        = "root-ps"
-	PreviewFamName    = "preview-family"
-	WorkerPoolFamName = "worker-pool-family"
-	FoldersFamName    = "folders-family"
-	ProfileFamName    = "profile-family"
-	CascadeFamName    = "cascade-family"
+	RootPsName                = "root-ps"
+	PreviewFamName            = "preview-family"
+	WorkerPoolFamName         = "worker-pool-family"
+	FoldersFamName            = "folders-family"
+	ProfileFamName            = "profile-family"
+	CascadeFamName            = "cascade-family"
+	SamplingFamName           = "sampling-family"
+	TextualInteractionFamName = "textual-family"
 )
 
 func Execute() error {
@@ -31,73 +31,15 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	rootCommand := container.Root()
 	paramSet := assistant.NewParamSet[common.RootParameterSet](rootCommand)
 
-	// --sample (pending: sampling-family)
+	// family: sampling [--sample, --no-files, --no-folders, --last]
 	//
-	paramSet.BindBool(&assistant.FlagInfo{
-		Name: "sample",
-		Usage: i18n.LeadsWith(
-			"sample",
-			xi18n.Text(i18n.RootCmdSampleUsageTemplData{}),
-		),
-		Default:            false,
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	},
-		&paramSet.Native.IsSampling,
-	)
+	samplingFam := assistant.NewParamSet[store.SamplingParameterSet](rootCommand)
+	samplingFam.Native.BindAll(samplingFam, rootCommand.PersistentFlags())
 
-	const (
-		defFSItems = uint(3)
-		minFSItems = uint(1)
-		maxFSItems = uint(128)
-	)
-
-	// --no-files (pending: sampling-family)
+	// family: textual-interaction [--no-tui]
 	//
-	paramSet.BindValidatedUintWithin(
-		&assistant.FlagInfo{
-			Name: "no-files",
-			Usage: i18n.LeadsWith(
-				"no-files",
-				xi18n.Text(i18n.RootCmdNoFilesUsageTemplData{}),
-			),
-			Default:            defFSItems,
-			AlternativeFlagSet: rootCommand.PersistentFlags(),
-		},
-		&paramSet.Native.NoFiles,
-		minFSItems,
-		maxFSItems,
-	)
-
-	// --no-folders (pending: sampling-family)
-	//
-	paramSet.BindValidatedUintWithin(
-		&assistant.FlagInfo{
-			Name: "no-folders",
-			Usage: i18n.LeadsWith(
-				"no-folders",
-				xi18n.Text(i18n.RootCmdNoFoldersUsageTemplData{}),
-			),
-			Default:            defFSItems,
-			AlternativeFlagSet: rootCommand.PersistentFlags(),
-		},
-		&paramSet.Native.NoFolders,
-		minFSItems,
-		maxFSItems,
-	)
-
-	// --last (pending: sampling-family)
-	//
-	paramSet.BindBool(&assistant.FlagInfo{
-		Name: "last",
-		Usage: i18n.LeadsWith(
-			"last",
-			xi18n.Text(i18n.RootCmdLastUsageTemplData{}),
-		),
-		Default:            false,
-		AlternativeFlagSet: rootCommand.PersistentFlags(),
-	},
-		&paramSet.Native.Last,
-	)
+	textualFam := assistant.NewParamSet[store.TextualInteractionParameterSet](rootCommand)
+	textualFam.Native.BindAll(textualFam, rootCommand.PersistentFlags())
 
 	// family: preview [--dry-run(D)]
 	//
@@ -133,6 +75,8 @@ func (b *Bootstrap) buildRootCommand(container *assistant.CobraContainer) {
 	// ??? rootCommand.Args = validatePositionalArgs
 
 	container.MustRegisterParamSet(RootPsName, paramSet)
+	container.MustRegisterParamSet(SamplingFamName, samplingFam)
+	container.MustRegisterParamSet(TextualInteractionFamName, textualFam)
 	container.MustRegisterParamSet(PreviewFamName, previewFam)
 	container.MustRegisterParamSet(WorkerPoolFamName, workerPoolFam)
 	container.MustRegisterParamSet(FoldersFamName, foldersFam)
@@ -145,6 +89,12 @@ func (b *Bootstrap) getRootInputs() *common.RootCommandInputs {
 		ParamSet: b.Container.MustGetParamSet(
 			RootPsName,
 		).(*assistant.ParamSet[common.RootParameterSet]),
+		SamplingFam: b.Container.MustGetParamSet(
+			SamplingFamName,
+		).(*assistant.ParamSet[store.SamplingParameterSet]),
+		TextualFam: b.Container.MustGetParamSet(
+			TextualInteractionFamName,
+		).(*assistant.ParamSet[store.TextualInteractionParameterSet]),
 		PreviewFam: b.Container.MustGetParamSet(
 			PreviewFamName,
 		).(*assistant.ParamSet[store.PreviewParameterSet]),
