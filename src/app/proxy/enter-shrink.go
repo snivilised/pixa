@@ -14,6 +14,7 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy/filing"
 	"github.com/snivilised/pixa/src/app/proxy/ipc"
 	"github.com/snivilised/pixa/src/app/proxy/orc"
+	"github.com/snivilised/pixa/src/app/proxy/user"
 )
 
 type ShrinkEntry struct {
@@ -62,6 +63,10 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	o.Notify.OnBegin = func(_ *nav.NavigationState) {
 		fmt.Printf("===> 🛡️  beginning traversal ...\n")
 	}
+
+	if decorator := e.EntryBase.Interaction.Decorate(o.Callback); decorator != nil {
+		o.Callback = decorator
+	}
 }
 
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
@@ -86,11 +91,11 @@ func clearResumeFromWith(with nav.CreateNewRunnerWith) nav.CreateNewRunnerWith {
 func (e *ShrinkEntry) navigateWithLookAhead(
 	with nav.CreateNewRunnerWith,
 	resumption *nav.Resumption,
-	after ...afterFunc,
+	after ...common.AfterFunc,
 ) error {
 	var nilResumption *nav.Resumption
 
-	if err := e.navigate(
+	if err := e.EntryBase.Interaction.Discover(
 		e.LookAheadOptionsFn,
 		clearResumeFromWith(with),
 		nilResumption,
@@ -98,7 +103,7 @@ func (e *ShrinkEntry) navigateWithLookAhead(
 		return errors.Wrap(err, "shrink look-ahead phase failed")
 	}
 
-	return e.navigate(
+	return e.EntryBase.Interaction.Primary(
 		e.PrincipalOptionsFn,
 		with,
 		resumption,
@@ -124,7 +129,7 @@ func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 	return controller.OnNewShrinkItem(item)
 }
 
-func (e *ShrinkEntry) run(_ configuration.ViperConfig) error {
+func (e *ShrinkEntry) run() error {
 	runnerWith := composeWith(e.Inputs.Root)
 	resumption := &nav.Resumption{
 		// actually, we need to come up with a convenient way for the restore
@@ -198,8 +203,12 @@ func EnterShrink(
 
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
-			Inputs:      params.Inputs.Root,
-			Agent:       agent,
+			Inputs: params.Inputs.Root,
+			Agent:  agent,
+			Interaction: user.New(
+				params.Inputs,
+				params.Logger,
+			),
 			Viper:       params.Viper,
 			Log:         params.Logger,
 			Vfs:         params.Vfs,
@@ -218,5 +227,5 @@ func EnterShrink(
 		Inputs: params.Inputs,
 	}
 
-	return entry.run(params.Viper)
+	return entry.run()
 }
