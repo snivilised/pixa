@@ -1,8 +1,6 @@
 package ipc
 
 import (
-	"fmt"
-
 	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 )
@@ -27,10 +25,6 @@ func (a *fakeAgent) Invoke(thirdPartyCL clif.ThirdPartyCommandLine,
 	if err := a.fm.Create(destination, false); err != nil {
 		return err
 	}
-
-	// for this to work, the dry run decorator needs to be in place ...
-	//
-	fmt.Printf("---> 🚀 created fake destination at '%v'\n", destination)
 
 	return a.program.Execute(
 		clif.Expand(before, thirdPartyCL, destination)...,

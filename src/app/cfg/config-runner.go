@@ -83,9 +83,8 @@ func (c *configRunner) path() string {
 
 	if configPath == "" {
 		configPath = c.DefaultPath()
-	} else {
-		fmt.Printf("---> ✨ PIXA_HOME found in environment: '%v'\n", configPath)
 	}
+	// else '✨ PIXA_HOME found in environment'
 
 	return configPath
 }

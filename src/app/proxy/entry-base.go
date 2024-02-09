@@ -141,7 +141,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	// This should not be here; move to root
 	//
 	if e.Registry == nil {
-		e.Registry = orc.NewRegistry(&common.SharedControllerInfo{},
+		e.Registry = orc.NewRegistry(&common.SessionControllerInfo{},
 			e.Inputs.Configs,
 		)
 	}
@@ -154,7 +154,7 @@ func (e *EntryBase) navigateLegacy(
 	with nav.CreateNewRunnerWith,
 	resumption *nav.Resumption,
 	after ...common.AfterFunc,
-) error {
+) (result *nav.TraverseResult, err error) {
 	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal", e.Log)
 	wgan.Add(1, navigatorRoutineName)
 
@@ -175,7 +175,7 @@ func (e *EntryBase) navigateLegacy(
 		},
 	}
 
-	result, err := nav.New().With(with, runnerInfo).Run(
+	result, err = nav.New().With(with, runnerInfo).Run(
 		nav.IfWithPoolUseContext(with, ctx, cancel)...,
 	)
 
@@ -183,5 +183,5 @@ func (e *EntryBase) navigateLegacy(
 		fn(result, err)
 	}
 
-	return err
+	return result, err
 }

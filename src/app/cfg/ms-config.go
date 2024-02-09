@@ -202,11 +202,12 @@ func (c *MsLoggingConfig) TimeFormat() string {
 }
 
 type MsMasterConfig struct {
-	Profiles ProfilesConfigMap `mapstructure:"profiles"`
-	Schemes  SchemesConfigMap  `mapstructure:"schemes"`
-	Sampler  MsSamplerConfig   `mapstructure:"sampler"`
-	Advanced MsAdvancedConfig  `mapstructure:"advanced"`
-	Logging  MsLoggingConfig   `mapstructure:"logging"`
+	Profiles    ProfilesConfigMap   `mapstructure:"profiles"`
+	Schemes     SchemesConfigMap    `mapstructure:"schemes"`
+	Sampler     MsSamplerConfig     `mapstructure:"sampler"`
+	Interaction MsInteractionConfig `mapstructure:"interaction"`
+	Advanced    MsAdvancedConfig    `mapstructure:"advanced"`
+	Logging     MsLoggingConfig     `mapstructure:"logging"`
 }
 
 func (c *MsMasterConfig) Read(vc configuration.ViperConfig) (*common.Configs, error) {
@@ -226,10 +227,11 @@ func (c *MsMasterConfig) Read(vc configuration.ViperConfig) (*common.Configs, er
 		Profiles: MsProfilesConfig{
 			Profiles: c.Profiles,
 		},
-		Schemes:  schemes,
-		Sampler:  &c.Sampler,
-		Advanced: &c.Advanced,
-		Logging:  &c.Logging,
+		Schemes:     schemes,
+		Sampler:     &c.Sampler,
+		Interaction: &c.Interaction,
+		Advanced:    &c.Advanced,
+		Logging:     &c.Logging,
 	}
 
 	return configs, c.validate(configs)

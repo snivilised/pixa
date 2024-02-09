@@ -1,12 +1,12 @@
 package proxy
 
 import (
-	"fmt"
 	"io/fs"
 	"log/slog"
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
@@ -22,15 +22,26 @@ type ShrinkEntry struct {
 	Inputs *common.ShrinkCommandInputs
 }
 
-func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
+func (e *ShrinkEntry) DiscoverOptionsFn(o *nav.TraverseOptions) {
 	e.ConfigureOptions(o)
 	o.Callback = &nav.LabelledTraverseCallback{
-		Label: "LookAhead: Shrink Entry Callback",
+		Label: "Discovery: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
 			if strings.Contains(item.Path, common.Definitions.Filing.DejaVu) {
 				return fs.SkipDir
 			}
 			journal := e.FileManager.Finder().JournalFullPath(item)
+
+			presentation := lo.Ternary(e.Inputs.Root.TextualFam.Native.IsNoTui,
+				"🧩 linear", "💄 textual",
+			)
+
+			e.Log.Debug("💎💎 Shrink Discovery Callback",
+				slog.String("name", item.Extension.Name),
+				slog.String("sub-path", item.Extension.SubPath),
+				slog.Int("depth", item.Extension.Depth),
+				slog.String("presentation", presentation),
+			)
 
 			return e.FileManager.Create(journal, false)
 		},
@@ -40,18 +51,26 @@ func (e *ShrinkEntry) LookAheadOptionsFn(o *nav.TraverseOptions) {
 func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	e.ConfigureOptions(o)
 
-	o.Callback = &nav.LabelledTraverseCallback{
+	o.Notify.OnBegin = func(_ *nav.NavigationState) {
+		e.Log.Info("===> 🛡️  beginning traversal ...")
+	}
+
+	o.Callback = e.EntryBase.Interaction.Decorate(&nav.LabelledTraverseCallback{
 		Label: "Principal: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
 			if strings.Contains(item.Path, common.Definitions.Filing.DejaVu) {
 				return fs.SkipDir
 			}
 
-			depth := item.Extension.Depth
+			presentation := lo.Ternary(e.Inputs.Root.TextualFam.Native.IsNoTui,
+				"🧩 linear", "💄 textual",
+			)
 
 			e.Log.Debug("🌀🌀 Shrink Principle Callback",
-				slog.String("path", item.Extension.SubPath),
-				slog.Int("depth", depth),
+				slog.String("name", item.Extension.Name),
+				slog.String("sub-path", item.Extension.SubPath),
+				slog.Int("depth", item.Extension.Depth),
+				slog.String("presentation", presentation),
 			)
 
 			controller := e.Registry.Get()
@@ -59,14 +78,7 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 
 			return controller.OnNewShrinkItem(item)
 		},
-	}
-	o.Notify.OnBegin = func(_ *nav.NavigationState) {
-		fmt.Printf("===> 🛡️  beginning traversal ...\n")
-	}
-
-	if decorator := e.EntryBase.Interaction.Decorate(o.Callback); decorator != nil {
-		o.Callback = decorator
-	}
+	})
 }
 
 func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
@@ -88,29 +100,6 @@ func clearResumeFromWith(with nav.CreateNewRunnerWith) nav.CreateNewRunnerWith {
 	return (with &^ nav.RunnerWithResume)
 }
 
-func (e *ShrinkEntry) navigateWithLookAhead(
-	with nav.CreateNewRunnerWith,
-	resumption *nav.Resumption,
-	after ...common.AfterFunc,
-) error {
-	var nilResumption *nav.Resumption
-
-	if err := e.EntryBase.Interaction.Discover(
-		e.LookAheadOptionsFn,
-		clearResumeFromWith(with),
-		nilResumption,
-	); err != nil {
-		return errors.Wrap(err, "shrink look-ahead phase failed")
-	}
-
-	return e.EntryBase.Interaction.Primary(
-		e.PrincipalOptionsFn,
-		with,
-		resumption,
-		after...,
-	)
-}
-
 func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 	if strings.HasPrefix(item.Extension.Name, common.Definitions.Filing.DejaVu) {
 		return fs.SkipDir
@@ -119,7 +108,8 @@ func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 	depth := item.Extension.Depth
 
 	e.Log.Debug("🎙️🎙️ Shrink Restore Callback",
-		slog.String("path", item.Extension.SubPath),
+		slog.String("name", item.Extension.Name),
+		slog.String("sub-path", item.Extension.SubPath),
 		slog.Int("depth", depth),
 	)
 
@@ -129,7 +119,7 @@ func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
 	return controller.OnNewShrinkItem(item)
 }
 
-func (e *ShrinkEntry) run() error {
+func (e *ShrinkEntry) run() (result *nav.TraverseResult, err error) {
 	runnerWith := composeWith(e.Inputs.Root)
 	resumption := &nav.Resumption{
 		// actually, we need to come up with a convenient way for the restore
@@ -150,11 +140,14 @@ func (e *ShrinkEntry) run() error {
 		Strategy: nav.ResumeStrategySpawnEn, // TODO: to come from an arg
 	}
 
-	return e.navigateWithLookAhead(
+	result, err = e.EntryBase.Interaction.Traverse(user.NewWalkInfo(e.DiscoverOptionsFn,
+		e.PrincipalOptionsFn,
 		runnerWith,
 		resumption,
-		summariseAfter,
-	)
+		e.Inputs.Root.PreviewFam.Native.DryRun,
+	))
+
+	return result, err
 }
 
 type ShrinkParams struct {
@@ -166,7 +159,7 @@ type ShrinkParams struct {
 
 func EnterShrink(
 	params *ShrinkParams,
-) error {
+) (*nav.TraverseResult, error) {
 	var (
 		agent common.ExecutionAgent
 		err   error
@@ -182,9 +175,7 @@ func EnterShrink(
 		params.Inputs.Root.PreviewFam.Native.DryRun,
 	); err != nil {
 		if errors.Is(err, ipc.ErrUseDummyExecutor) {
-			// todo: notify ui via bubbletea
-			//
-			fmt.Printf("===> 💥💥💥 REVERTING TO DUMMY EXECUTOR !!!!\n")
+			params.Logger.Warn("===> 💥💥💥 REVERTING TO DUMMY EXECUTOR !!!!")
 
 			agent = ipc.Pacify(
 				params.Inputs.Root.Configs.Advanced,
@@ -193,22 +184,23 @@ func EnterShrink(
 				ipc.PacifyWithDummy,
 			)
 		} else if errors.Is(err, ipc.ErrUnsupportedExecutor) {
-			fmt.Printf("===> 💥💥💥 Undefined EXECUTOR: '%v' !!!!\n",
-				params.Inputs.Root.Configs.Advanced.Executable().Symbol(),
+			params.Logger.Error("===> 💥💥💥 Undefined EXECUTOR: '%v' !!!!",
+				slog.String("name", params.Inputs.Root.Configs.Advanced.Executable().Symbol()),
 			)
 
-			return err
+			return nil, err
 		}
 	}
 
+	interaction := user.NewInteraction(
+		params.Inputs,
+		params.Logger,
+	)
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{
-			Inputs: params.Inputs.Root,
-			Agent:  agent,
-			Interaction: user.New(
-				params.Inputs,
-				params.Logger,
-			),
+			Inputs:      params.Inputs.Root,
+			Agent:       agent,
+			Interaction: interaction,
 			Viper:       params.Viper,
 			Log:         params.Logger,
 			Vfs:         params.Vfs,
@@ -216,10 +208,11 @@ func EnterShrink(
 			FilterSetup: &filterSetup{
 				inputs: params.Inputs,
 			},
-			Registry: orc.NewRegistry(&common.SharedControllerInfo{
+			Registry: orc.NewRegistry(&common.SessionControllerInfo{
 				Agent:       agent,
 				Inputs:      params.Inputs,
 				FileManager: fileManager,
+				Interaction: interaction,
 			},
 				params.Inputs.Root.Configs,
 			),

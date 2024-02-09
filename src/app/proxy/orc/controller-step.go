@@ -12,7 +12,7 @@ import (
 // output file names; this is the responsibility of the controller, which uses
 // the path-finder to accomplish that task.
 type controllerStep struct {
-	shared       *common.SharedControllerInfo
+	session      *common.SessionControllerInfo
 	thirdPartyCL clif.ThirdPartyCommandLine
 	profile      string
 	sourcePath   string
@@ -22,7 +22,7 @@ type controllerStep struct {
 
 // Run
 func (s *controllerStep) Run(pi *common.PathInfo) error {
-	folder, file := s.shared.FileManager.Finder().Result(pi)
+	folder, file := s.session.FileManager.Finder().Result(pi)
 	destination := filepath.Join(folder, file)
 
 	// if transparent, then we need to ask the fm to move the
@@ -30,7 +30,17 @@ func (s *controllerStep) Run(pi *common.PathInfo) error {
 	// during setup? See, which mean setup in not working properly in
 	// this scenario.
 
-	return s.shared.Agent.Invoke(
+	err := s.session.Agent.Invoke(
 		s.thirdPartyCL, pi.RunStep.Source, destination,
 	)
+
+	s.session.Interaction.Tick(&common.ProgressMsg{
+		Source:      pi.RunStep.Source,
+		Destination: destination,
+		Scheme:      pi.Scheme,
+		Profile:     s.profile,
+		Err:         err,
+	})
+
+	return err
 }

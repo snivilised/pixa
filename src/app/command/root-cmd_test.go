@@ -63,14 +63,14 @@ var _ = Describe("RootCmd", Ordered, func() {
 		XEntry(
 			nil, &rootTE{
 				given:       "just a positional",
-				commandLine: []string{"./"},
+				commandLine: []string{"./", "--no-tui"},
 			},
 		),
 
 		XEntry(
 			nil, &rootTE{
 				given:       "a family defined switch (--dry-run)",
-				commandLine: []string{"./", "--dry-run"},
+				commandLine: []string{"./", "--dry-run", "--no-tui"},
 			},
 		),
 	)

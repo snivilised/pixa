@@ -25,11 +25,12 @@ func (pc ProfilesConfigMap) Validate(name string) error {
 
 type (
 	Configs struct {
-		Profiles ProfilesConfig
-		Schemes  SchemesConfig
-		Sampler  SamplerConfig
-		Advanced AdvancedConfig
-		Logging  LoggingConfig
+		Profiles    ProfilesConfig
+		Schemes     SchemesConfig
+		Sampler     SamplerConfig
+		Interaction InteractionConfig
+		Advanced    AdvancedConfig
+		Logging     LoggingConfig
 	}
 
 	ConfigInfo struct {
@@ -50,10 +51,6 @@ type (
 		Profile(name string) (clif.ChangedFlagsMap, bool)
 	}
 
-	ProfilesConfigReader interface {
-		Read(viper configuration.ViperConfig) (ProfilesConfig, error)
-	}
-
 	SchemeConfig interface {
 		Profiles() []string
 	}
@@ -63,17 +60,9 @@ type (
 		Scheme(name string) (SchemeConfig, bool)
 	}
 
-	SchemesConfigReader interface {
-		Read(viper configuration.ViperConfig) (SchemesConfig, error)
-	}
-
 	SamplerConfig interface {
 		NoFiles() uint
 		NoFolders() uint
-	}
-
-	SamplerConfigReader interface {
-		Read(viper configuration.ViperConfig) (SamplerConfig, error)
 	}
 
 	ExtensionsConfig interface {
@@ -88,6 +77,14 @@ type (
 		NoRetries() uint
 	}
 
+	TuiConfig interface {
+		PerItemDelay() time.Duration
+	}
+
+	InteractionConfig interface {
+		TuiConfig() TuiConfig
+	}
+
 	AdvancedConfig interface {
 		AbortOnError() bool
 		AdhocLabel() string
@@ -99,10 +96,6 @@ type (
 		Executable() ExecutableConfig
 	}
 
-	AdvancedConfigReader interface {
-		Read(viper configuration.ViperConfig) (AdvancedConfig, error)
-	}
-
 	LoggingConfig interface {
 		Path() string
 		MaxSizeInMb() uint
@@ -110,9 +103,5 @@ type (
 		MaxAgeInDays() uint
 		Level() string
 		TimeFormat() string
-	}
-
-	LoggingConfigReader interface {
-		Read(viper configuration.ViperConfig) (LoggingConfig, error)
 	}
 )
