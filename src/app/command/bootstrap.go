@@ -1,6 +1,7 @@
 package command
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -59,11 +60,12 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
 type Bootstrap struct {
-	Container   *assistant.CobraContainer
-	OptionsInfo ConfigureOptionsInfo
-	Configs     *common.Configs
-	Vfs         storage.VirtualFS
-	Logger      *slog.Logger
+	Container    *assistant.CobraContainer
+	OptionsInfo  ConfigureOptionsInfo
+	Configs      *common.Configs
+	Vfs          storage.VirtualFS
+	Logger       *slog.Logger
+	Presentation common.PresentationOptions
 }
 
 type ConfigureOptionsInfo struct {
@@ -120,9 +122,12 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			Long:    xi18n.Text(i18n.RootCmdLongDescTemplData{}),
 			Version: fmt.Sprintf("'%v'", Version),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				fmt.Printf("		===> 🌷🌷🌷 Root Command...\n")
-
 				inputs := b.getRootInputs()
+
+				if len(args) == 0 {
+					return errors.New("missing directory arg")
+				}
+
 				inputs.ParamSet.Native.Directory = utils.ResolvePath(args[0])
 
 				if inputs.WorkerPoolFam.Native.CPU {
@@ -146,10 +151,13 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 				// ---> execute root core
 				//
 
-				return proxy.EnterRoot(
+				_, err := proxy.EnterRoot(
 					inputs,
 					b.OptionsInfo.Config.Viper,
+					b.Logger,
 				)
+
+				return err
 			},
 		},
 	)

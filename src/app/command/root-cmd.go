@@ -110,6 +110,7 @@ func (b *Bootstrap) getRootInputs() *common.RootCommandInputs {
 		CascadeFam: b.Container.MustGetParamSet(
 			CascadeFamName,
 		).(*assistant.ParamSet[store.CascadeParameterSet]),
-		Configs: b.Configs,
+		Configs:      b.Configs,
+		Presentation: &b.Presentation,
 	}
 }

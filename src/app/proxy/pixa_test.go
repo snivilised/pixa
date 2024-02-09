@@ -28,6 +28,7 @@ type controllerTE struct {
 	should       string
 	exists       bool
 	args         []string
+	isTui        bool
 	dry          bool
 	withFake     bool
 	outputFlag   string
@@ -43,6 +44,56 @@ type controllerTE struct {
 type samplerTE struct {
 	controllerTE
 	scheme string
+}
+
+func augment(entry *samplerTE,
+	args []string, vfs storage.VirtualFS, root, directory string,
+) []string {
+	result := args
+	result = append(result, entry.args...)
+
+	if entry.exists {
+		location := filepath.Join(directory, entry.intermediate, entry.supplement)
+		if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
+			Fail(errors.Wrap(err, err.Error()).Error())
+		}
+	}
+
+	if entry.outputFlag != "" {
+		output := helpers.Path(root, entry.outputFlag)
+		result = append(result, "--output", output)
+	}
+
+	if entry.trashFlag != "" {
+		trash := helpers.Path(root, entry.trashFlag)
+		result = append(result, "--trash", trash)
+	}
+
+	if entry.dry {
+		result = append(result, "--dry-run")
+	}
+
+	return result
+}
+
+func assertInFs(entry *samplerTE, bs *command.Bootstrap, directory string) {
+	vfs := bs.Vfs
+
+	if entry.mandatory != nil && entry.dry {
+		dejaVuSupplement := filepath.Join(common.Definitions.Filing.DejaVu, entry.supplement)
+		supplement := helpers.Path(entry.intermediate, dejaVuSupplement)
+
+		for _, original := range entry.mandatory {
+			originalPath := filepath.Join(supplement, original)
+
+			if entry.withFake {
+				withFake := filing.ComposeFake(original, bs.Configs.Advanced.FakeLabel())
+				originalPath = filepath.Join(directory, withFake)
+			}
+
+			Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
+		}
+	}
 }
 
 var _ = Describe("pixa", Ordered, func() {
@@ -66,39 +117,27 @@ var _ = Describe("pixa", Ordered, func() {
 		)
 	})
 
-	DescribeTable("run",
+	DescribeTable("interactive",
 		func(entry *samplerTE) {
 			directory := helpers.Path(root, entry.relative)
-			options := []string{
-				common.Definitions.Commands.Shrink, directory,
-				"--no-tui",
-			}
-
-			args := options
-			args = append(args, entry.args...)
-
-			if entry.exists {
-				location := filepath.Join(directory, entry.intermediate, entry.supplement)
-				if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
-					Fail(errors.Wrap(err, err.Error()).Error())
-				}
-			}
-
-			if entry.outputFlag != "" {
-				output := helpers.Path(root, entry.outputFlag)
-				args = append(args, "--output", output)
-			}
-			if entry.trashFlag != "" {
-				trash := helpers.Path(root, entry.trashFlag)
-				args = append(args, "--trash", trash)
-			}
-			if entry.dry {
-				args = append(args, "--dry-run")
-			}
+			args := augment(entry,
+				[]string{
+					common.Definitions.Commands.Shrink, directory,
+				},
+				vfs, root, directory,
+			)
 
 			bootstrap := command.Bootstrap{
 				Vfs: vfs,
+				Presentation: common.PresentationOptions{
+					WithoutRenderer: true,
+				},
 			}
+
+			if !entry.isTui {
+				args = append(args, "--no-tui")
+			}
+
 			tester := helpers.CommandTester{
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
@@ -114,21 +153,7 @@ var _ = Describe("pixa", Ordered, func() {
 				fmt.Sprintf("execution result non nil (%v)", err),
 			)
 
-			if entry.mandatory != nil && entry.dry {
-				dejaVuSupplement := filepath.Join(common.Definitions.Filing.DejaVu, entry.supplement)
-				supplement := helpers.Path(entry.intermediate, dejaVuSupplement)
-
-				for _, original := range entry.mandatory {
-					originalPath := filepath.Join(supplement, original)
-
-					if entry.withFake {
-						withFake := filing.ComposeFake(original, bootstrap.Configs.Advanced.FakeLabel())
-						originalPath = filepath.Join(directory, withFake)
-					}
-
-					Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
-				}
-			}
+			assertInFs(entry, &bootstrap, directory)
 		},
 		func(entry *samplerTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'",
@@ -136,6 +161,8 @@ var _ = Describe("pixa", Ordered, func() {
 			)
 		},
 
+		// linear-ui
+		//
 		// full run
 
 		Entry(nil, &samplerTE{
@@ -616,6 +643,36 @@ var _ = Describe("pixa", Ordered, func() {
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplement:   "adaptive/TRASH",
+				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+
+		// textual-ui
+		// https://dev.to/pomdtr/how-to-debug-bubble-tea-applications-in-visual-studio-code-50jp
+		//
+		// full run
+		//
+		// 📚 to attach to dlv debugger, start dlv like this:
+		// dlv debug --headless --listen=:2345 . -- shrink /Users/plastikfan/dev/test --profile blur --files "wonky*" --dry-run
+		// the args come after --
+		// the launch.json does not support args for an attach request, args are only
+		// appropriate for launch
+		//
+
+		XEntry(nil, &samplerTE{
+			controllerTE: controllerTE{
+				given:    "bubbletea tui, full run transparent adhoc, with ex-glob",
+				should:   "full run with ex-glob filter, result file takes place of input",
+				relative: BackyardWorldsPlanet9Scan01,
+				args: []string{
+					"--files", "*Backyard-Worlds*",
+					"--gaussian-blur", "0.51",
+					"--interlace", "line",
+				},
+				isTui:        true,
+				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+				supplement:   "ADHOC/TRASH",
 				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),

@@ -9,17 +9,17 @@ import (
 )
 
 type Controller struct {
-	shared  *common.SharedControllerInfo
+	session *common.SessionControllerInfo
 	private *common.PrivateControllerInfo
 	configs *common.Configs
 }
 
 func New(
-	shared *common.SharedControllerInfo,
+	session *common.SessionControllerInfo,
 	configs *common.Configs,
 ) *Controller {
 	return &Controller{
-		shared:  shared,
+		session: session,
 		private: &common.PrivateControllerInfo{},
 		configs: configs,
 	}
@@ -31,8 +31,8 @@ func (c *Controller) OnNewShrinkItem(item *nav.TraverseItem) error {
 	//
 	pi := &common.PathInfo{
 		Item:    item,
-		Scheme:  c.shared.Inputs.Root.ProfileFam.Native.Scheme,
-		Profile: c.shared.Inputs.Root.ProfileFam.Native.Profile,
+		Scheme:  c.session.Inputs.Root.ProfileFam.Native.Scheme,
+		Profile: c.session.Inputs.Root.ProfileFam.Native.Profile,
 		Origin:  item.Extension.Parent,
 	}
 
@@ -59,32 +59,32 @@ func (c *Controller) sequence(pi *common.PathInfo, fn sequenceFunc) common.Seque
 }
 
 func (c *Controller) profile(pi *common.PathInfo) common.Sequence {
-	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
+	changed := c.session.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
 	combined := c.compose(pi.Profile, changed)
 	step := &controllerStep{
-		shared:       c.shared,
+		session:      c.session,
 		thirdPartyCL: combined,
 		sourcePath:   pi.Item.Path,
 		profile:      pi.Profile,
-		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
+		outputPath:   c.session.Inputs.ParamSet.Native.OutputPath,
 	}
 
 	return common.Sequence{step}
 }
 
 func (c *Controller) scheme(pi *common.PathInfo) common.Sequence {
-	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
+	changed := c.session.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
 	schemeCfg, _ := c.configs.Schemes.Scheme(pi.Scheme) // scheme already validated
 	sequence := make(common.Sequence, 0, len(schemeCfg.Profiles()))
 
 	for _, current := range schemeCfg.Profiles() {
 		combined := c.compose(current, changed)
 		step := &controllerStep{
-			shared:       c.shared,
+			session:      c.session,
 			thirdPartyCL: combined,
 			sourcePath:   pi.Item.Path,
 			profile:      current,
-			outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
+			outputPath:   c.session.Inputs.ParamSet.Native.OutputPath,
 		}
 
 		sequence = append(sequence, step)
@@ -94,12 +94,12 @@ func (c *Controller) scheme(pi *common.PathInfo) common.Sequence {
 }
 
 func (c *Controller) adhoc(pi *common.PathInfo) common.Sequence {
-	changed := c.shared.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
+	changed := c.session.Inputs.ParamSet.Native.ThirdPartySet.LongChangedCL
 	step := &controllerStep{
-		shared:       c.shared,
+		session:      c.session,
 		thirdPartyCL: changed,
 		sourcePath:   pi.Item.Path,
-		outputPath:   c.shared.Inputs.ParamSet.Native.OutputPath,
+		outputPath:   c.session.Inputs.ParamSet.Native.OutputPath,
 	}
 
 	return common.Sequence{step}
@@ -113,7 +113,7 @@ func (c *Controller) compose(
 
 	return cobrass.Evaluate(
 		primary,
-		c.shared.Inputs.ParamSet.Native.ThirdPartySet.KnownBy,
+		c.session.Inputs.ParamSet.Native.ThirdPartySet.KnownBy,
 		secondary,
 	)
 }
@@ -145,7 +145,7 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 	c.private.Pi = common.PathInfo{
 		Item:   item,
 		Origin: item.Parent.Path,
-		Scheme: c.shared.FileManager.Finder().Scheme(),
+		Scheme: c.session.FileManager.Finder().Scheme(),
 	}
 
 	// TODO: need to decide a proper policy for cleaning up
@@ -155,7 +155,7 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 	// Perhaps we have an error policy including one that implements
 	// a retry.
 	//
-	if c.private.Pi.RunStep.Source, err = c.shared.FileManager.Setup(
+	if c.private.Pi.RunStep.Source, err = c.session.FileManager.Setup(
 		&c.private.Pi,
 	); err != nil {
 		return err
@@ -163,7 +163,7 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 
 	iterator.RunAll(each, while)
 
-	return c.shared.FileManager.Tidy(&c.private.Pi)
+	return c.session.FileManager.Tidy(&c.private.Pi)
 }
 
 func (c *Controller) Reset() {}

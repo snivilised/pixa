@@ -3,10 +3,11 @@ package common
 import "github.com/snivilised/extendio/xfs/nav"
 
 type (
-	SharedControllerInfo struct {
+	SessionControllerInfo struct {
 		Agent       ExecutionAgent
 		Inputs      *ShrinkCommandInputs
 		FileManager FileManager
+		Interaction UserInteraction
 	}
 
 	PrivateControllerInfo struct {

@@ -6,13 +6,13 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy/common"
 )
 
-func NewRegistry(shared *common.SharedControllerInfo, configs *common.Configs) *ControllerRegistry {
+func NewRegistry(session *common.SessionControllerInfo, configs *common.Configs) *ControllerRegistry {
 	return &ControllerRegistry{
 		pool: sync.Pool{
 			// see: https://www.sobyte.net/post/2022-03/think-in-sync-pool/
 			//
 			New: func() interface{} {
-				return New(shared, configs)
+				return New(session, configs)
 			},
 		},
 	}

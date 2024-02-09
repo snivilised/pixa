@@ -20,6 +20,9 @@ schemes:
 sampler:
   files: 2
   folders: 1
+interaction:
+  tui:
+    per-item-delay: "1s"
 advanced:
   abort-on-error: false
   overwrite-on-collision: false

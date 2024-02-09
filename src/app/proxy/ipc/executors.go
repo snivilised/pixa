@@ -1,9 +1,7 @@
 package ipc
 
 import (
-	"fmt"
 	"os/exec"
-	"strings"
 )
 
 type ProgramExecutor struct {
@@ -19,11 +17,9 @@ func (e *ProgramExecutor) Look() (string, error) {
 }
 
 func (e *ProgramExecutor) Execute(args ...string) error {
-	fmt.Printf("✨ executing: '%v %v'\n",
-		e.Name,
-		strings.Join(args, " "),
-	)
-
+	_ = args
+	// todo: ✨ executing
+	//
 	// #nosec G204 // prog(e.Name) is pre-vetted
 	cmd := exec.Command(e.Name, args...)
 	err := cmd.Start()
@@ -48,10 +44,8 @@ func (e *DummyExecutor) Look() (string, error) {
 }
 
 func (e *DummyExecutor) Execute(args ...string) error {
-	fmt.Printf("✨ dummy:executing: '%v %v'\n",
-		e.Name,
-		strings.Join(args, " "),
-	)
+	_ = args
+	// todo: ✨ dummy:executing
 
 	return nil
 }

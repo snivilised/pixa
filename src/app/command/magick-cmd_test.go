@@ -40,7 +40,7 @@ var _ = Describe("MagickCmd", Ordered, func() {
 				Vfs: vfs,
 			}
 			tester := helpers.CommandTester{
-				Args: []string{"mag"},
+				Args: []string{"mag", "--no-tui"},
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 					co.Detector = &DetectorStub{}
 					co.Config.Name = common.Definitions.Pixa.ConfigTestFilename

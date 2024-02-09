@@ -45,7 +45,7 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 
 	directory := helpers.Path(root, entry.directory)
 	args := append([]string{common.Definitions.Commands.Shrink, directory}, []string{
-		"--dry-run",
+		"--dry-run", "--no-tui",
 	}...)
 
 	if entry.outputFlag != "" && entry.outputValue != "" {
@@ -229,7 +229,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
 					message:     "with general long form parameters",
-					args:        []string{},
+					args:        []string{"--no-tui"},
 					outputFlag:  "--output",
 					outputValue: "output",
 					configPath:  configPath,
@@ -244,7 +244,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
 					message:    "with general long form parameters",
-					args:       []string{},
+					args:       []string{"--no-tui"},
 					trashFlag:  "--trash",
 					trashValue: "discard",
 					configPath: configPath,
@@ -261,7 +261,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
 					message:     "with general short form parameters",
-					args:        []string{},
+					args:        []string{"--no-tui"},
 					outputFlag:  "-o",
 					outputValue: "output",
 					configPath:  configPath,
@@ -276,7 +276,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				directory: BackyardWorldsPlanet9Scan01,
 				commandTE: commandTE{
 					message:    "with general short form parameters",
-					args:       []string{},
+					args:       []string{"--no-tui"},
 					trashFlag:  "-t",
 					trashValue: "discard",
 					configPath: configPath,

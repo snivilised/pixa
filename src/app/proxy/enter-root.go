@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"fmt"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/samber/lo"
@@ -38,11 +38,15 @@ func (e *RootEntry) principalFn(item *nav.TraverseItem) error {
 		e.files = append(e.files, fullPath)
 	}
 
-	fmt.Printf(
-		"---> %v ROOT-CALLBACK: (depth:%v, files:%v) '%v'\n",
-		indicator,
-		depth, len(item.Children),
-		item.Path,
+	// this need to be done properly, in the mean time just populate the log
+	// (this should probably be implemented inside the interaction ui)
+	//
+	e.Log.Info("---> %v ROOT-CALLBACK",
+		slog.String(">", indicator),
+		slog.Int("depth", depth),
+		slog.Int("files", len(item.Children)),
+		slog.String("name", item.Extension.Name),
+		slog.String("sub-path", item.Extension.SubPath),
 	)
 
 	return nil
@@ -50,11 +54,11 @@ func (e *RootEntry) principalFn(item *nav.TraverseItem) error {
 
 func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	o.Notify.OnBegin = func(_ *nav.NavigationState) {
-		fmt.Printf("===> 🛡️ beginning traversal ...\n")
+		e.Log.Info("===> 🛡️  beginning traversal ...")
 	}
 	o.Notify.OnEnd = func(result *nav.TraverseResult) {
-		fmt.Printf("===> 🚩 finished traversal - folders '%v'\n",
-			result.Metrics.Count(nav.MetricNoFoldersInvokedEn),
+		e.Log.Info("===> 🚩 finished traversal - folders",
+			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))),
 		)
 	}
 	o.Callback = &nav.LabelledTraverseCallback{
@@ -65,16 +69,18 @@ func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	e.EntryBase.ConfigureOptions(o)
 }
 
-func (e *RootEntry) run() error {
+func (e *RootEntry) run() (*nav.TraverseResult, error) {
 	runnerWith := composeWith(e.Inputs)
 
 	// root does not need to support resume
 	//
 	var nilResumption *nav.Resumption
 
-	after := func(result *nav.TraverseResult, err error) {
+	after := func(result *nav.TraverseResult, _ error) {
 		for _, file := range e.files {
-			fmt.Printf("		===> 📒 candidate file: '%v'\n", file)
+			e.Log.Info("📒 candidate file: '%v'",
+				slog.String("file", file),
+			)
 		}
 	}
 
@@ -91,7 +97,7 @@ func (e *RootEntry) run() error {
 		runnerWith,
 		nilResumption,
 		after,
-		summariseAfter,
+		// --> summariseAfter,
 	)
 }
 
@@ -108,13 +114,17 @@ func composeWith(inputs *common.RootCommandInputs) nav.CreateNewRunnerWith {
 func EnterRoot(
 	inputs *common.RootCommandInputs,
 	config configuration.ViperConfig,
-) error {
-	fmt.Printf("---> 📁📁📁 Directory: '%v'\n", inputs.ParamSet.Native.Directory)
+	logger *slog.Logger,
+) (*nav.TraverseResult, error) {
+	logger.Info("---> 📁📁📁 Directory: '%v'",
+		slog.String("directory", inputs.ParamSet.Native.Directory),
+	)
 
 	entry := &RootEntry{
 		EntryBase: EntryBase{
 			Inputs: inputs,
 			Viper:  config,
+			Log:    logger,
 		},
 	}
 

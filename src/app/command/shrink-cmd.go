@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"log/slog"
 	"maps"
 	"strings"
 
@@ -111,10 +112,11 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 					shrinkPS.Native.ThirdPartySet.LongChangedCL = changed
 
-					fmt.Printf("%v %v Running shrink, with args: '%v'\n",
-						common.Definitions.Pixa.Emoji,
-						common.Definitions.Pixa.AppName,
-						strings.Join(args, "/"),
+					b.Logger.Info(
+						fmt.Sprintf("%v %v running shrink",
+							common.Definitions.Pixa.AppName, common.Definitions.Pixa.Emoji,
+						),
+						slog.String("args", strings.Join(args, "/")),
 					)
 
 					inputs := b.getShrinkInputs()
@@ -135,7 +137,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 						}
 					}
 
-					appErr = proxy.EnterShrink(
+					_, appErr = proxy.EnterShrink(
 						&proxy.ShrinkParams{
 							Inputs: inputs,
 							Viper:  b.OptionsInfo.Config.Viper,

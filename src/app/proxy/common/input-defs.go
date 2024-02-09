@@ -99,6 +99,7 @@ type RootCommandInputs struct {
 	SamplingFam   *assistant.ParamSet[store.SamplingParameterSet]
 	TextualFam    *assistant.ParamSet[store.TextualInteractionParameterSet]
 	Configs       *Configs
+	Presentation  *PresentationOptions
 }
 
 type ShrinkCommandInputs struct {
