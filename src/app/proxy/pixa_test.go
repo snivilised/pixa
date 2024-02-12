@@ -652,13 +652,22 @@ var _ = Describe("pixa", Ordered, func() {
 		//
 		// full run
 		//
-		// 📚 to attach to dlv debugger, start dlv like this:
-		// dlv debug --headless --listen=:2345 . -- shrink /Users/plastikfan/dev/test --profile blur --files "wonky*" --dry-run
+		// 📚 debugging bubbletea
+		// !! use the predefined "Attach to dlv" launch task. It requires the task
+		// defined as "Run headless dlv". This starts the dlv debugger in headless mode.
+		// Note that because the args are hardcoded into the dlv task, if you need to
+		// debug pixa with different args, then the dlv task needs to be modified.
+		//
+		// to attach to dlv debugger manually, start dlv like this:
+		// dlv debug --headless --listen=:2345 ./src/app/main/ -- shrink /Users/plastikfan/dev/test --profile blur --files "wonky*" --dry-run
 		// the args come after --
 		// the launch.json does not support args for an attach request, args are only
 		// appropriate for launch
 		//
-
+		// Beware, if you start dlv manually, you will need to define a new launch entry
+		// that does not depend on the "Run headless dlv" as that attempts to start dlv
+		// automatically.
+		//
 		XEntry(nil, &samplerTE{
 			controllerTE: controllerTE{
 				given:    "bubbletea tui, full run transparent adhoc, with ex-glob",
