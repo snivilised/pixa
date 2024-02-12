@@ -2,6 +2,7 @@ package proxy_test
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -17,6 +18,15 @@ import (
 	"github.com/snivilised/pixa/src/internal/helpers"
 	"github.com/snivilised/pixa/src/internal/matchers"
 )
+
+func openInputTTY() (*os.File, error) {
+	f, err := os.Open("/dev/tty")
+	if err != nil {
+		return nil, fmt.Errorf("could not open a new TTY: %w", err)
+	}
+
+	return f, nil
+}
 
 const (
 	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
@@ -80,15 +90,15 @@ func assertInFs(entry *samplerTE, bs *command.Bootstrap, directory string) {
 	vfs := bs.Vfs
 
 	if entry.mandatory != nil && entry.dry {
-		dejaVuSupplement := filepath.Join(common.Definitions.Filing.DejaVu, entry.supplement)
-		supplement := helpers.Path(entry.intermediate, dejaVuSupplement)
+		dejaVu := filepath.Join(common.Definitions.Filing.DejaVu, entry.supplement)
+		supplement := helpers.Path(entry.intermediate, dejaVu)
 
 		for _, original := range entry.mandatory {
 			originalPath := filepath.Join(supplement, original)
 
 			if entry.withFake {
-				withFake := filing.ComposeFake(original, bs.Configs.Advanced.FakeLabel())
-				originalPath = filepath.Join(directory, withFake)
+				fake := filing.ComposeFake(original, bs.Configs.Advanced.FakeLabel())
+				originalPath = filepath.Join(directory, fake)
 			}
 
 			Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
@@ -98,17 +108,28 @@ func assertInFs(entry *samplerTE, bs *command.Bootstrap, directory string) {
 
 var _ = Describe("pixa", Ordered, func() {
 	var (
-		repo       string
-		l10nPath   string
-		configPath string
-		root       string
-		vfs        storage.VirtualFS
+		repo            string
+		l10nPath        string
+		configPath      string
+		root            string
+		vfs             storage.VirtualFS
+		withoutRenderer bool
 	)
 
 	BeforeAll(func() {
 		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
+
+		var (
+			err error
+			f   *os.File
+		)
+
+		if f, err = openInputTTY(); err != nil {
+			withoutRenderer = true
+		}
+		f.Close()
 	})
 
 	BeforeEach(func() {
@@ -130,13 +151,15 @@ var _ = Describe("pixa", Ordered, func() {
 			bootstrap := command.Bootstrap{
 				Vfs: vfs,
 				Presentation: common.PresentationOptions{
-					WithoutRenderer: true,
+					WithoutRenderer: withoutRenderer,
 				},
 			}
 
 			if !entry.isTui {
 				args = append(args, "--no-tui")
 			}
+
+			fmt.Printf("======> XTERM: '%v'\n", os.Getenv("XTERM"))
 
 			tester := helpers.CommandTester{
 				Args: args,

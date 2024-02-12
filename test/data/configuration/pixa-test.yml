@@ -22,7 +22,7 @@ sampler:
   folders: 1
 interaction:
   tui:
-    per-item-delay: "1s"
+    per-item-delay: "1ms"
 advanced:
   abort-on-error: false
   overwrite-on-collision: false
