@@ -112,5 +112,6 @@ func (b *Bootstrap) getRootInputs() *common.RootCommandInputs {
 		).(*assistant.ParamSet[store.CascadeParameterSet]),
 		Configs:      b.Configs,
 		Presentation: &b.Presentation,
+		Observers:    &b.Observers,
 	}
 }

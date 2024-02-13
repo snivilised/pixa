@@ -22,14 +22,9 @@ type controllerStep struct {
 
 // Run
 func (s *controllerStep) Run(pi *common.PathInfo) error {
+	pi.Profile = s.profile
 	folder, file := s.session.FileManager.Finder().Result(pi)
 	destination := filepath.Join(folder, file)
-
-	// if transparent, then we need to ask the fm to move the
-	// existing file out of the way. But shouldn't that already have happened
-	// during setup? See, which mean setup in not working properly in
-	// this scenario.
-
 	err := s.session.Agent.Invoke(
 		s.thirdPartyCL, pi.RunStep.Source, destination,
 	)

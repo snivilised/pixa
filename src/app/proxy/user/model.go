@@ -150,7 +150,7 @@ type bodyContent struct {
 	emoji       string
 }
 
-func (bc *bodyContent) render() string {
+func (bc *bodyContent) view() string {
 	from, source := filepath.Split(bc.source)
 	enriched := fmt.Sprintf("%v %v", bc.emoji, source)
 	to, destination := filepath.Split(bc.destination)
@@ -195,7 +195,7 @@ func (m *model) View() string {
 	`,
 		m.spinner.View(), executable, dry, m.status,
 		info,
-		bc.render(),
+		bc.view(),
 		e,
 		m.level, m.workload,
 	)

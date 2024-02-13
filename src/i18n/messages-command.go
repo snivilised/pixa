@@ -240,6 +240,20 @@ func (td ShrinkCmdTrashPathParamUsageTemplData) Message() *i18n.Message {
 	}
 }
 
+// ShrinkCmdCuddleParamUsageTemplData
+// 🧊
+type ShrinkCmdCuddleParamUsageTemplData struct {
+	pixaTemplData
+}
+
+func (td ShrinkCmdCuddleParamUsageTemplData) Message() *i18n.Message {
+	return &i18n.Message{
+		ID:          "shrink-cmd-cuddle.param-usage",
+		Description: "cuddle specifies that output files to be kept in the same directory as input",
+		Other:       "cuddle specifies that output files to be kept in the same directory as input",
+	}
+}
+
 // ShrinkCmdShortDefinitionTemplData
 // 🧊
 type ShrinkCmdShortDefinitionTemplData struct {

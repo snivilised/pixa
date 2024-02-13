@@ -87,6 +87,11 @@ type ShrinkParameterSet struct {
 	//
 	OutputPath string
 	TrashPath  string
+	Cuddle     bool
+}
+
+type Observers struct {
+	PathFinder PathFinder
 }
 
 type RootCommandInputs struct {
@@ -100,6 +105,7 @@ type RootCommandInputs struct {
 	TextualFam    *assistant.ParamSet[store.TextualInteractionParameterSet]
 	Configs       *Configs
 	Presentation  *PresentationOptions
+	Observers     *Observers
 }
 
 type ShrinkCommandInputs struct {

@@ -52,3 +52,7 @@ func (d *dryRunPathFinderDecorator) Statics() *common.StaticInfo {
 func (d *dryRunPathFinderDecorator) Scheme() string {
 	return d.decorated.Scheme()
 }
+
+func (d *dryRunPathFinderDecorator) Observe(t common.PathFinder) common.PathFinder {
+	return t
+}

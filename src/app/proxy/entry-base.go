@@ -63,11 +63,18 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 			return nil, err
 		}
 
+		statics := e.FileManager.Finder().Statics()
+		jWithoutExt := statics.Journal.WithoutExt
+		trash := statics.TrashTag()
+
 		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
 			name := item.Name()
-			withoutExt := e.FileManager.Finder().Statics().Meta.WithoutExt
 
-			return !strings.HasPrefix(name, ".") && !strings.Contains(name, withoutExt)
+			// todo: filter out sample files
+
+			return !strings.HasPrefix(name, ".") &&
+				!strings.Contains(name, jWithoutExt) &&
+				!strings.Contains(name, trash)
 		}), nil
 	}
 

@@ -34,6 +34,9 @@ func (c *Controller) OnNewShrinkItem(item *nav.TraverseItem) error {
 		Scheme:  c.session.Inputs.Root.ProfileFam.Native.Scheme,
 		Profile: c.session.Inputs.Root.ProfileFam.Native.Profile,
 		Origin:  item.Extension.Parent,
+		Cuddle:  c.session.Inputs.ParamSet.Native.Cuddle,
+		Output:  c.session.Inputs.ParamSet.Native.OutputPath,
+		Trash:   c.session.Inputs.ParamSet.Native.TrashPath,
 	}
 
 	var sequence common.Sequence
@@ -129,6 +132,7 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 		// profile here on pi not set when profile set on command line
 		// but thats ok, since a profile sequence is created and the
 		// executive step itself does have the profile.
+		//
 		return step.Run(&c.private.Pi)
 	}
 	while := func(_ common.Step, e error) bool {
@@ -146,6 +150,9 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 		Item:   item,
 		Origin: item.Parent.Path,
 		Scheme: c.session.FileManager.Finder().Scheme(),
+		Cuddle: c.session.Inputs.ParamSet.Native.Cuddle,
+		Output: c.session.Inputs.ParamSet.Native.OutputPath,
+		Trash:  c.session.Inputs.ParamSet.Native.TrashPath,
 	}
 
 	// TODO: need to decide a proper policy for cleaning up
