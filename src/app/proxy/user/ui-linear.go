@@ -49,7 +49,7 @@ func (ui *linearUI) Tick(msg *common.ProgressMsg) {
 		`
 	===
 %v`,
-		bc.render(),
+		bc.view(),
 	)
 }
 

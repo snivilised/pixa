@@ -7,22 +7,23 @@ import (
 )
 
 type StaticInfo struct {
-	Adhoc  string
-	Meta   JournalMetaInfo
-	Legacy string
-	Trash  string
-	Fake   string
+	Adhoc      string
+	Journal    JournalMetaInfo
+	Legacy     string
+	Trash      string
+	Fake       string
+	Supplement string
 }
 
 func (i *StaticInfo) JournalLocation(name, parent string) string {
-	file := name + i.Meta.Journal
+	file := name + i.Journal.Actual
 	journalFile := filepath.Join(parent, file)
 
 	return journalFile
 }
 
 func (i *StaticInfo) JournalFilterGlob() string {
-	return fmt.Sprintf("*%v%v*", i.Meta.Tag, i.Meta.Core)
+	return fmt.Sprintf("*%v%v*", i.Journal.Discriminator, i.Journal.Core)
 }
 
 func (i *StaticInfo) JournalFilterRegex(sourcePattern, suffixesCSV string) string {
@@ -34,4 +35,12 @@ func (i *StaticInfo) JournalFilterRegex(sourcePattern, suffixesCSV string) strin
 	// the extended glob
 	//
 	return fmt.Sprintf("(?i).%v.*(%v)$", sourcePattern, strings.Join(suffixes, "|"))
+}
+
+func (i *StaticInfo) FileSupplement(baseFilename, supp string) string {
+	return fmt.Sprintf("%v.%v", baseFilename, supp)
+}
+
+func (i *StaticInfo) TrashTag() string {
+	return fmt.Sprintf("$%v$", i.Trash)
 }

@@ -47,6 +47,7 @@ var shrinkShortFlags = cobrass.KnownByCollection{
 	//
 	"output": "o",
 	"trash":  "t",
+	"cuddle": "c",
 	// families:
 	//
 	"cpu":        "C", // family: worker-pool
@@ -198,6 +199,20 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 		},
 	)
 
+	// --cuddle(c)
+	//
+	const (
+		defaultCuddle = false
+	)
+
+	paramSet.BindBool(
+		newShrinkFlagInfoWithShort(
+			xi18n.Text(i18n.ShrinkCmdCuddleParamUsageTemplData{}),
+			defaultCuddle,
+		),
+		&paramSet.Native.Cuddle,
+	)
+
 	// --gaussian-blur(b)
 	//
 	const (
@@ -332,6 +347,21 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 	// validatePositionalArgs
 	//
 	// shrinkCommand.Args = validatePositionalArgs
+
+	// If we allowed --output to be specified with --cuddle, then that would
+	// mean the result files would be written to the output location and then input
+	// files would have to follow the results, leaving the origin without
+	// the input or the output. This could be seen as excessive and unnecessary.
+	// The cuddle option is most useful to the user when running a sample to
+	// enable easier comparison of the result with the input. If the user
+	// really wants to cuddle, then there should be no need to specify an output.
+	// We need to reduce the number of permutations to reduce complexity and
+	// the number of required unit tests; particularly for the path-finder.
+	// 	The same logic applies to cuddle with trash, except that's its even more
+	// acute in this usage scenario, because you never want your new results
+	// to be cuddled into the trash location.
+	paramSet.Command.MarkFlagsMutuallyExclusive("output", "cuddle")
+	paramSet.Command.MarkFlagsMutuallyExclusive("trash", "cuddle")
 
 	return shrinkCommand
 }

@@ -66,6 +66,7 @@ type Bootstrap struct {
 	Vfs          storage.VirtualFS
 	Logger       *slog.Logger
 	Presentation common.PresentationOptions
+	Observers    common.Observers
 }
 
 type ConfigureOptionsInfo struct {

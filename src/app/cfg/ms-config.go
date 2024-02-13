@@ -86,11 +86,12 @@ func (c *MsSamplerConfig) NoFolders() uint {
 }
 
 type MsLabelsConfig struct {
-	Adhoc   string `mapstructure:"adhoc"`
-	Journal string `mapstructure:"journal-suffix"`
-	Legacy  string `mapstructure:"legacy"`
-	Trash   string `mapstructure:"trash"`
-	Fake    string `mapstructure:"fake"`
+	Adhoc      string `mapstructure:"adhoc"`
+	Journal    string `mapstructure:"journal-suffix"`
+	Legacy     string `mapstructure:"legacy"`
+	Trash      string `mapstructure:"trash"`
+	Fake       string `mapstructure:"fake"`
+	Supplement string `mapstructure:"supplement"`
 }
 
 type MsExtensionsConfig struct {
@@ -158,6 +159,10 @@ func (c *MsAdvancedConfig) TrashLabel() string {
 
 func (c *MsAdvancedConfig) FakeLabel() string {
 	return c.LabelsCFG.Fake
+}
+
+func (c *MsAdvancedConfig) SupplementLabel() string {
+	return c.LabelsCFG.Supplement
 }
 
 func (c *MsAdvancedConfig) Extensions() common.ExtensionsConfig {

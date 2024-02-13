@@ -27,7 +27,7 @@ func (e *ShrinkEntry) DiscoverOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = &nav.LabelledTraverseCallback{
 		Label: "Discovery: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			if strings.Contains(item.Path, common.Definitions.Filing.DejaVu) {
+			if strings.Contains(item.Path, e.FileManager.Finder().Statics().TrashTag()) {
 				return fs.SkipDir
 			}
 			journal := e.FileManager.Finder().JournalFullPath(item)
@@ -58,7 +58,7 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 	o.Callback = e.EntryBase.Interaction.Decorate(&nav.LabelledTraverseCallback{
 		Label: "Principal: Shrink Entry Callback",
 		Fn: func(item *nav.TraverseItem) error {
-			if strings.Contains(item.Path, common.Definitions.Filing.DejaVu) {
+			if strings.Contains(item.Path, e.FileManager.Finder().Statics().TrashTag()) {
 				return fs.SkipDir
 			}
 
@@ -101,7 +101,7 @@ func clearResumeFromWith(with nav.CreateNewRunnerWith) nav.CreateNewRunnerWith {
 }
 
 func (e *ShrinkEntry) resumeFn(item *nav.TraverseItem) error {
-	if strings.HasPrefix(item.Extension.Name, common.Definitions.Filing.DejaVu) {
+	if strings.HasPrefix(item.Extension.Name, e.FileManager.Finder().Statics().TrashTag()) {
 		return fs.SkipDir
 	}
 
@@ -165,7 +165,14 @@ func EnterShrink(
 		err   error
 	)
 
-	finder := filing.NewFinder(params.Inputs)
+	finder := filing.NewFinder(&filing.NewFinderInfo{
+		Advanced:   params.Inputs.Root.Configs.Advanced,
+		Schemes:    params.Inputs.Root.Configs.Schemes,
+		OutputPath: params.Inputs.ParamSet.Native.OutputPath,
+		TrashPath:  params.Inputs.ParamSet.Native.TrashPath,
+		DryRun:     params.Inputs.Root.PreviewFam.Native.DryRun,
+		Observer:   params.Inputs.Root.Observers.PathFinder,
+	})
 	fileManager := filing.NewManager(params.Vfs, finder)
 
 	if agent, err = ipc.New(

@@ -31,6 +31,7 @@ type commandTE struct {
 	outputFlag  string
 	outputValue string
 	configPath  string
+	expectError bool
 }
 
 type shrinkTE struct {
@@ -38,7 +39,7 @@ type shrinkTE struct {
 	directory string
 }
 
-func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root string) {
+func assertShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root string) {
 	bootstrap := command.Bootstrap{
 		Vfs: vfs,
 	}
@@ -69,9 +70,16 @@ func expectValidShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root
 	}
 
 	_, err := tester.Execute()
-	Expect(err).Error().To(BeNil(),
-		"should pass validation due to all flag being valid",
-	)
+
+	if entry.expectError {
+		Expect(err).Error().NotTo(BeNil(),
+			"expected error due to invalid flag combination",
+		)
+	} else {
+		Expect(err).Error().To(BeNil(),
+			"should pass validation due to all flag being valid",
+		)
+	}
 }
 
 var _ = Describe("ShrinkCmd", Ordered, func() {
@@ -99,11 +107,16 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 		func(entry *shrinkTE) {
 			entry.directory = BackyardWorldsPlanet9Scan01
 			entry.configPath = configPath
-			expectValidShrinkCmdInvocation(vfs, entry, root)
+
+			assertShrinkCmdInvocation(vfs, entry, root)
 		},
 		func(entry *shrinkTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v'", entry.message)
 		},
+
+		// vanilla in this context just means that other options
+		// such as "--strip", "--interlace", "plane", "--quality", "85",
+		// are provided, in addition to the option being tested
 
 		Entry(nil, &shrinkTE{
 			commandTE: commandTE{
@@ -218,6 +231,46 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			},
 		}),
+
+		// ---->
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message: "long form cuddle",
+				args: []string{
+					"--cuddle",
+				},
+			},
+		}),
+
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message: "short form cuddle",
+				args: []string{
+					"-c",
+				},
+			},
+		}),
+
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message:     "expect error since cuddle not compatible with output",
+				expectError: true,
+				args: []string{
+					"--cuddle", "--output", "results",
+				},
+			},
+		}),
+
+		Entry(nil, &shrinkTE{
+			commandTE: commandTE{
+				message:     "expect error since cuddle not compatible with trash",
+				expectError: true,
+				args: []string{
+					"--cuddle", "--trash", "results",
+				},
+			},
+		}),
+		// <----
 	)
 
 	// NB: these tests are required because state does not work with
@@ -236,7 +289,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(vfs, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
@@ -251,7 +304,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(vfs, entry, root)
 		})
 	})
 
@@ -268,7 +321,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(vfs, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
@@ -283,7 +336,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			expectValidShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(vfs, entry, root)
 		})
 	})
 })

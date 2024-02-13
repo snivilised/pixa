@@ -32,6 +32,7 @@ advanced:
     journal-suffix: journal
     trash: TRASH
     fake: .FAKE
+    supplement: SUPP
   extensions:
     suffixes-csv: "jpg,jpeg,png"
     transforms-csv: lower

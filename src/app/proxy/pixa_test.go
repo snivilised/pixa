@@ -31,7 +31,13 @@ func openInputTTY() (*os.File, error) {
 const (
 	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
 	BackyardWorldsPlanet9Scan02 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02"
+	DejaVu                      = "$TRASH$"
 )
+
+type supplements struct {
+	file      string
+	directory string
+}
 
 type controllerTE struct {
 	given        string
@@ -40,14 +46,14 @@ type controllerTE struct {
 	args         []string
 	isTui        bool
 	dry          bool
+	intermediate string
 	withFake     bool
 	outputFlag   string
 	trashFlag    string
 	profile      string
 	relative     string
 	mandatory    []string
-	intermediate string
-	supplement   string
+	supplements  supplements
 	inputs       []string
 }
 
@@ -63,7 +69,7 @@ func augment(entry *samplerTE,
 	result = append(result, entry.args...)
 
 	if entry.exists {
-		location := filepath.Join(directory, entry.intermediate, entry.supplement)
+		location := filepath.Join(directory, entry.intermediate, entry.supplements.directory)
 		if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
 			Fail(errors.Wrap(err, err.Error()).Error())
 		}
@@ -86,11 +92,15 @@ func augment(entry *samplerTE,
 	return result
 }
 
-func assertInFs(entry *samplerTE, bs *command.Bootstrap, directory string) {
+func assertInFs(entry *samplerTE,
+	bs *command.Bootstrap,
+	directory string,
+	observer *testPathFinderObserver,
+) {
 	vfs := bs.Vfs
 
-	if entry.mandatory != nil && entry.dry {
-		dejaVu := filepath.Join(common.Definitions.Filing.DejaVu, entry.supplement)
+	if entry.mandatory != nil && entry.dry { //
+		dejaVu := filepath.Join(DejaVu, entry.supplements.directory)
 		supplement := helpers.Path(entry.intermediate, dejaVu)
 
 		for _, original := range entry.mandatory {
@@ -104,6 +114,8 @@ func assertInFs(entry *samplerTE, bs *command.Bootstrap, directory string) {
 			Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
 		}
 	}
+
+	observer.assert(entry, directory, vfs)
 }
 
 var _ = Describe("pixa", Ordered, func() {
@@ -140,26 +152,32 @@ var _ = Describe("pixa", Ordered, func() {
 
 	DescribeTable("interactive",
 		func(entry *samplerTE) {
-			directory := helpers.Path(root, entry.relative)
+			origin := helpers.Path(root, entry.relative)
 			args := augment(entry,
 				[]string{
-					common.Definitions.Commands.Shrink, directory,
+					common.Definitions.Commands.Shrink, origin,
 				},
-				vfs, root, directory,
+				vfs, root, origin,
 			)
+
+			observer := &testPathFinderObserver{
+				transfers: make(observerAssertions),
+				results:   make(observerAssertions),
+			}
 
 			bootstrap := command.Bootstrap{
 				Vfs: vfs,
 				Presentation: common.PresentationOptions{
 					WithoutRenderer: withoutRenderer,
 				},
+				Observers: common.Observers{
+					PathFinder: observer,
+				},
 			}
 
 			if !entry.isTui {
 				args = append(args, "--no-tui")
 			}
-
-			fmt.Printf("======> XTERM: '%v'\n", os.Getenv("XTERM"))
 
 			tester := helpers.CommandTester{
 				Args: args,
@@ -176,7 +194,7 @@ var _ = Describe("pixa", Ordered, func() {
 				fmt.Sprintf("execution result non nil (%v)", err),
 			)
 
-			assertInFs(entry, &bootstrap, directory)
+			assertInFs(entry, &bootstrap, origin, observer)
 		},
 		func(entry *samplerTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'",
@@ -188,9 +206,9 @@ var _ = Describe("pixa", Ordered, func() {
 		//
 		// full run
 
-		Entry(nil, &samplerTE{
+		XEntry(nil, &samplerTE{
 			controllerTE: controllerTE{
-				given:    "full run transparent adhoc, with ex-glob",
+				given:    "full/transparent/adhoc/ex-glob",
 				should:   "full run with ex-glob filter, result file takes place of input",
 				relative: BackyardWorldsPlanet9Scan01,
 				args: []string{
@@ -200,8 +218,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					file:      "ADHOC.TRASH",
+					directory: "$pixa$/ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -217,8 +238,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -235,8 +259,13 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					file:      "adaptive",
+					directory: "adaptive/TRASH",
+				},
+
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -254,8 +283,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -272,8 +304,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "singleton/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "singleton/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -290,8 +325,11 @@ var _ = Describe("pixa", Ordered, func() {
 				trashFlag:    "discard",
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "discard",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -309,8 +347,11 @@ var _ = Describe("pixa", Ordered, func() {
 				trashFlag:    "discard",
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "discard",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -328,8 +369,11 @@ var _ = Describe("pixa", Ordered, func() {
 				trashFlag:    "discard",
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "discard",
-				supplement:   "singleton/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					file:      "$SUPP/ADHOC.TRASH",
+					directory: "singleton/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -347,8 +391,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "blur-sf/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "blur-sf/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -365,8 +412,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -382,8 +432,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan02,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan02,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan02,
 			},
 		}),
 
@@ -403,8 +456,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -423,8 +479,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -444,8 +503,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01Last4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01Last4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01Last4,
 			},
 		}),
 
@@ -461,8 +523,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First2,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First2,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First2,
 			},
 		}),
 
@@ -482,8 +547,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -502,8 +570,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "singleton/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "singleton/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -522,8 +593,11 @@ var _ = Describe("pixa", Ordered, func() {
 				trashFlag:    "discard",
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -543,8 +617,11 @@ var _ = Describe("pixa", Ordered, func() {
 				trashFlag:    "discard",
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -564,8 +641,11 @@ var _ = Describe("pixa", Ordered, func() {
 				trashFlag:    "discard",
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
-				supplement:   "singleton/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "singleton/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -585,8 +665,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "blur-sf/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "blur-sf/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -605,8 +688,11 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First4,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -626,8 +712,11 @@ var _ = Describe("pixa", Ordered, func() {
 				withFake:     true,
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -645,8 +734,11 @@ var _ = Describe("pixa", Ordered, func() {
 				withFake:     true,
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -665,8 +757,11 @@ var _ = Describe("pixa", Ordered, func() {
 				withFake:     true,
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "adaptive/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "adaptive/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -704,8 +799,11 @@ var _ = Describe("pixa", Ordered, func() {
 				isTui:        true,
 				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplement:   "ADHOC/TRASH",
-				inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
+				supplements: supplements{
+					// file:      "$SUPP/ADHOC.TRASH",
+					directory: "ADHOC/TRASH",
+				},
+				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 	)

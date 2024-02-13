@@ -92,6 +92,7 @@ type (
 		LegacyLabel() string
 		TrashLabel() string
 		FakeLabel() string
+		SupplementLabel() string
 		Extensions() ExtensionsConfig
 		Executable() ExecutableConfig
 	}

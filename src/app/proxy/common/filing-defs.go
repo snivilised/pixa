@@ -8,11 +8,11 @@ import (
 
 type (
 	JournalMetaInfo struct {
-		Core       string // without any decoration
-		Journal    string // used as part of the journal file name
-		WithoutExt string
-		Extension  string // .txt
-		Tag        string // the journal file discriminator (.$)
+		Core          string // without any decoration
+		Actual        string // used as part of the journal file name
+		WithoutExt    string
+		Extension     string // .txt
+		Discriminator string // the journal/sample file discriminator (.$)
 	}
 
 	PathInfo struct {
@@ -21,6 +21,9 @@ type (
 		Scheme  string
 		Profile string
 		RunStep RunStepInfo
+		Cuddle  bool
+		Output  string
+		Trash   string
 	}
 
 	PathFinder interface {
@@ -30,6 +33,7 @@ type (
 		JournalFullPath(item *nav.TraverseItem) string
 		Statics() *StaticInfo
 		Scheme() string
+		Observe(o PathFinder) PathFinder
 	}
 
 	FileManager interface {

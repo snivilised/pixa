@@ -49,9 +49,8 @@ type (
 	}
 
 	filingDefs struct {
-		DejaVu     string
-		JournalExt string
-		JournalTag string
+		JournalExt    string
+		Discriminator string // helps to identify files that should be filtered out
 	}
 
 	definitions struct {
@@ -93,8 +92,7 @@ var Definitions = definitions{
 		Home: "PIXA_HOME",
 	},
 	Filing: filingDefs{
-		DejaVu:     fmt.Sprintf("$%v$", appName),
-		JournalExt: ".txt",
-		JournalTag: ".$",
+		JournalExt:    ".txt",
+		Discriminator: ".$",
 	},
 }
