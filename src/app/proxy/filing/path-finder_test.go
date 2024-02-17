@@ -101,7 +101,6 @@ var _ = Describe("PathFinder", Ordered, func() {
 				Scheme:     entry.scheme,
 				OutputPath: entry.output,
 				TrashPath:  entry.trash,
-				DryRun:     entry.dry,
 			})
 
 			origin := filepath.Join("foo", "sessions", "scan01")

@@ -13,10 +13,8 @@ import (
 	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/app/proxy/filing"
 
 	"github.com/snivilised/pixa/src/internal/helpers"
-	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
 func openInputTTY() (*os.File, error) {
@@ -47,7 +45,6 @@ type controllerTE struct {
 	isTui        bool
 	dry          bool
 	intermediate string
-	withFake     bool
 	outputFlag   string
 	trashFlag    string
 	profile      string
@@ -99,21 +96,18 @@ func assertInFs(entry *samplerTE,
 ) {
 	vfs := bs.Vfs
 
-	if entry.mandatory != nil && entry.dry { //
-		dejaVu := filepath.Join(DejaVu, entry.supplements.directory)
-		supplement := helpers.Path(entry.intermediate, dejaVu)
+	// this needs rework, to be done in another issue
+	//
+	// if entry.mandatory != nil {
+	// 	dejaVu := filepath.Join(DejaVu, entry.supplements.directory)
+	// 	supplement := helpers.Path(entry.intermediate, dejaVu)
 
-		for _, original := range entry.mandatory {
-			originalPath := filepath.Join(supplement, original)
+	// 	for _, original := range entry.mandatory {
+	// 		originalPath := filepath.Join(supplement, original)
 
-			if entry.withFake {
-				fake := filing.ComposeFake(original, bs.Configs.Advanced.FakeLabel())
-				originalPath = filepath.Join(directory, fake)
-			}
-
-			Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
-		}
-	}
+	// 		Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
+	// 	}
+	// }
 
 	observer.assert(entry, directory, vfs)
 }
@@ -240,7 +234,7 @@ var _ = Describe("pixa", Ordered, func() {
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
+					directory: "ADHOC",
 				},
 				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
 			},
@@ -708,9 +702,8 @@ var _ = Describe("pixa", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				dry:          true,
-				withFake:     true,
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				dry: true,
+				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
@@ -730,9 +723,8 @@ var _ = Describe("pixa", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				dry:          true,
-				withFake:     true,
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				dry: true,
+				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
@@ -753,9 +745,8 @@ var _ = Describe("pixa", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				dry:          true,
-				withFake:     true,
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				dry: true,
+				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",

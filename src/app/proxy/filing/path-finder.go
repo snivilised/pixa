@@ -17,7 +17,6 @@ type NewFinderInfo struct {
 	Profile    string
 	OutputPath string
 	TrashPath  string
-	DryRun     bool
 	Observer   common.PathFinder
 }
 
@@ -41,20 +40,7 @@ func NewFinder(
 		},
 	}
 
-	finder.init(&NewFinderInfo{
-		Advanced:   info.Advanced,
-		Schemes:    info.Schemes,
-		OutputPath: info.OutputPath,
-		TrashPath:  info.TrashPath,
-		DryRun:     info.DryRun,
-		Observer:   info.Observer,
-	})
-
-	if info.DryRun {
-		return &dryRunPathFinderDecorator{
-			decorated: finder,
-		}
-	}
+	finder.init(info)
 
 	if info.Observer != nil {
 		return info.Observer.Observe(finder)
