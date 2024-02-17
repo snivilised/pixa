@@ -16,10 +16,11 @@ const (
 	errorDestination = ""
 )
 
-func NewManager(vfs storage.VirtualFS, finder common.PathFinder) common.FileManager {
+func NewManager(vfs storage.VirtualFS, finder common.PathFinder, dryRun bool) common.FileManager {
 	return &FileManager{
 		Vfs:    vfs,
 		finder: finder,
+		dryRun: dryRun,
 	}
 }
 
@@ -28,6 +29,7 @@ func NewManager(vfs storage.VirtualFS, finder common.PathFinder) common.FileMana
 type FileManager struct {
 	Vfs    storage.VirtualFS
 	finder common.PathFinder
+	dryRun bool
 }
 
 func (fm *FileManager) Finder() common.PathFinder {
@@ -66,31 +68,35 @@ func (fm *FileManager) Setup(pi *common.PathInfo) (destination string, err error
 	// we don't want to rename/move the source...
 	//
 	if folder, file := fm.finder.Transfer(pi); folder != "" {
-		if err = fm.Vfs.MkdirAll(folder, perm); err != nil {
-			return errorDestination, errors.Wrapf(
-				err, "could not create parent setup for '%v'", pi.Item.Path,
-			)
+		if !fm.dryRun {
+			if err = fm.Vfs.MkdirAll(folder, perm); err != nil {
+				return errorDestination, errors.Wrapf(
+					err, "could not create parent setup for '%v'", pi.Item.Path,
+				)
+			}
 		}
 
 		destination = filepath.Join(folder, file)
 
-		if !fm.Vfs.FileExists(pi.Item.Path) {
-			return errorDestination, fmt.Errorf(
-				"source file: '%v' does not exist", pi.Item.Path,
-			)
-		}
-
-		if pi.Item.Path != destination {
-			if fm.Vfs.FileExists(destination) {
+		if !fm.dryRun {
+			if !fm.Vfs.FileExists(pi.Item.Path) {
 				return errorDestination, fmt.Errorf(
-					"destination file: '%v' already exists", destination,
+					"source file: '%v' does not exist", pi.Item.Path,
 				)
 			}
 
-			if err := fm.Vfs.Rename(pi.Item.Path, destination); err != nil {
-				return errorDestination, errors.Wrapf(
-					err, "could not complete setup for '%v'", pi.Item.Path,
-				)
+			if pi.Item.Path != destination {
+				if fm.Vfs.FileExists(destination) {
+					return errorDestination, fmt.Errorf(
+						"destination file: '%v' already exists", destination,
+					)
+				}
+
+				if err := fm.Vfs.Rename(pi.Item.Path, destination); err != nil {
+					return errorDestination, errors.Wrapf(
+						err, "could not complete setup for '%v'", pi.Item.Path,
+					)
+				}
 			}
 		}
 	}
@@ -99,6 +105,10 @@ func (fm *FileManager) Setup(pi *common.PathInfo) (destination string, err error
 }
 
 func (fm *FileManager) Tidy(pi *common.PathInfo) error {
+	if fm.dryRun {
+		return nil
+	}
+
 	journalFile := fm.finder.JournalFullPath(pi.Item)
 
 	if !fm.Vfs.FileExists(journalFile) {

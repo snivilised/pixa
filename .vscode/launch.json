@@ -28,7 +28,7 @@
       "args": ["shrink", "~/music/"]
     },
     {
-      "name": "Attach to dlv",
+      "name": "Attach to dlv (profile)",
       "type": "go",
       "debugAdapter": "dlv-dap",
       "request": "attach",
@@ -36,7 +36,18 @@
       "remotePath": "${workspaceFolder}",
       "port": 2345,
       "host": "127.0.0.1",
-      "preLaunchTask": "Run headless dlv",
+      "preLaunchTask": "Run headless dlv (profile)",
+    },
+    {
+      "name": "Attach to dlv (scheme)",
+      "type": "go",
+      "debugAdapter": "dlv-dap",
+      "request": "attach",
+      "mode": "remote",
+      "remotePath": "${workspaceFolder}",
+      "port": 2345,
+      "host": "127.0.0.1",
+      "preLaunchTask": "Run headless dlv (scheme)",
     }
   ]
 }

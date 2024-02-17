@@ -43,6 +43,10 @@ func (e *ShrinkEntry) DiscoverOptionsFn(o *nav.TraverseOptions) {
 				slog.String("presentation", presentation),
 			)
 
+			if e.Inputs.Root.PreviewFam.Native.DryRun {
+				return nil
+			}
+
 			return e.FileManager.Create(journal, false)
 		},
 	}
@@ -168,12 +172,14 @@ func EnterShrink(
 	finder := filing.NewFinder(&filing.NewFinderInfo{
 		Advanced:   params.Inputs.Root.Configs.Advanced,
 		Schemes:    params.Inputs.Root.Configs.Schemes,
+		Scheme:     params.Inputs.Root.ProfileFam.Native.Scheme,
 		OutputPath: params.Inputs.ParamSet.Native.OutputPath,
 		TrashPath:  params.Inputs.ParamSet.Native.TrashPath,
-		DryRun:     params.Inputs.Root.PreviewFam.Native.DryRun,
 		Observer:   params.Inputs.Root.Observers.PathFinder,
 	})
-	fileManager := filing.NewManager(params.Vfs, finder)
+	fileManager := filing.NewManager(params.Vfs, finder,
+		params.Inputs.Root.PreviewFam.Native.DryRun,
+	)
 
 	if agent, err = ipc.New(
 		params.Inputs.Root.Configs.Advanced,
