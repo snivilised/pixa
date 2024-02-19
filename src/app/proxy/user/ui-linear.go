@@ -25,7 +25,7 @@ func (ui *linearUI) Traverse(di common.DriverTraverseInfo) (*nav.TraverseResult,
 	// we could simple call Next, then call the principal, but we
 	// could change the meaning of next which automatically calls principal
 	//
-	with := clearResumeFromWith(di.RunWith())
+	with := di.RunWith()
 
 	if _, err := ui.navigate(di, clearResumeFromWith(with)); err != nil {
 		return nil, errors.Wrap(err, "shrink look-ahead phase failed")
@@ -42,7 +42,7 @@ func (ui *linearUI) Tick(msg *common.ProgressMsg) {
 	bc := bodyContent{
 		source:      msg.Source,
 		destination: msg.Destination,
-		emoji:       randomEmoji(),
+		emoji:       randemoji(),
 	}
 
 	fmt.Printf(

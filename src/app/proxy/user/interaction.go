@@ -72,7 +72,7 @@ func (u *interaction) navigate(ci common.ClientTraverseInfo,
 	return result, err
 }
 
-func randomEmoji() string {
+func randemoji() string {
 	return string(emojis[rand.Intn(len(emojis))]) //nolint:gosec // foo
 }
 

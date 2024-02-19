@@ -11,14 +11,14 @@ type walkInfo struct {
 	activeOptionsFn    nav.TraverseOptionFn
 	with               nav.CreateNewRunnerWith
 	resumption         *nav.Resumption
-	dryRun             bool
+	inputs             *common.ShrinkCommandInputs
 }
 
 func NewWalkInfo(discoverOptionsFn nav.TraverseOptionFn,
 	principalOptionsFn nav.TraverseOptionFn,
 	with nav.CreateNewRunnerWith,
 	resumption *nav.Resumption,
-	dryRun bool,
+	inputs *common.ShrinkCommandInputs,
 ) common.DriverTraverseInfo {
 	return &walkInfo{
 		discoverOptionsFn:  discoverOptionsFn,
@@ -26,7 +26,7 @@ func NewWalkInfo(discoverOptionsFn nav.TraverseOptionFn,
 		activeOptionsFn:    discoverOptionsFn,
 		with:               with,
 		resumption:         resumption,
-		dryRun:             dryRun,
+		inputs:             inputs,
 	}
 }
 
@@ -43,7 +43,7 @@ func (wi *walkInfo) Resumption() *nav.Resumption {
 }
 
 func (wi *walkInfo) IsDryRun() bool {
-	return wi.dryRun
+	return wi.inputs.Root.PreviewFam.Native.DryRun
 }
 
 func (wi *walkInfo) Next() {

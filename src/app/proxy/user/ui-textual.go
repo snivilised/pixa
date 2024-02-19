@@ -33,6 +33,7 @@ func (ui *textualUI) Decorate(target *nav.LabelledTraverseCallback) *nav.Labelle
 func (ui *textualUI) Traverse(di common.DriverTraverseInfo,
 ) (*nav.TraverseResult, error) {
 	ui.m = &model{
+		inputs:     ui.inputs,
 		executable: ui.inputs.Root.Configs.Advanced.Executable().Symbol(),
 		status:     "🔎 discovering ...",
 		latest: JobDescription{

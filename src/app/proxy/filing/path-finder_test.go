@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/samber/lo"
 
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/pixa/src/app/cfg"
@@ -14,22 +15,20 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy/filing"
 )
 
-type supplements struct {
+type reasons struct {
 	folder string
 	file   string
 }
-
-type reasons = supplements
 
 type asserter func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE)
 
 type pfTE struct {
 	given          string
 	should         string
-	reasons        supplements
+	reasons        reasons
 	scheme         string
 	profile        string
-	supplements    supplements
+	supplement     string
 	output         string
 	trash          string
 	cuddle         bool
@@ -95,12 +94,22 @@ var _ = Describe("PathFinder", Ordered, func() {
 
 	DescribeTable("core",
 		func(entry *pfTE) {
+			scheme, _ := schemes.Scheme(entry.scheme)
+			noProfiles := lo.TernaryF(scheme == nil,
+				func() uint {
+					return 1
+				},
+				func() uint {
+					return uint(len(scheme.Profiles()))
+				},
+			)
 			finder := filing.NewFinder(&filing.NewFinderInfo{
 				Advanced:   advanced,
 				Schemes:    schemes,
 				Scheme:     entry.scheme,
 				OutputPath: entry.output,
 				TrashPath:  entry.trash,
+				Arity:      noProfiles,
 			})
 
 			origin := filepath.Join("foo", "sessions", "scan01")
@@ -147,13 +156,11 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way and not cuddled",
 			},
-			profile: "blur",
-			supplements: supplements{
-				folder: filepath.Join("$TRASH$", "blur"),
-			},
+			profile:        "blur",
+			supplement:     filepath.Join("$TRASH$", "blur"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplements.folder)), because(entry.reasons.folder))
+				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplement)), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -179,16 +186,14 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "not modify folder to enable cuddle",
 				file:   "cuddled file needs to be disambiguated from the input",
 			},
-			profile: "blur",
-			supplements: supplements{
-				file: fmt.Sprintf("%v.%v", "$TRASH$", "blur"),
-			},
+			profile:        "blur",
+			supplement:     fmt.Sprintf("%v.%v", "$TRASH$", "blur"),
 			actionTransfer: true,
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
-					pi.Item.Extension.Name, entry.supplements.file, statics,
+					pi.Item.Extension.Name, entry.supplement, statics,
 				)
 				Expect(file).To(Equal(supplemented), because(entry.reasons.file, file))
 			},
@@ -217,14 +222,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way and not cuddled",
 			},
-			scheme:  "blur-sf",
-			profile: "blur",
-			supplements: supplements{
-				folder: filepath.Join("$TRASH$", "blur-sf", "blur"),
-			},
+			scheme:         "blur-sf",
+			profile:        "blur",
+			supplement:     filepath.Join("$TRASH$", "blur-sf", "blur"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplements.folder)), because(entry.reasons.folder))
+				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplement)), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -238,14 +241,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way and not cuddled",
 			},
-			scheme:  "blur-sf",
-			profile: "sf",
-			supplements: supplements{
-				folder: filepath.Join("$TRASH$", "blur-sf", "sf"),
-			},
+			scheme:         "blur-sf",
+			profile:        "sf",
+			supplement:     filepath.Join("$TRASH$", "blur-sf", "sf"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplements.folder)), because(entry.reasons.folder))
+				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplement)), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -259,18 +260,15 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "not modify folder to enable cuddle",
 				file:   "cuddled file needs to be disambiguated from the input",
 			},
-			scheme:  "blur-sf",
-			profile: "blur",
-			supplements: supplements{
-				folder: "",
-				file:   "$TRASH$.blur-sf.blur",
-			},
+			scheme:         "blur-sf",
+			profile:        "blur",
+			supplement:     "$TRASH$.blur-sf.blur",
 			actionTransfer: true,
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
-					pi.Item.Extension.Name, entry.supplements.file, statics,
+					pi.Item.Extension.Name, entry.supplement, statics,
 				)
 				Expect(file).To(Equal(supplemented), because(entry.reasons.file, file))
 			},
@@ -285,18 +283,15 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "not modify folder to enable cuddle",
 				file:   "cuddled file needs to be disambiguated from the input",
 			},
-			scheme:  "blur-sf",
-			profile: "sf",
-			supplements: supplements{
-				folder: "",
-				file:   "$TRASH$.blur-sf.sf",
-			},
+			scheme:         "blur-sf",
+			profile:        "sf",
+			supplement:     "$TRASH$.blur-sf.sf",
 			actionTransfer: true,
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
-					pi.Item.Extension.Name, entry.supplements.file, statics,
+					pi.Item.Extension.Name, entry.supplement, statics,
 				)
 				Expect(file).To(Equal(supplemented), because(entry.reasons.file))
 			},
@@ -312,12 +307,10 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way and not cuddled",
 			},
-			supplements: supplements{
-				folder: filepath.Join("$TRASH$", "ADHOC"),
-			},
+			supplement:     filepath.Join("$TRASH$", "ADHOC"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplements.folder)), because(entry.reasons.folder))
+				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplement)), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -345,14 +338,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way and not cuddled",
 			},
-			profile: "blur",
-			trash:   filepath.Join("foo", "sessions", "scan01", "rubbish"),
-			supplements: supplements{
-				folder: filepath.Join("$TRASH$", "blur"),
-			},
+			profile:        "blur",
+			trash:          filepath.Join("foo", "sessions", "scan01", "rubbish"),
+			supplement:     filepath.Join("$TRASH$", "blur"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(entry.trash, entry.supplements.folder)), because(entry.reasons.folder, folder))
+				Expect(folder).To(Equal(filepath.Join(entry.trash, entry.supplement)), because(entry.reasons.folder, folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -381,15 +372,13 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way",
 			},
-			scheme:  "blur-sf",
-			profile: "blur",
-			trash:   filepath.Join("foo", "sessions", "scan01", "rubbish"),
-			supplements: supplements{
-				folder: filepath.Join("rubbish", "$TRASH$", "blur-sf", "blur"),
-			},
+			scheme:         "blur-sf",
+			profile:        "blur",
+			trash:          filepath.Join("foo", "sessions", "scan01", "rubbish"),
+			supplement:     filepath.Join("rubbish", "$TRASH$", "blur-sf", "blur"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplements.folder)), because(entry.reasons.folder))
+				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplement)), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -403,15 +392,13 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "transparency, result should take place of input in same folder",
 				file:   "file should be moved out of the way",
 			},
-			scheme:  "blur-sf",
-			profile: "sf",
-			trash:   filepath.Join("foo", "sessions", "scan01", "rubbish"),
-			supplements: supplements{
-				folder: filepath.Join("rubbish", "$TRASH$", "blur-sf", "sf"),
-			},
+			scheme:         "blur-sf",
+			profile:        "sf",
+			trash:          filepath.Join("foo", "sessions", "scan01", "rubbish"),
+			supplement:     filepath.Join("rubbish", "$TRASH$", "blur-sf", "sf"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplements.folder)), because(entry.reasons.folder))
+				Expect(folder).To(Equal(filepath.Join(pi.Origin, entry.supplement)), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
 			},
 		}),
@@ -427,11 +414,9 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "no transfer required",
 				file:   "input file left alone",
 			},
-			profile: "blur",
-			output:  filepath.Join("foo", "sessions", "scan01", "results"),
-			supplements: supplements{
-				folder: filepath.Join("$TRASH$", "blur"),
-			},
+			profile:        "blur",
+			output:         filepath.Join("foo", "sessions", "scan01", "results"),
+			supplement:     filepath.Join("$TRASH$", "blur"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(BeEmpty(), because(entry.reasons.folder, folder))
@@ -446,14 +431,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "result should be send to supplemented output folder",
 				file:   "filename only needs to match input filename because the folder is supplemented",
 			},
-			profile: "blur",
-			output:  filepath.Join("foo", "sessions", "scan01", "results"),
-			supplements: supplements{
-				folder: "blur",
-			},
+			profile:    "blur",
+			output:     filepath.Join("foo", "sessions", "scan01", "results"),
+			supplement: "blur",
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				supplemented := filing.SupplementFolder(
-					entry.output, entry.supplements.folder,
+					entry.output, entry.supplement,
 				)
 				Expect(folder).To(Equal(supplemented), because(entry.reasons.folder, folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
@@ -469,12 +452,9 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "no transfer required",
 				file:   "input file left alone",
 			},
-			scheme:  "blur-sf",
-			profile: "blur",
-			output:  filepath.Join("foo", "sessions", "scan01", "results"),
-			supplements: supplements{
-				folder: filepath.Join("rubbish", "$TRASH$", "blur-sf", "blur"),
-			},
+			scheme:         "blur-sf",
+			profile:        "blur",
+			output:         filepath.Join("foo", "sessions", "scan01", "results"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
@@ -491,12 +471,9 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "no transfer required",
 				file:   "input file left alone",
 			},
-			scheme:  "blur-sf",
-			profile: "sf",
-			output:  filepath.Join("foo", "sessions", "scan01", "results"),
-			supplements: supplements{
-				folder: filepath.Join("rubbish", "$TRASH$", "blur-sf", "sf"),
-			},
+			scheme:         "blur-sf",
+			profile:        "sf",
+			output:         filepath.Join("foo", "sessions", "scan01", "results"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
@@ -529,13 +506,11 @@ var _ = Describe("PathFinder", Ordered, func() {
 				folder: "result should be send to supplemented output folder",
 				file:   "filename only needs to match input filename because the folder is supplemented",
 			},
-			output: filepath.Join("foo", "sessions", "scan01", "results"),
-			supplements: supplements{
-				folder: "ADHOC",
-			},
+			output:     filepath.Join("foo", "sessions", "scan01", "results"),
+			supplement: "ADHOC",
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				supplemented := filing.SupplementFolder(
-					entry.output, entry.supplements.folder,
+					entry.output, entry.supplement,
 				)
 				Expect(folder).To(Equal(supplemented), because(entry.reasons.folder))
 				Expect(file).To(Equal(pi.Item.Extension.Name), because(entry.reasons.file))
