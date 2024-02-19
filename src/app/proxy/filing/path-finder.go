@@ -18,6 +18,7 @@ type NewFinderInfo struct {
 	OutputPath string
 	TrashPath  string
 	Observer   common.PathFinder
+	Arity      uint
 }
 
 func NewFinder(
@@ -179,7 +180,7 @@ func (f *PathFinder) init(info *NewFinderInfo) {
 	// When the user specifies an alternative location for the results to be sent to
 	// with the --output flag, then the input is no longer transparent, as the user has
 	// to go to the output location to see the result.
-	f.transparentInput = info.OutputPath == ""
+	f.transparentInput = info.OutputPath == "" && info.Arity == 1
 
 	journal := info.Advanced.JournalLabel()
 

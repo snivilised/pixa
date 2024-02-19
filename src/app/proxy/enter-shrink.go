@@ -148,7 +148,7 @@ func (e *ShrinkEntry) run() (result *nav.TraverseResult, err error) {
 		e.PrincipalOptionsFn,
 		runnerWith,
 		resumption,
-		e.Inputs.Root.PreviewFam.Native.DryRun,
+		e.Inputs,
 	))
 
 	return result, err
@@ -169,13 +169,25 @@ func EnterShrink(
 		err   error
 	)
 
+	schemes := params.Inputs.Root.Configs.Schemes
+	selectedScheme := params.Inputs.Root.ProfileFam.Native.Scheme
+	scheme, _ := schemes.Scheme(selectedScheme)
+	noProfiles := lo.TernaryF(scheme == nil,
+		func() uint {
+			return 1
+		},
+		func() uint {
+			return uint(len(scheme.Profiles()))
+		},
+	)
 	finder := filing.NewFinder(&filing.NewFinderInfo{
 		Advanced:   params.Inputs.Root.Configs.Advanced,
-		Schemes:    params.Inputs.Root.Configs.Schemes,
-		Scheme:     params.Inputs.Root.ProfileFam.Native.Scheme,
+		Schemes:    schemes,
+		Scheme:     selectedScheme,
 		OutputPath: params.Inputs.ParamSet.Native.OutputPath,
 		TrashPath:  params.Inputs.ParamSet.Native.TrashPath,
 		Observer:   params.Inputs.Root.Observers.PathFinder,
+		Arity:      noProfiles,
 	})
 	fileManager := filing.NewManager(params.Vfs, finder,
 		params.Inputs.Root.PreviewFam.Native.DryRun,

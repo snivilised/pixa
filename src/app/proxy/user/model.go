@@ -12,6 +12,8 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy/common"
 )
 
+type actionType string
+
 type JobDescription struct {
 	Scheme      string
 	Profile     string
@@ -27,6 +29,7 @@ type Summary struct {
 }
 
 type model struct {
+	inputs     *common.ShrinkCommandInputs
 	executable string
 	status     string
 	workload   uint
@@ -117,7 +120,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.latest.Destination = msg.Destination
 		m.latest.Scheme = msg.Scheme
 		m.latest.Profile = msg.Profile
-		m.latest.emoji = randomEmoji()
+		m.latest.emoji = randemoji()
 		m.latest.err = msg.Err
 		m.status = "🚀 progressing"
 
@@ -173,27 +176,45 @@ func (m *model) View() string {
 	executable := fmt.Sprintf("%v %v", common.Definitions.Pixa.Emoji, m.executable)
 	scheme := lo.Ternary(m.latest.Scheme != "", m.latest.Scheme, "[NONE]")
 	profile := lo.Ternary(m.latest.Profile != "", m.latest.Profile, "[NONE]")
-	info := fmt.Sprintf("scheme: '%v', profile: '%v'", scheme, profile)
+	executing := lo.TernaryF(m.di.IsDryRun(),
+		func() string {
+			return "⛔ dry with"
+		},
+		func() string {
+			return "🌀 go using"
+		},
+	)
+	wpf := m.inputs.Root.WorkerPoolFam.Native
+	cpus := lo.TernaryF(wpf.NoWorkers > 1 || wpf.CPU,
+		func() string {
+			return fmt.Sprintf("%v CPUs", fmt.Sprintf("%v", wpf.CPU))
+		},
+		func() string {
+			return "single CPU"
+		},
+	)
+
+	action := fmt.Sprintf("%v %v", executing, cpus)
+	info := fmt.Sprintf("action: '%v', scheme: '%v', profile: '%v'", action, scheme, profile)
 	bc := bodyContent{
 		source:      m.latest.Source,
 		destination: m.latest.Destination,
 		emoji:       m.latest.emoji,
 	}
 
-	dry := lo.Ternary(m.di.IsDryRun(), "⛔", "🌀")
 	e := lo.Ternary(m.latest.err != nil,
 		fmt.Sprintf("💥 %v", m.latest.err),
 		"💫 ok",
 	)
 	latestView := fmt.Sprintf(
 		`
-	- %v status(%v) %v: %v
+	- %v status(%v): %v
 		-->        info: %v
 %v
 		-->       error: %v
 		-->    progress: %v of %v
 	`,
-		m.spinner.View(), executable, dry, m.status,
+		m.spinner.View(), executable, m.status,
 		info,
 		bc.view(),
 		e,
