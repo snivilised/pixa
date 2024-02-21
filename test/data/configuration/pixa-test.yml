@@ -24,7 +24,7 @@ interaction:
   tui:
     per-item-delay: "1ms"
 advanced:
-  abort-on-error: false
+  abort-on-error: true
   overwrite-on-collision: false
   labels:
     adhoc: ADHOC
@@ -37,7 +37,6 @@ advanced:
     suffixes-csv: "jpg,jpeg,png"
     transforms-csv: lower
     map:
-      jpeg: jpg
   executable:
     program-name: dummy
     timeout: "20s"

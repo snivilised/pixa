@@ -68,7 +68,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		}
 
 		advanced = &cfg.MsAdvancedConfig{
-			Abort: false,
+			Abort: true,
 			LabelsCFG: cfg.MsLabelsConfig{
 				Adhoc:      "ADHOC",
 				Journal:    "journal",
@@ -150,7 +150,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		//
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/profile/non-cuddled (🎯 @TID-CORE-1_TR-PR-NC_T)",
+			given:  "🌀 TRANSFER: transparent/profile/not-cuddled (🎯 @TID-CORE-1_TR-PR-NC_T)",
 			should: "redirect input to supplemented folder // filename not modified",
 			reasons: reasons{
 				folder: "transparency, result should take place of input in same folder",
@@ -166,7 +166,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		}),
 
 		Entry(nil, &pfTE{
-			given:  "🎁 RESULT: transparent/profile (🎯 @TID-CORE-2_TR-PR-NC_R)",
+			given:  "🎁 RESULT: transparent/profile/not-cuddled (🎯 @TID-CORE-2_TR-PR-NC_R)",
 			should: "not modify folder // not modify filename",
 			reasons: reasons{
 				folder: "transparency, result should take place of input",
@@ -180,11 +180,20 @@ var _ = Describe("PathFinder", Ordered, func() {
 		}),
 
 		Entry(nil, &pfTE{
+			// If we say transparent and cuddled, then that implies
+			// - inputs and outputs should be in the same folder
+			// - transparent means the output take the place of the input
+			// - input has to be moved out of the way
+			// - but which directory? By default we attempt to be transparent, so
+			// the directory should be origin. This would be changed by the presence
+			// of either --trash(input), --output(result).
+			// - input renamed with supplement
+
 			given:  "🌀 TRANSFER: transparent/profile/cuddled (🎯 @TID-CORE-3_TR-PR-CU_T)",
-			should: "not modify folder // file decorated with supplement",
+			should: "return origin folder // file decorated with supplement",
 			reasons: reasons{
-				folder: "not modify folder to enable cuddle",
-				file:   "cuddled file needs to be disambiguated from the input",
+				folder: "origin folder to enable cuddle",
+				file:   "input needs to be supplemented so result can be cuddled",
 			},
 			profile:        "blur",
 			supplement:     fmt.Sprintf("%v.%v", "$TRASH$", "blur"),
@@ -192,6 +201,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
+				// Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
 					pi.Item.Extension.Name, entry.supplement, statics,
 				)
@@ -204,7 +214,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 			should: "not modify folder // not modify filename",
 			reasons: reasons{
 				folder: "not modify folder to enable cuddle",
-				file:   "cuddled result file needs to replace the input",
+				file:   "cuddled un-supplemented result file needs to replace the input",
 			},
 			profile: "blur",
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
@@ -216,7 +226,18 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// === TRANSPARENT / SCHEME (non-cuddle) [BLUE]
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/scheme/non-cuddled (🎯 @TID-CORE-5_TR-SC-NC_BLUR_T)",
+			// NOT-TRANSPARENT:
+			//
+			// scheme not compatible with transparency, so this may not be a valid test
+			// since arity > 1, how can we achieve transparency? we can't, because only
+			// 1 result can take the place of the input.
+			// This is not transparent, but the case may still be valid. SInce this
+			// is not transparent, we either need:
+			// - --trash: to transfer the input to this explicit location
+			// - --output: to create new file as the output of operation
+			// if neither are specified, the the input stays as is and the results are
+			// decorated with the supplement, all origin.
+			given:  "🌀 TRANSFER: not-transparent/scheme/not-cuddled (🎯 @TID-CORE-5_NTR-SC-NC_BLUR_T)",
 			should: "redirect input to supplemented folder // filename not modified",
 			reasons: reasons{
 				folder: "transparency, result should take place of input in same folder",
@@ -235,7 +256,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// ...
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/scheme/non-cuddled (🎯 @TID-CORE-6_TR-SC-NC_SF_T)",
+			given:  "🌀 TRANSFER: not-transparent/scheme/not-cuddled (🎯 @TID-CORE-6_NTR-SC-NC_SF_T)",
 			should: "redirect input to supplemented folder // filename not modified",
 			reasons: reasons{
 				folder: "transparency, result should take place of input in same folder",
@@ -254,10 +275,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// === TRANSPARENT / SCHEME (cuddle) [GREEN]
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/scheme/cuddled (🎯 @TID-CORE-7_TR-SC-CU_BLUR_T)",
-			should: "not modify folder // file decorated with supplement",
+			// !!! input file should stay unmodified
+			// the results should be supplemented
+			given:  "🌀 TRANSFER: not-transparent/scheme/cuddled (🎯 @TID-CORE-7_NTR-SC-CU_BLUR_T)",
+			should: "return origin folder // file decorated with supplement",
 			reasons: reasons{
-				folder: "not modify folder to enable cuddle",
+				folder: "return origin folder to enable cuddle",
 				file:   "cuddled file needs to be disambiguated from the input",
 			},
 			scheme:         "blur-sf",
@@ -274,13 +297,33 @@ var _ = Describe("PathFinder", Ordered, func() {
 			},
 		}),
 
+		Entry(nil, &pfTE{
+			given:  "🎁 RESULT: not-transparent/scheme/cuddled (🎯 @TID-CORE-(7:_TBD_)_NTR-SC-CU_BLUR_T)",
+			should: "return empty folder // file decorated with supplement",
+			reasons: reasons{
+				folder: "return empty folder to enable cuddle",
+				file:   "cuddled file needs to be disambiguated from the input",
+			},
+			scheme:     "blur-sf",
+			profile:    "blur",
+			supplement: "blur-sf.blur",
+			cuddle:     true,
+			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
+				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
+				supplemented := filing.SupplementFilename(
+					pi.Item.Extension.Name, entry.supplement, statics,
+				)
+				Expect(file).To(Equal(supplemented), because(entry.reasons.file, file))
+			},
+		}),
+
 		// ...
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/scheme/cuddled (🎯 @TID-CORE-8_TR-SC-CU_SF_T)",
-			should: "not modify folder // file decorated with supplement",
+			given:  "🌀 TRANSFER: not-transparent/scheme/cuddled (🎯 @TID-CORE-8_NTR-SC-CU_SF_T)",
+			should: "return origin folder // file decorated with supplement",
 			reasons: reasons{
-				folder: "not modify folder to enable cuddle",
+				folder: "return origin folder to enable cuddle",
 				file:   "cuddled file needs to be disambiguated from the input",
 			},
 			scheme:         "blur-sf",
@@ -297,11 +340,31 @@ var _ = Describe("PathFinder", Ordered, func() {
 			},
 		}),
 
+		Entry(nil, &pfTE{
+			given:  "🎁 RESULT: not-transparent/scheme/cuddled (🎯 @TID-CORE-(8:_TBD_)_NTR-SC-CU_SF_R)",
+			should: "return origin folder // file decorated with supplement",
+			reasons: reasons{
+				folder: "return origin folder to enable cuddle",
+				file:   "cuddled file needs to be disambiguated from the input",
+			},
+			scheme:     "blur-sf",
+			profile:    "sf",
+			supplement: "blur-sf.sf",
+			cuddle:     true,
+			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
+				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
+				supplemented := filing.SupplementFilename(
+					pi.Item.Extension.Name, entry.supplement, statics,
+				)
+				Expect(file).To(Equal(supplemented), because(entry.reasons.file))
+			},
+		}),
+
 		//
 		// === TRANSPARENT / ADHOC
 		//
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/adhoc/non-cuddled (🎯 @TID-CORE-9_TR-AD-NC_SF_T)",
+			given:  "🌀 TRANSFER: transparent/adhoc/not-cuddled (🎯 @TID-CORE-9_TR-AD-NC_SF_T)",
 			should: "redirect input to supplemented folder // filename not modified",
 			reasons: reasons{
 				folder: "transparency, result should take place of input in same folder",
@@ -316,7 +379,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		}),
 
 		Entry(nil, &pfTE{
-			given:  "🎁 RESULT: transparent/adhoc (🎯 @TID-CORE-10_TR-AD_R)",
+			given:  "🎁 RESULT: transparent/adhoc/not-cuddled (🎯 @TID-CORE-10_TR-AD-NC_SF_R)",
 			should: "not modify folder // not modify filename",
 			reasons: reasons{
 				folder: "transparency, result should take place of input",
@@ -366,7 +429,9 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// === TRANSPARENT / SCHEME (non-cuddle) [BLUE]
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/scheme/trash (🎯 @TID-CORE-13_TR-SC-TRA_BLUR_T)",
+			// NOT-TRANSPARENT
+			//
+			given:  "🌀 TRANSFER: not-transparent/scheme/trash (🎯 @TID-CORE-13_NTR-SC-TRA_BLUR_T)",
 			should: "redirect input to supplemented folder // filename not modified",
 			reasons: reasons{
 				folder: "transparency, result should take place of input in same folder",
@@ -386,7 +451,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// ...
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: transparent/scheme/trash (🎯 @TID-CORE-14_TR-SC-TRA_SF_T)",
+			given:  "🌀 TRANSFER: not-transparent/scheme/trash (🎯 @TID-CORE-14_NTR-SC-TRA_SF_T)",
 			should: "redirect input to supplemented folder // filename not modified",
 			reasons: reasons{
 				folder: "transparency, result should take place of input in same folder",
@@ -408,7 +473,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		//
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: profile/output (🎯 @TID-CORE-15_NT-PR-OUT_T)",
+			given:  "🌀 TRANSFER: not-transparent/profile/output (🎯 @TID-CORE-15_NTR-PR-NC-OUT_T)",
 			should: "return empty folder and file",
 			reasons: reasons{
 				folder: "no transfer required",
@@ -416,7 +481,6 @@ var _ = Describe("PathFinder", Ordered, func() {
 			},
 			profile:        "blur",
 			output:         filepath.Join("foo", "sessions", "scan01", "results"),
-			supplement:     filepath.Join("$TRASH$", "blur"),
 			actionTransfer: true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
 				Expect(folder).To(BeEmpty(), because(entry.reasons.folder, folder))
@@ -425,7 +489,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		}),
 
 		Entry(nil, &pfTE{
-			given:  "🎁 RESULT: profile/output (🎯 @TID-CORE-16_NT-PR-OUT_R)",
+			given:  "🎁 RESULT: not-transparent/profile/output (🎯 @TID-CORE-16_NTR-PR-NC-OUT_R)",
 			should: "redirect result to output // supplement folder // not modify filename",
 			reasons: reasons{
 				folder: "result should be send to supplemented output folder",
@@ -446,7 +510,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// === NON-TRANSPARENT / SCHEME (non-cuddle) [BLUE]
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: scheme/output (🎯 @TID-CORE-17_NT-SC-OUT_BLUR_T)",
+			given:  "🌀 TRANSFER: not-transparent/scheme/output (🎯 @TID-CORE-17_NTR-SC-NC-OUT_BLUR_T)",
 			should: "return empty folder and file",
 			reasons: reasons{
 				folder: "no transfer required",
@@ -465,7 +529,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// ...
 
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: scheme/output (🎯 @TID-CORE-18_NT-SC-OUT_SF_T)",
+			given:  "🌀 TRANSFER: not-transparent/scheme/output (🎯 @TID-CORE-18_NTR-SC-NC-OUT_SF_T)",
 			should: "return empty folder and file",
 			reasons: reasons{
 				folder: "no transfer required",
@@ -485,7 +549,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		// === NON-TRANSPARENT / ADHOC
 		//
 		Entry(nil, &pfTE{
-			given:  "🌀 TRANSFER: adhoc/output (🎯 @TID-CORE-19_NT-AD-OUT_SF_T)",
+			given:  "🌀 TRANSFER: not-transparent/adhoc/output (🎯 @TID-CORE-19_NTR-AD-OUT_SF_T)",
 			should: "return empty folder and file",
 			reasons: reasons{
 				folder: "no transfer required",
@@ -500,7 +564,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 		}),
 
 		Entry(nil, &pfTE{
-			given:  "🎁 RESULT: adhoc/output (🎯 @TID-CORE-20_NT-AD-OUT_SF_R)",
+			given:  "🎁 RESULT: not-transparent/adhoc/output (🎯 @TID-CORE-20_NTR-AD-OUT_SF_R)",
 			should: "redirect result to output // supplement folder // not modify filename",
 			reasons: reasons{
 				folder: "result should be send to supplemented output folder",

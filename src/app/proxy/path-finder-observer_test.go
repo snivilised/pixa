@@ -2,21 +2,20 @@ package proxy_test
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/samber/lo"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/app/proxy/filing"
-	"github.com/snivilised/pixa/src/internal/matchers"
-
-	. "github.com/onsi/gomega"
 )
 
-type pathAssertion struct {
+type splitPath struct {
 	file   string
 	folder string
+}
+type pathAssertion struct {
+	actual splitPath
+	info   *common.PathInfo
 }
 
 type observerAssertions map[string]*pathAssertion
@@ -73,40 +72,30 @@ type testPathFinderObserver struct {
 // -------------|---------|---------|---------|--------|----------------------------------|-----------------------------------------
 //  YES					| NO			| NO			| NO			| NO     | - //OR/$N.$S											| //OR/$N
 //	YES					| YES			|	YES			| NO			| NO     | input > /null									  | output > /null
+// assertL
 
-func (o *testPathFinderObserver) assert(entry *samplerTE,
+func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 	origin string, vfs storage.VirtualFS,
 ) {
-	if entry.supplements.file != "do not enter" {
-		return
-	}
+	if len(o.transfers) > 0 {
+		first := lo.Keys(o.transfers)[0]
+		fmt.Printf("\n 📂 TRANSFER FOLDER: '%v'\n", o.transfers[first].actual.folder)
 
-	first := lo.Keys(o.transfers)[0]
-	fmt.Printf("\n 📂 FOLDER: '%v'\n", o.transfers[first].folder)
-
-	for _, v := range o.transfers {
-		if o.TransparentInput() {
-			// input should just be renamed with supplement in the origin folder
-			//
-			statics := o.target.Statics()
-
-			originalPath := filepath.Join(origin,
-				filing.SupplementFilename(v.file, entry.supplements.file, statics),
-			)
-			Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
+		if !entry.dry && entry.asserters.transfer != nil {
+			for name, assertion := range o.transfers {
+				entry.asserters.transfer(name, entry, origin, assertion, vfs)
+			}
 		}
 	}
 
-	for _, v := range o.results {
-		if o.TransparentInput() { // ?? CHECK-VALID FOR OUTPUT?
-			// result should take the place of input
-			//
-			// directory
-			// intermediate
-			// name
-			//
-			originalPath := filepath.Join(origin, v.file)
-			Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
+	if len(o.results) > 0 && entry.asserters.result != nil {
+		first := lo.Keys(o.results)[0]
+		fmt.Printf("\n 📂 RESULT FOLDER: '%v'\n", o.results[first].actual.folder)
+
+		if !entry.dry {
+			for name, assertion := range o.results {
+				entry.asserters.result(name, entry, origin, assertion, vfs)
+			}
 		}
 	}
 }
@@ -114,8 +103,11 @@ func (o *testPathFinderObserver) assert(entry *samplerTE,
 func (o *testPathFinderObserver) Transfer(info *common.PathInfo) (folder, file string) {
 	folder, file = o.target.Transfer(info)
 	o.transfers[info.Item.Extension.Name] = &pathAssertion{
-		folder: folder,
-		file:   file,
+		actual: splitPath{
+			folder: folder,
+			file:   file,
+		},
+		info: info,
 	}
 
 	return folder, file
@@ -124,8 +116,11 @@ func (o *testPathFinderObserver) Transfer(info *common.PathInfo) (folder, file s
 func (o *testPathFinderObserver) Result(info *common.PathInfo) (folder, file string) {
 	folder, file = o.target.Result(info)
 	o.results[info.Item.Extension.Name] = &pathAssertion{
-		folder: folder,
-		file:   file,
+		actual: splitPath{
+			folder: folder,
+			file:   file,
+		},
+		info: info,
 	}
 
 	return folder, file

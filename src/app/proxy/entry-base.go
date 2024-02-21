@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
@@ -17,20 +16,6 @@ import (
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/app/proxy/orc"
 )
-
-func summariseAfter(result *nav.TraverseResult, err error) {
-	measure := fmt.Sprintf("started: '%v', elapsed: '%v'",
-		result.Session.StartedAt().Format(time.RFC1123), result.Session.Elapsed(),
-	)
-	files := result.Metrics.Count(nav.MetricNoFilesInvokedEn)
-	folders := result.Metrics.Count(nav.MetricNoFoldersInvokedEn)
-	summary := fmt.Sprintf("files: %v, folders: %v", files, folders)
-	message := lo.Ternary(err == nil,
-		fmt.Sprintf("🚩 navigation completed ok (%v) 💝 [%v]", summary, measure),
-		fmt.Sprintf("🚩 error occurred during navigation (%v)💔 [%v]", err, measure),
-	)
-	fmt.Println(message)
-}
 
 // EntryBase is the base entry for all commands in pixa
 type EntryBase struct {
@@ -76,6 +61,10 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 				!strings.Contains(name, jWithoutExt) &&
 				!strings.Contains(name, trash)
 		}), nil
+	}
+
+	o.Hooks.Extend = func(navi *nav.NavigationInfo, entries *nav.DirectoryContents) {
+		nav.DefaultExtendHookFn(navi, entries)
 	}
 
 	if o.Store.FilterDefs == nil {

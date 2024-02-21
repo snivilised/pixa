@@ -33,6 +33,7 @@ type model struct {
 	executable string
 	status     string
 	workload   uint
+	arity      uint
 	level      uint
 	latest     JobDescription
 	di         common.DriverTraverseInfo
@@ -104,7 +105,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.result = msg.Result
 		m.err = msg.Err
 		m.status = "🎭 discovered"
-		m.workload = msg.Result.Metrics.Count(nav.MetricNoFilesInvokedEn)
+		m.workload = msg.Result.Metrics.Count(nav.MetricNoFilesInvokedEn) * m.arity
 
 		if msg.Err != nil {
 			return m, tea.Quit

@@ -171,9 +171,12 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			defaultOutputPath,
 		),
 		&paramSet.Native.OutputPath, func(s string, f *pflag.Flag) error {
-			if f.Changed && !b.Vfs.DirectoryExists(s) {
-				return i18n.NewOutputPathDoesNotExistError(s)
-			}
+			// Instead of doing the commented out check, check that the location
+			// specified has the correct permission to write
+			//
+			// if f.Changed && !b.Vfs.DirectoryExists(s) {
+			// 	return i18n.NewOutputPathDoesNotExistError(s)
+			// }
 
 			return nil
 		},
@@ -191,9 +194,12 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			defaultTrashPath,
 		),
 		&paramSet.Native.TrashPath, func(s string, f *pflag.Flag) error {
-			if f.Changed && !b.Vfs.DirectoryExists(s) {
-				return i18n.NewOutputPathDoesNotExistError(s)
-			}
+			// Instead of doing the commented out check, check that the location
+			// specified has the correct permission to write
+			//
+			// if f.Changed && !b.Vfs.DirectoryExists(s) {
+			// 	return i18n.NewOutputPathDoesNotExistError(s)
+			// }
 
 			return nil
 		},
