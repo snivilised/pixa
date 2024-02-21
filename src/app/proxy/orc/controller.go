@@ -140,19 +140,17 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 			err = e
 		}
 
-		// TODO: this needs to change according to a new, not yet defined
-		// setting, 'ContinueOnError'
-		//
-		return e == nil
+		return e == nil || !c.configs.Advanced.AbortOnError()
 	}
 
 	c.private.Pi = common.PathInfo{
-		Item:   item,
-		Origin: item.Parent.Path,
-		Scheme: c.session.FileManager.Finder().Scheme(),
-		Cuddle: c.session.Inputs.ParamSet.Native.Cuddle,
-		Output: c.session.Inputs.ParamSet.Native.OutputPath,
-		Trash:  c.session.Inputs.ParamSet.Native.TrashPath,
+		Item:    item,
+		Origin:  item.Parent.Path,
+		Profile: c.session.Inputs.Root.ProfileFam.Native.Profile,
+		Scheme:  c.session.FileManager.Finder().Scheme(),
+		Cuddle:  c.session.Inputs.ParamSet.Native.Cuddle,
+		Output:  c.session.Inputs.ParamSet.Native.OutputPath,
+		Trash:   c.session.Inputs.ParamSet.Native.TrashPath,
 	}
 
 	// TODO: need to decide a proper policy for cleaning up

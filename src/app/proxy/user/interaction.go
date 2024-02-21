@@ -19,7 +19,14 @@ const (
 
 var (
 	navigatorRoutineName = boost.GoRoutineName("✨ pixa-navigator")
+	emojis               = []rune(
+		"🍦🧋🍡🤠👾😭🦊🐯🦆👽👻🍔🍒🍥😈🤮🦁🍰🐶🐸🍕🥐💀💩🥇🫐🏆🤖🌽🍉🥝🍓",
+	)
 )
+
+func randemoji() string {
+	return string(emojis[rand.Intn(len(emojis))]) //nolint:gosec // foo
+}
 
 type walker interface {
 	navigate(ci common.ClientTraverseInfo,
@@ -31,11 +38,8 @@ type walker interface {
 type interaction struct {
 	inputs *common.ShrinkCommandInputs
 	logger *slog.Logger
+	arity  uint
 }
-
-var emojis = []rune(
-	"🍦🧋🍡🤠👾😭🦊🐯🦆👽👻🍔🍒🍥😈🤮🦁🍰🐶🐸🍕🥐💀💩🥇🫐🏆🤖🌽🍉🥝🍓",
-)
 
 func (u *interaction) navigate(ci common.ClientTraverseInfo,
 	with nav.CreateNewRunnerWith,
@@ -72,10 +76,6 @@ func (u *interaction) navigate(ci common.ClientTraverseInfo,
 	return result, err
 }
 
-func randemoji() string {
-	return string(emojis[rand.Intn(len(emojis))]) //nolint:gosec // foo
-}
-
 func summary(result *nav.TraverseResult, err error) string {
 	measure := fmt.Sprintf("started: '%v', elapsed: '%v'",
 		result.Session.StartedAt().Format(time.RFC1123), result.Session.Elapsed(),
@@ -92,7 +92,7 @@ func summary(result *nav.TraverseResult, err error) string {
 }
 
 func NewInteraction(inputs *common.ShrinkCommandInputs,
-	logger *slog.Logger,
+	logger *slog.Logger, arity uint,
 ) common.UserInteraction {
 	return lo.TernaryF(inputs.Root.TextualFam.Native.IsNoTui,
 		func() common.UserInteraction {
@@ -100,6 +100,7 @@ func NewInteraction(inputs *common.ShrinkCommandInputs,
 				interaction: interaction{
 					inputs: inputs,
 					logger: logger,
+					arity:  arity,
 				},
 			}
 		},
@@ -108,6 +109,7 @@ func NewInteraction(inputs *common.ShrinkCommandInputs,
 				interaction: interaction{
 					inputs: inputs,
 					logger: logger,
+					arity:  arity,
 				},
 				po: inputs.Root.Presentation,
 			}

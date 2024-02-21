@@ -228,7 +228,7 @@ func (f *PathFinder) Scheme() string {
 func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 	folder = func() string {
 		if info.Cuddle {
-			return info.Origin // should we return empty string here?
+			return info.Origin
 		}
 
 		if info.Output != "" && info.Trash == "" {
@@ -277,6 +277,14 @@ func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 
 		return info.Item.Extension.Name
 	}()
+
+	if filepath.Join(folder, file) == info.Item.Path {
+		// Since we have derived a path that is the same as the input,
+		// we should return nothing to indicate to the file manager
+		// that it does not have to move/rename the input.
+		//
+		return "", ""
+	}
 
 	return folder, file
 }
@@ -351,6 +359,16 @@ func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 		// The file name just matches the input file name. The folder name
 		// provides the context.
 		//
+		if info.Cuddle {
+			// decorate the input file to get the result file
+			//
+			supp := f.fileProfileSupplement(info.Profile)
+
+			return SupplementFilename(
+				info.Item.Extension.Name, supp, f.Stats,
+			)
+		}
+
 		return info.Item.Extension.Name
 	}()
 

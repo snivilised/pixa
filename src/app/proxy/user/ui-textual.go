@@ -36,6 +36,7 @@ func (ui *textualUI) Traverse(di common.DriverTraverseInfo,
 		inputs:     ui.inputs,
 		executable: ui.inputs.Root.Configs.Advanced.Executable().Symbol(),
 		status:     "🔎 discovering ...",
+		arity:      ui.arity,
 		latest: JobDescription{
 			Source:      "waiting ...",
 			Destination: "waiting ...",
@@ -56,7 +57,7 @@ func (ui *textualUI) Traverse(di common.DriverTraverseInfo,
 
 	options := []tea.ProgramOption{}
 	if ui.po.WithoutRenderer {
-		options = append(options, tea.WithoutRenderer())
+		options = []tea.ProgramOption{tea.WithoutRenderer()}
 	}
 
 	ui.m.program = tea.NewProgram(ui.m, options...)

@@ -172,7 +172,7 @@ func EnterShrink(
 	schemes := params.Inputs.Root.Configs.Schemes
 	selectedScheme := params.Inputs.Root.ProfileFam.Native.Scheme
 	scheme, _ := schemes.Scheme(selectedScheme)
-	noProfiles := lo.TernaryF(scheme == nil,
+	arity := lo.TernaryF(scheme == nil,
 		func() uint {
 			return 1
 		},
@@ -187,7 +187,7 @@ func EnterShrink(
 		OutputPath: params.Inputs.ParamSet.Native.OutputPath,
 		TrashPath:  params.Inputs.ParamSet.Native.TrashPath,
 		Observer:   params.Inputs.Root.Observers.PathFinder,
-		Arity:      noProfiles,
+		Arity:      arity,
 	})
 	fileManager := filing.NewManager(params.Vfs, finder,
 		params.Inputs.Root.PreviewFam.Native.DryRun,
@@ -220,6 +220,7 @@ func EnterShrink(
 	interaction := user.NewInteraction(
 		params.Inputs,
 		params.Logger,
+		arity,
 	)
 	entry := &ShrinkEntry{
 		EntryBase: EntryBase{

@@ -4,112 +4,194 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/pixa/src/app/proxy/filing"
 
 	"github.com/snivilised/pixa/src/internal/helpers"
+	"github.com/snivilised/pixa/src/internal/matchers"
 )
 
-func openInputTTY() (*os.File, error) {
-	f, err := os.Open("/dev/tty")
-	if err != nil {
-		return nil, fmt.Errorf("could not open a new TTY: %w", err)
-	}
-
-	return f, nil
+type reasons struct {
+	folder string
+	file   string
 }
 
-const (
-	BackyardWorldsPlanet9Scan01 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01"
-	BackyardWorldsPlanet9Scan02 = "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02"
-	DejaVu                      = "$TRASH$"
-)
+type arrange func(entry *pixaTE, origin string, vfs storage.VirtualFS)
 
-type supplements struct {
-	file      string
-	directory string
+type asserter func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS)
+
+type asserters struct {
+	transfer asserter
+	result   asserter
+	bs       *command.Bootstrap
 }
 
-type controllerTE struct {
+func assertTransfer(folder string, pa *pathAssertion, vfs storage.VirtualFS) {
+	actualDestination := filepath.Join(pa.actual.folder, pa.actual.file)
+	Expect(matchers.AsDirectory(folder)).To(matchers.ExistInFS(vfs),
+		because(actualDestination, "🌀 TRANSFER"),
+	)
+
+	file := filepath.Join(folder, pa.info.Item.Extension.Name)
+	Expect(matchers.AsFile(file)).To(matchers.ExistInFS(vfs), because(actualDestination))
+}
+
+func assertTransferSupplementedOrigin(name string,
+	entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS,
+) {
+	_ = name
+
+	folder := filing.SupplementFolder(origin,
+		entry.supplements.folder,
+	)
+	assertTransfer(folder, pa, vfs)
+}
+
+func assertResultItemFile(name string,
+	entry *pixaTE, origin string, pa *pathAssertion,
+) {
+	_ = name
+	_ = entry
+	_ = origin
+	// We don't have anything that actually creates the result file
+	// so instead of checking that it exists in the file system, we
+	// check the path is what we expect.
+	//
+	file := pa.info.Item.Path
+	Expect(file).To(Equal(pa.info.Item.Path), because(file, "🎁 RESULT"))
+}
+
+type pixaTE struct {
 	given        string
 	should       string
+	reasons      reasons
+	arranger     arrange
+	asserters    asserters
 	exists       bool
 	args         []string
 	isTui        bool
 	dry          bool
 	intermediate string
-	outputFlag   string
-	trashFlag    string
+	output       string
+	trash        string
 	profile      string
+	scheme       string
 	relative     string
 	mandatory    []string
 	supplements  supplements
 	inputs       []string
 }
 
-type samplerTE struct {
-	controllerTE
-	scheme string
+func because(reason string, extras ...string) string {
+	if len(extras) == 0 {
+		return fmt.Sprintf("🔥 %v", reason)
+	}
+
+	return fmt.Sprintf("🔥 %v (%v)", reason, strings.Join(extras, ","))
 }
 
-func augment(entry *samplerTE,
+func augment(entry *pixaTE,
 	args []string, vfs storage.VirtualFS, root, directory string,
 ) []string {
 	result := args
 	result = append(result, entry.args...)
 
 	if entry.exists {
-		location := filepath.Join(directory, entry.intermediate, entry.supplements.directory)
+		location := filepath.Join(directory, entry.intermediate, entry.supplements.folder)
 		if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
 			Fail(errors.Wrap(err, err.Error()).Error())
 		}
 	}
 
-	if entry.outputFlag != "" {
-		output := helpers.Path(root, entry.outputFlag)
+	if entry.output != "" {
+		output := helpers.Path(root, entry.output)
 		result = append(result, "--output", output)
 	}
 
-	if entry.trashFlag != "" {
-		trash := helpers.Path(root, entry.trashFlag)
-		result = append(result, "--trash", trash)
+	if entry.trash != "" {
+		result = append(result, "--trash", entry.trash)
+	}
+
+	if entry.profile != "" {
+		result = append(result, "--profile", entry.profile)
+	}
+
+	if entry.scheme != "" {
+		result = append(result, "--scheme", entry.scheme)
 	}
 
 	if entry.dry {
 		result = append(result, "--dry-run")
 	}
 
+	if !entry.isTui {
+		result = append(result, "--no-tui")
+	}
+
 	return result
 }
 
-func assertInFs(entry *samplerTE,
-	bs *command.Bootstrap,
-	directory string,
-	observer *testPathFinderObserver,
-) {
-	vfs := bs.Vfs
+type coreTest struct {
+	entry           *pixaTE
+	root            string
+	configPath      string
+	vfs             storage.VirtualFS
+	withoutRenderer bool
+}
 
-	// this needs rework, to be done in another issue
-	//
-	// if entry.mandatory != nil {
-	// 	dejaVu := filepath.Join(DejaVu, entry.supplements.directory)
-	// 	supplement := helpers.Path(entry.intermediate, dejaVu)
+func (t *coreTest) run() {
+	origin := helpers.Path(t.root, t.entry.relative)
 
-	// 	for _, original := range entry.mandatory {
-	// 		originalPath := filepath.Join(supplement, original)
+	if t.entry.arranger != nil {
+		t.entry.arranger(t.entry, origin, t.vfs)
+	}
 
-	// 		Expect(matchers.AsFile(originalPath)).To(matchers.ExistInFS(vfs))
-	// 	}
-	// }
+	args := augment(t.entry,
+		[]string{
+			common.Definitions.Commands.Shrink, origin,
+		},
+		t.vfs, t.root, origin,
+	)
 
-	observer.assert(entry, directory, vfs)
+	observer := &testPathFinderObserver{
+		transfers: make(observerAssertions),
+		results:   make(observerAssertions),
+	}
+
+	bootstrap := command.Bootstrap{
+		Vfs: t.vfs,
+		Presentation: common.PresentationOptions{
+			WithoutRenderer: t.withoutRenderer,
+		},
+		Observers: common.Observers{
+			PathFinder: observer,
+		},
+	}
+
+	tester := helpers.CommandTester{
+		Args: args,
+		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
+			co.Detector = &helpers.DetectorStub{}
+			co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
+			co.Config.ConfigPath = t.configPath
+			co.Config.Viper = &configuration.GlobalViperConfig{}
+		}),
+	}
+
+	_, err := tester.Execute()
+	Expect(err).Error().To(BeNil(),
+		fmt.Sprintf("execution result non nil (%v)", err),
+	)
+
+	observer.assertAll(t.entry, origin, t.vfs)
 }
 
 var _ = Describe("pixa", Ordered, func() {
@@ -145,691 +227,230 @@ var _ = Describe("pixa", Ordered, func() {
 	})
 
 	DescribeTable("interactive",
-		func(entry *samplerTE) {
-			origin := helpers.Path(root, entry.relative)
-			args := augment(entry,
-				[]string{
-					common.Definitions.Commands.Shrink, origin,
-				},
-				vfs, root, origin,
-			)
-
-			observer := &testPathFinderObserver{
-				transfers: make(observerAssertions),
-				results:   make(observerAssertions),
+		func(entry *pixaTE) {
+			core := coreTest{
+				entry:           entry,
+				root:            root,
+				configPath:      configPath,
+				vfs:             vfs,
+				withoutRenderer: withoutRenderer,
 			}
-
-			bootstrap := command.Bootstrap{
-				Vfs: vfs,
-				Presentation: common.PresentationOptions{
-					WithoutRenderer: withoutRenderer,
-				},
-				Observers: common.Observers{
-					PathFinder: observer,
-				},
-			}
-
-			if !entry.isTui {
-				args = append(args, "--no-tui")
-			}
-
-			tester := helpers.CommandTester{
-				Args: args,
-				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
-					co.Detector = &helpers.DetectorStub{}
-					co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
-					co.Config.ConfigPath = configPath
-					co.Config.Viper = &configuration.GlobalViperConfig{}
-				}),
-			}
-
-			_, err := tester.Execute()
-			Expect(err).Error().To(BeNil(),
-				fmt.Sprintf("execution result non nil (%v)", err),
-			)
-
-			assertInFs(entry, &bootstrap, origin, observer)
+			core.run()
 		},
-		func(entry *samplerTE) string {
+		func(entry *pixaTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v', should: '%v'",
 				entry.given, entry.should,
 			)
 		},
-
-		// linear-ui
 		//
-		// full run
-
-		XEntry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full/transparent/adhoc/ex-glob",
-				should:   "full run with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					file:      "ADHOC.TRASH",
-					directory: "$pixa$/ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run transparent adhoc, with regex",
-				should:   "full run with regex filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files-rx", "Backyard-Worlds",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run transparent with profile, with ex-glob",
-				should:   "full run with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					file:      "adaptive",
-					directory: "adaptive/TRASH",
-				},
-
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run, profile",
-				should:   "full run with regex filter using the defined profile",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--strip",
-					"--interlace", "plane",
-					"--quality", "85",
-					"--files-rx", "Backyard-Worlds",
-					"--profile", "adaptive",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run transparent with scheme with single profile",
-				should:   "full run with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--scheme", "singleton",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "singleton/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run non transparent adhoc",
-				should:   "full run with ex-glob filter, input moved to alternative location",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "discard",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run non transparent with profile",
-				should:   "full run with ex-glob filter, input moved to alternative location",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "discard",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run non transparent scheme single with profile",
-				should:   "full run with ex-glob filter, input moved to alternative location",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--scheme", "singleton",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "discard",
-				supplements: supplements{
-					file:      "$SUPP/ADHOC.TRASH",
-					directory: "singleton/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run, scheme",
-				should:   "full run, all profiles in the scheme",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--strip",
-					"--interlace", "plane",
-					"--quality", "85",
-					"--scheme", "blur-sf",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "blur-sf/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full run transparent adhoc and target already exists",
-				should:   "full run with ex-glob filter, result file takes place of input",
-				exists:   true,
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "directory contains files with same name different extensions",
-				should:   "create journal file include file extension",
-				relative: BackyardWorldsPlanet9Scan02,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan02,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan02,
-			},
-		}),
-
-		// sample run
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run transparent adhoc",
-				should:   "sample(first) with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run transparent with profile",
-				should:   "sample(first) with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run(last) transparent with profile",
-				should:   "sample(last) with ex-glob filter using the defined profile",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--last",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01Last4,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01Last4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "profile without no-files in args",
-				should:   "sample(first) with ex-glob filter, using no-files from config",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First2,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First2,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "profile",
-				should:   "sample with regex filter using the defined profile",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--strip",
-					"--interlace", "plane",
-					"--quality", "85",
-					"--files-rx", "Backyard-Worlds",
-					"--profile", "adaptive",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run transparent with scheme with single profile",
-				should:   "sample(first) with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--scheme", "singleton",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "singleton/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run non transparent adhoc",
-				should:   "sample(first) with ex-glob filter, input moved to alternative location",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "discard",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run non transparent with profile",
-				should:   "sample(first) with ex-glob filter, input moved to alternative location",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "discard",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run non transparent scheme single with profile",
-				should:   "sample(first) with ex-glob filter, input moved to alternative location",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--scheme", "singleton",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "discard",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "singleton/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "scheme",
-				should:   "sample all profiles in the scheme",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--strip",
-					"--interlace", "plane",
-					"--quality", "85",
-					"--scheme", "blur-sf",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "blur-sf/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "run transparent adhoc and target already exists",
-				should:   "sample(first) with ex-glob filter, result file takes place of input",
-				exists:   true,
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--sample",
-					"--no-files", "4",
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
-			},
-		}),
-
-		// dry run
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full dry run transparent adhoc, using glob",
-				should:   "full run with ex-glob filter, without moving input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				dry: true,
-				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full dry run transparent adhoc, using regex",
-				should:   "full run with regex filter, without moving input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files-rx", "Backyard-Worlds",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				dry: true,
-				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		Entry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "full dry run transparent with profile, using glob",
-				should:   "full run with ex-glob filter, without moving input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--profile", "adaptive",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
-				},
-				dry: true,
-				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "adaptive/TRASH",
-				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
-			},
-		}),
-
-		// textual-ui
-		// https://dev.to/pomdtr/how-to-debug-bubble-tea-applications-in-visual-studio-code-50jp
+		// === TRANSPARENT / PROFILE
 		//
-		// full run
-		//
-		// 📚 debugging bubbletea
-		// !! use the predefined "Attach to dlv" launch task. It requires the task
-		// defined as "Run headless dlv". This starts the dlv debugger in headless mode.
-		// Note that because the args are hardcoded into the dlv task, if you need to
-		// debug pixa with different args, then the dlv task needs to be modified.
-		//
-		// to attach to dlv debugger manually, start dlv like this:
-		// dlv debug --headless --listen=:2345 ./src/app/main/ -- shrink /Users/plastikfan/dev/test --profile blur --files "wonky*" --dry-run
-		// the args come after --
-		// the launch.json does not support args for an attach request, args are only
-		// appropriate for launch
-		//
-		// Beware, if you start dlv manually, you will need to define a new launch entry
-		// that does not depend on the "Run headless dlv" as that attempts to start dlv
-		// automatically.
-		//
-		XEntry(nil, &samplerTE{
-			controllerTE: controllerTE{
-				given:    "bubbletea tui, full run transparent adhoc, with ex-glob",
-				should:   "full run with ex-glob filter, result file takes place of input",
-				relative: BackyardWorldsPlanet9Scan01,
-				args: []string{
-					"--files", "*Backyard-Worlds*",
-					"--gaussian-blur", "0.51",
-					"--interlace", "line",
+		Entry(nil, &pixaTE{
+			given:    "regex/transparent/profile/not-cuddled (🎯 @TID-CORE-1/2:_TBD__TR-PR-NC_TR)",
+			should:   "transfer input to supplemented folder // input filename not modified",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "transparency, result should take place of input in same folder",
+				file:   "file should be moved out of the way and not cuddled",
+			},
+			profile: "blur",
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				file:   "$TRASH$.blur",
+				folder: filepath.Join("$TRASH$", "blur"),
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				transfer: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					assertTransferSupplementedOrigin(name, entry, origin, pa, vfs)
 				},
-				isTui:        true,
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
-				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
-				supplements: supplements{
-					// file:      "$SUPP/ADHOC.TRASH",
-					directory: "ADHOC/TRASH",
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					assertResultItemFile(name, entry, origin, pa)
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			},
+		}),
+		//
+		// === TRANSPARENT / ADHOC
+		//
+		Entry(nil, &pixaTE{
+			given:    "regex/transparent/adhoc/not-cuddled (🎯 @TID-CORE-9/10:_TBD__TR-AD-NC_SF_TR)",
+			should:   "transfer input to supplemented folder // input filename not modified",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "transparency, result should take place of input",
+				file:   "file should be moved out of the way and result not cuddled",
+			},
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				file:   "$TRASH$.ADHOC",
+				folder: filepath.Join("$TRASH$", "ADHOC"),
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				transfer: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					assertTransferSupplementedOrigin(name, entry, origin, pa, vfs)
+				},
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					assertResultItemFile(name, entry, origin, pa)
+				},
+			},
+		}),
+		//
+		// TRANSPARENT --trash SPECIFIED
+		//
+		Entry(nil, &pixaTE{
+			given:    "regex/transparent/adhoc/not-cuddled (🎯 @TID-CORE-11/12:_TBD__TR-PR-TRA_TR)",
+			should:   "transfer input to supplemented folder // input filename not modified",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "transparency, result should take place of input",
+				file:   "file should be moved out of the way to specified trash and result not cuddled",
+			},
+			arranger: func(entry *pixaTE, origin string, vfs storage.VirtualFS) {
+				p := filepath.Join(origin, entry.trash)
+				entry.trash = p
+				_ = vfs.MkdirAll(p, common.Permissions.Write.Perm())
+			},
+			profile: "blur",
+			trash:   "rubbish",
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				file:   "$TRASH$.ADHOC",
+				folder: filepath.Join("$TRASH$", "blur"),
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				transfer: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					folder := filing.SupplementFolder(entry.trash,
+						entry.supplements.folder,
+					)
+
+					assertTransfer(folder, pa, vfs)
+				},
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {},
+			},
+		}),
+		//
+		// ❌ --output SPECIFIED, can't be TRANSPARENT as the output is being diverted
+		// elsewhere and by definition can't take the place of the input.
+		//
+
+		//
+		// NON-TRANSPARENT --output SPECIFIED
+		//
+		Entry(nil, &pixaTE{
+			given:    "regex/not-transparent/profile/not-cuddled (🎯 @TID-CORE-15/16:_TBD__NTR-PR-NC-OUT_TR)",
+			should:   "not transfer input // not modify input filename // re-direct result to output",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "result should be re-directed, so input can stay in place",
+				file:   "input file remains un modified",
+			},
+			arranger: func(entry *pixaTE, origin string, vfs storage.VirtualFS) {
+				_ = vfs.MkdirAll(entry.output, common.Permissions.Write.Perm())
+			},
+			profile: "blur",
+			output:  filepath.Join("foo", "sessions", "scan01", "results"),
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				folder: "blur",
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				transfer: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					folder := filing.SupplementFolder(entry.output,
+						entry.supplements.folder,
+					)
+
+					assertTransfer(folder, pa, vfs)
+				},
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {},
+			},
+		}),
+		//
+		// === NON-TRANSPARENT / SCHEME (non-cuddle) [BLUE]
+		//
+		Entry(nil, &pixaTE{
+			given:    "regex/not-transparent/scheme/output (🎯 @TID-CORE-17/18:_TBD__NTR-SC-NC-OUT_BLUR_TR)",
+			should:   "not transfer input // not modify input filename // re-direct result to output",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "result should be re-directed, so input can stay in place",
+				file:   "input file remains un modified",
+			},
+			scheme: "blur-sf",
+			arranger: func(entry *pixaTE, origin string, vfs storage.VirtualFS) {
+				_ = vfs.MkdirAll(entry.output, common.Permissions.Write.Perm())
+			},
+			output: filepath.Join("foo", "sessions", "scan01", "results"),
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				folder: "blur-sf", // !! +blue/sf
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				// transfer: not transparent; no transfer is invoked
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					assertResultItemFile(name, entry, origin, pa)
+				},
+			},
+		}),
+		//
+		// === NON-TRANSPARENT / ADHOC
+		//
+		Entry(nil, &pixaTE{
+			given:    "regex/not-transparent/adhoc/output (🎯 @TID-CORE-19/20:_TBD__NTR-AD-OUT_SF_TR)",
+			should:   "not transfer input // not modify input filename // re-direct result to output",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "result should be re-directed, so input can stay in place",
+				file:   "input file remains un modified",
+			},
+			arranger: func(entry *pixaTE, origin string, vfs storage.VirtualFS) {
+				_ = vfs.MkdirAll(entry.output, common.Permissions.Write.Perm())
+			},
+			output: filepath.Join("foo", "sessions", "scan01", "results"),
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				folder: "ADHOC",
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				// transfer: not transparent; no transfer is invoked
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+					assertResultItemFile(name, entry, origin, pa)
+				},
 			},
 		}),
 	)
-})
-
-var _ = Describe("end to end", Ordered, func() {
-	Context("REAL", func() {
-		XIt("should: tinkle the ivories", func() {
-			// pixa shrink ~/dev/test/pics --profile blur --sample --no-files 1 --files "screen*" --dry-run
-			args := []string{
-				"shrink",
-				"/Users/plastikfan/dev/test/pics",
-				"--profile", "blur",
-				// "--sample",
-				// "--no-files", "1",
-				"--files", "wonky*",
-				"--dry-run",
-			}
-			configPath := utils.ResolvePath("~/snivilised/pixa")
-			bootstrap := command.Bootstrap{
-				Vfs: storage.UseNativeFS(),
-			}
-			tester := helpers.CommandTester{
-				Args: args,
-				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
-					co.Detector = &helpers.DetectorStub{}
-					co.Config.Name = common.Definitions.Pixa.AppName
-					co.Config.ConfigPath = configPath
-				}),
-			}
-
-			_, err := tester.Execute()
-			Expect(err).Error().To(BeNil(),
-				fmt.Sprintf("execution result non nil (%v)", err),
-			)
-		})
-	})
 })
