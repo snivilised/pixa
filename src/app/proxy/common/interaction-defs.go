@@ -64,6 +64,7 @@ type (
 	// ClientTraverseInfo represents an entity which needs start a navigation
 	// operation.
 	ClientTraverseInfo interface {
+		Name() string
 		// ActiveOptionsFn allows the client to obtain the options func
 		// for the current phase.
 		ActiveOptionsFn() nav.TraverseOptionFn

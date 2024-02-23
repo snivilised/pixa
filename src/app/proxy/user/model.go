@@ -3,6 +3,8 @@ package user
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
+	"sync/atomic"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -32,9 +34,8 @@ type model struct {
 	inputs     *common.ShrinkCommandInputs
 	executable string
 	status     string
-	workload   uint
 	arity      uint
-	level      uint
+	level      int32
 	latest     JobDescription
 	di         common.DriverTraverseInfo
 	ui         walker
@@ -105,7 +106,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.result = msg.Result
 		m.err = msg.Err
 		m.status = "🎭 discovered"
-		m.workload = msg.Result.Metrics.Count(nav.MetricNoFilesInvokedEn) * m.arity
 
 		if msg.Err != nil {
 			return m, tea.Quit
@@ -116,7 +116,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, principal(m.di, m.ui)
 
 	case *common.ProgressMsg:
-		m.level++
+		atomic.AddInt32(&m.level, 1)
 		m.latest.Source = msg.Source
 		m.latest.Destination = msg.Destination
 		m.latest.Scheme = msg.Scheme
@@ -188,7 +188,10 @@ func (m *model) View() string {
 	wpf := m.inputs.Root.WorkerPoolFam.Native
 	cpus := lo.TernaryF(wpf.NoWorkers > 1 || wpf.CPU,
 		func() string {
-			return fmt.Sprintf("%v CPUs", fmt.Sprintf("%v", wpf.CPU))
+			if wpf.CPU {
+				return fmt.Sprintf("NumCPUs %v", runtime.NumCPU())
+			}
+			return fmt.Sprintf("%v workers", fmt.Sprintf("%v", wpf.NoWorkers))
 		},
 		func() string {
 			return "single CPU"
@@ -213,13 +216,13 @@ func (m *model) View() string {
 		-->        info: %v
 %v
 		-->       error: %v
-		-->    progress: %v of %v
+		-->    progress: %v
 	`,
 		m.spinner.View(), executable, m.status,
 		info,
 		bc.view(),
 		e,
-		m.level, m.workload,
+		m.level,
 	)
 
 	// the view will be a series of 'lanes', each one representing a job

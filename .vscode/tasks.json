@@ -20,7 +20,9 @@
               "blur",
               "--files",
               "wonky*",
-              "--dry-run"
+              "--dry-run",
+              "--now",
+              "3"
           ],
           "isBackground": true,
           "problemMatcher": {
