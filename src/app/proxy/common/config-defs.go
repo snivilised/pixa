@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/snivilised/cobrass/src/assistant/configuration"
@@ -38,6 +39,7 @@ type (
 		ConfigType string
 		ConfigPath string
 		Viper      configuration.ViperConfig
+		Scope      ConfigScope
 	}
 )
 
@@ -105,4 +107,21 @@ type (
 		Level() string
 		TimeFormat() string
 	}
+
+	ConfigScope interface {
+		ConfigDirs() ([]string, error)
+		LogPath(filename string) (string, error)
+	}
 )
+
+func IsUsingXDG(vc configuration.ViperConfig) bool {
+	val, ok := vc.Get(Definitions.Environment.UseXDG).(string)
+
+	if !ok {
+		val = ""
+	}
+
+	return !slices.Contains([]string{"", "0", "false", "no", "off"},
+		val,
+	)
+}

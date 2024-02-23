@@ -23,6 +23,7 @@ type (
 		ConfigTestFilename string
 		ConfigType         string
 		SubPath            string
+		Org                string
 	}
 
 	thirdPartyDefs struct {
@@ -45,7 +46,8 @@ type (
 	}
 
 	environmentDefs struct {
-		Home string
+		Home   string
+		UseXDG string
 	}
 
 	filingDefs struct {
@@ -79,6 +81,7 @@ var Definitions = definitions{
 		ConfigTestFilename: fmt.Sprintf("%v-test", appName),
 		ConfigType:         yml,
 		SubPath:            filepath.Join(org, appName),
+		Org:                org,
 	},
 	ThirdParty: thirdPartyDefs{
 		Magick: "magick",
@@ -97,7 +100,8 @@ var Definitions = definitions{
 		},
 	},
 	Environment: environmentDefs{
-		Home: "PIXA_HOME",
+		Home:   "PIXA_HOME",
+		UseXDG: "PIXA_XDG",
 	},
 	Filing: filingDefs{
 		JournalExt:    ".txt",

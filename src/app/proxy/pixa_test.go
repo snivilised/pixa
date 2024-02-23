@@ -70,24 +70,25 @@ func assertResultItemFile(name string,
 }
 
 type pixaTE struct {
-	given        string
-	should       string
-	reasons      reasons
-	arranger     arrange
-	asserters    asserters
-	exists       bool
-	args         []string
-	isTui        bool
-	dry          bool
-	intermediate string
-	output       string
-	trash        string
-	profile      string
-	scheme       string
-	relative     string
-	mandatory    []string
-	supplements  supplements
-	inputs       []string
+	given              string
+	should             string
+	reasons            reasons
+	arranger           arrange
+	asserters          asserters
+	exists             bool
+	args               []string
+	isTui              bool
+	dry                bool
+	intermediate       string
+	output             string
+	trash              string
+	profile            string
+	scheme             string
+	relative           string
+	mandatory          []string
+	supplements        supplements
+	inputs             []string
+	configTestFilename string
 }
 
 func because(reason string, extras ...string) string {
@@ -176,11 +177,16 @@ func (t *coreTest) run() {
 		},
 	}
 
+	configTestFilename := common.Definitions.Pixa.ConfigTestFilename
+	if t.entry.configTestFilename != "" {
+		configTestFilename = t.entry.configTestFilename
+	}
+
 	tester := helpers.CommandTester{
 		Args: args,
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
 			co.Detector = &helpers.DetectorStub{}
-			co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
+			co.Config.Name = configTestFilename
 			co.Config.ConfigPath = t.configPath
 			co.Config.Viper = &configuration.GlobalViperConfig{}
 		}),
@@ -449,6 +455,42 @@ var _ = Describe("pixa", Ordered, func() {
 				// transfer: not transparent; no transfer is invoked
 				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
 					assertResultItemFile(name, entry, origin, pa)
+				},
+			},
+		}),
+
+		//
+		// === MISC
+		//
+
+		//
+		// === NO LOGGER IN CONFIG (TRANSPARENT / PROFILE)
+		//
+		Entry(nil, &pixaTE{
+			given:    "no-log (🎯 @TID-CORE-1/2:_TBD__TR-PR-NC_TR)",
+			should:   "use log with default scope",
+			relative: BackyardWorldsPlanet9Scan01,
+			reasons: reasons{
+				folder: "transparency, result should take place of input in same folder",
+				file:   "file should be moved out of the way and not cuddled",
+			},
+			configTestFilename: "pixa-test-no-logger",
+			profile:            "blur",
+			args: []string{
+				"--files-rx", "Backyard-Worlds",
+				"--gaussian-blur", "0.51",
+				"--interlace", "line",
+			},
+			intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
+			supplements: supplements{
+				file:   "$TRASH$.blur",
+				folder: filepath.Join("$TRASH$", "blur"),
+			},
+			inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+			asserters: asserters{
+				transfer: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				},
+				result: func(name string, entry *pixaTE, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
 				},
 			},
 		}),

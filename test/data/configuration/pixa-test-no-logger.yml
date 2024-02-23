@@ -1,0 +1,49 @@
+profiles:
+  blur:
+    strip: true
+    interlace: "plane"
+    gaussian-blur: "0.05"
+  sf:
+    strip: true
+    interlace: "plane"
+    sampling-factor: "4:2:0"
+  adaptive:
+    strip: true
+    interlace: "plane"
+    gaussian-blur: "0.25"
+    adaptive-resize: "60"
+schemes:
+  blur-sf: ["blur", "sf"]
+  adaptive-sf: ["adaptive", "sf"]
+  adaptive-blur: ["adaptive", "blur"]
+  singleton: ["adaptive"]
+sampler:
+  files: 2
+  folders: 1
+interaction:
+  tui:
+    per-item-delay: "1ms"
+advanced:
+  abort-on-error: true
+  overwrite-on-collision: false
+  labels:
+    adhoc: ADHOC
+    legacy: .LEGACY
+    journal-suffix: journal
+    trash: TRASH
+    fake: .FAKE
+    supplement: SUPP
+  extensions:
+    suffixes-csv: "jpg,jpeg,png"
+    transforms-csv: lower
+    map:
+  executable:
+    program-name: dummy
+    timeout: "20s"
+    no-retries: 0
+logging:
+  max-size-in-mb: 10
+  max-backups: 3
+  max-age-in-days: 30
+  level: info
+  time-format: "2006-01-02 15:04:05"

@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 
+	gap "github.com/muesli/go-app-paths"
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
@@ -71,7 +72,7 @@ type Bootstrap struct {
 
 type ConfigureOptionsInfo struct {
 	Detector LocaleDetector
-	Config   common.ConfigInfo
+	Config   *common.ConfigInfo
 	Runner   common.ConfigRunner
 }
 
@@ -81,14 +82,26 @@ type ConfigureOptionFn func(*ConfigureOptionsInfo)
 // to be executed.
 func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	vc := &configuration.GlobalViperConfig{}
-	ci := common.ConfigInfo{
+	ci := &common.ConfigInfo{
 		Name:       common.Definitions.Pixa.AppName,
 		ConfigType: common.Definitions.Pixa.ConfigType,
 		Viper:      vc,
+		Scope: gap.NewVendorScope(gap.User,
+			common.Definitions.Pixa.Org, common.Definitions.Pixa.AppName,
+		),
+	}
+
+	b.OptionsInfo = ConfigureOptionsInfo{
+		Detector: &Jabber{},
+		Config:   ci,
+	}
+
+	for _, fo := range options {
+		fo(&b.OptionsInfo)
 	}
 
 	runner, err := cfg.New(
-		&ci,
+		ci,
 		common.Definitions.Pixa.SourceID,
 		common.Definitions.Pixa.AppName,
 		b.Vfs,
@@ -102,19 +115,11 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 		os.Exit(1)
 	}
 
-	b.OptionsInfo = ConfigureOptionsInfo{
-		Detector: &Jabber{},
-		Config:   ci,
-		Runner:   runner,
-	}
-
-	for _, fo := range options {
-		fo(&b.OptionsInfo)
-	}
+	b.OptionsInfo.Runner = runner
 
 	b.configure()
 	b.viper()
-	b.Logger = plog.New(b.Configs.Logging, b.Vfs)
+	b.Logger = plog.New(b.Configs.Logging, b.Vfs, ci.Scope, vc)
 
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
