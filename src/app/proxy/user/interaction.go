@@ -41,6 +41,11 @@ type interaction struct {
 	arity  uint
 }
 
+func (u *interaction) IfWithPool(with nav.CreateNewRunnerWith) bool {
+	// this should go into nav, alongside IfWithPoolUseContext
+	return with&nav.RunnerWithPool > 0
+}
+
 func (u *interaction) navigate(ci common.ClientTraverseInfo,
 	with nav.CreateNewRunnerWith,
 	after ...common.AfterFunc,
@@ -68,6 +73,10 @@ func (u *interaction) navigate(ci common.ClientTraverseInfo,
 	result, err = nav.New().With(with, runnerInfo).Run(
 		nav.IfWithPoolUseContext(with, ctx, cancel)...,
 	)
+
+	if u.IfWithPool(with) {
+		wgan.Wait(boost.GoRoutineName(fmt.Sprintf("👾 %v", ci.Name())))
+	}
 
 	for _, fn := range after {
 		fn(result, err)

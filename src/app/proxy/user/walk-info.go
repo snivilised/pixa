@@ -6,6 +6,7 @@ import (
 )
 
 type walkInfo struct {
+	name               string
 	discoverOptionsFn  nav.TraverseOptionFn
 	principalOptionsFn nav.TraverseOptionFn
 	activeOptionsFn    nav.TraverseOptionFn
@@ -21,6 +22,7 @@ func NewWalkInfo(discoverOptionsFn nav.TraverseOptionFn,
 	inputs *common.ShrinkCommandInputs,
 ) common.DriverTraverseInfo {
 	return &walkInfo{
+		name:               common.Definitions.Interaction.Names.Discovery,
 		discoverOptionsFn:  discoverOptionsFn,
 		principalOptionsFn: principalOptionsFn,
 		activeOptionsFn:    discoverOptionsFn,
@@ -28,6 +30,10 @@ func NewWalkInfo(discoverOptionsFn nav.TraverseOptionFn,
 		resumption:         resumption,
 		inputs:             inputs,
 	}
+}
+
+func (wi *walkInfo) Name() string {
+	return wi.name
 }
 
 func (wi *walkInfo) ActiveOptionsFn() nav.TraverseOptionFn {
@@ -47,5 +53,6 @@ func (wi *walkInfo) IsDryRun() bool {
 }
 
 func (wi *walkInfo) Next() {
+	wi.name = common.Definitions.Interaction.Names.Primary
 	wi.activeOptionsFn = wi.principalOptionsFn
 }

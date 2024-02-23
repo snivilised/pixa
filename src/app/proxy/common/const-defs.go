@@ -53,6 +53,13 @@ type (
 		Discriminator string // helps to identify files that should be filtered out
 	}
 
+	interactionDefs struct {
+		Names struct {
+			Discovery string
+			Primary   string
+		}
+	}
+
 	definitions struct {
 		Pixa        pixaDefs
 		ThirdParty  thirdPartyDefs
@@ -60,6 +67,7 @@ type (
 		Defaults    defaultDefs
 		Environment environmentDefs
 		Filing      filingDefs
+		Interaction interactionDefs
 	}
 )
 
@@ -94,5 +102,14 @@ var Definitions = definitions{
 	Filing: filingDefs{
 		JournalExt:    ".txt",
 		Discriminator: ".$",
+	},
+	Interaction: interactionDefs{
+		Names: struct {
+			Discovery string
+			Primary   string
+		}{
+			Discovery: "discover",
+			Primary:   "primary",
+		},
 	},
 }
