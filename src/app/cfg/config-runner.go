@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	gap "github.com/muesli/go-app-paths"
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
@@ -45,6 +46,7 @@ func New(
 		applicationName: applicationName,
 		home:            home,
 		vfs:             vfs,
+		useXDG:          common.IsUsingXDG(ci.Viper),
 	}, err
 }
 
@@ -55,6 +57,7 @@ type configRunner struct {
 	applicationName string
 	home            string
 	vfs             storage.VirtualFS
+	useXDG          bool
 }
 
 func (c *configRunner) DefaultPath() string {
@@ -65,7 +68,6 @@ func (c *configRunner) Run() error {
 	c.vc.SetConfigName(c.ci.Name)
 	c.vc.SetConfigType(c.ci.ConfigType)
 	c.vc.AutomaticEnv()
-	c.vc.AddConfigPath(c.path())
 
 	err := c.read()
 
@@ -93,6 +95,9 @@ func (c *configRunner) read() error {
 	var (
 		err error
 	)
+
+	c.vc.AddConfigPath(c.path())
+
 	// the returned error from vc.ReadInConfig() does not support standard
 	// golang error identity via errors.Is, so we are forced to assume
 	// that if we get an error, it is viper.ConfigFileNotFoundError
@@ -108,6 +113,49 @@ func (c *configRunner) read() error {
 			// try the home path
 			//
 			c.vc.AddConfigPath(c.home)
+
+			return nil
+		},
+		func() error {
+			// try standard or XDG
+			//
+			if c.useXDG {
+				// manual XDG: ["~/.local/share/app", "/usr/local/share/app", "/usr/share/app"]
+				// https://github.com/muesli/go-app-paths?tab=readme-ov-file#directories
+				//
+				paths := []string{
+					filepath.Join(c.home, ".local", "share"),
+					filepath.Join(string(filepath.Separator), "usr", "local", "share"),
+					filepath.Join(string(filepath.Separator), "usr", "share"),
+				}
+
+				for _, dir := range paths {
+					c.vc.AddConfigPath(filepath.Join(dir, common.Definitions.Pixa.AppName))
+				}
+			} else {
+				// use standard muesli; ie platform specific
+				//
+				scope := lo.TernaryF(c.ci.Scope != nil,
+					func() common.ConfigScope {
+						return c.ci.Scope
+					},
+					func() common.ConfigScope {
+						return gap.NewVendorScope(gap.User,
+							common.Definitions.Pixa.Org, common.Definitions.Pixa.AppName,
+						)
+					},
+				)
+
+				paths, e := scope.ConfigDirs()
+
+				if e == nil {
+					for _, dir := range paths {
+						c.vc.AddConfigPath(dir)
+					}
+				} else {
+					return e
+				}
+			}
 
 			return nil
 		},

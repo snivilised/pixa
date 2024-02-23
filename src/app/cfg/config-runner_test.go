@@ -1,6 +1,7 @@
 package cfg_test
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -19,12 +20,39 @@ import (
 var (
 	sourceID    = "github.com/snivilised/pixa"
 	environment = "PIXA_HOME"
+	useXDG      = ""
 )
+
+type testScope struct {
+}
+
+func (f *testScope) ConfigDirs() ([]string, error) {
+	return []string{
+		filepath.Join(string(filepath.Separator), "foo"),
+		filepath.Join(string(filepath.Separator), "bar"),
+	}, nil
+}
+
+func (f *testScope) LogPath(filename string) (string, error) {
+	return filename, nil
+}
+
+type errorScope struct {
+}
+
+func (f *errorScope) ConfigDirs() ([]string, error) {
+	return []string{}, errors.New("fake could not get config dirs")
+}
+
+func (f *errorScope) LogPath(filename string) (string, error) {
+	return filename, nil
+}
 
 type runnerTE struct {
 	given   string
 	should  string
 	path    string
+	scope   common.ConfigScope
 	arrange func(entry *runnerTE, path string)
 	created func(entry *runnerTE, runner common.ConfigRunner)
 	assert  func(entry *runnerTE, runner common.ConfigRunner, err error)
@@ -59,6 +87,7 @@ var _ = Describe("ConfigRunner", func() {
 				ConfigType: common.Definitions.Pixa.ConfigType,
 				ConfigPath: entry.path,
 				Viper:      mock,
+				Scope:      entry.scope,
 			}
 			// this is why I hate mocking, requires too much
 			// knowledge of the implementation, making the tests
@@ -94,6 +123,10 @@ var _ = Describe("ConfigRunner", func() {
 			given:  "config file present at PIXA_HOME",
 			should: "use config at PIXA_HOME",
 			arrange: func(_ *runnerTE, path string) {
+				mock.EXPECT().Get(gomock.Eq(common.Definitions.Environment.UseXDG)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
 				mock.EXPECT().ReadInConfig().Times(1)
 				mock.EXPECT().AddConfigPath(path).AnyTimes()
 				mock.EXPECT().Get(gomock.Eq(environment)).DoAndReturn(func(_ string) string {
@@ -110,6 +143,10 @@ var _ = Describe("ConfigRunner", func() {
 			given:  "config file present as configured by client, PIXA_HOME not defined",
 			should: "use config at specified path",
 			arrange: func(_ *runnerTE, _ string) {
+				mock.EXPECT().Get(gomock.Eq(common.Definitions.Environment.UseXDG)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
 				mock.EXPECT().ReadInConfig().Times(1)
 				mock.EXPECT().AddConfigPath(gomock.Any()).AnyTimes()
 				mock.EXPECT().Get(gomock.Eq(environment)).DoAndReturn(func(_ string) string {
@@ -126,6 +163,10 @@ var _ = Describe("ConfigRunner", func() {
 			given:  "config file missing, but at default location, PIXA_HOME not defined",
 			should: "use config at default location",
 			arrange: func(_ *runnerTE, _ string) {
+				mock.EXPECT().Get(gomock.Eq(common.Definitions.Environment.UseXDG)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
 				mock.EXPECT().Get(gomock.Eq(environment)).DoAndReturn(func(_ string) string {
 					return ""
 				}).AnyTimes()
@@ -158,6 +199,64 @@ var _ = Describe("ConfigRunner", func() {
 			given:  "config file completely missing",
 			should: "use default exported config",
 			arrange: func(_ *runnerTE, _ string) {
+				mock.EXPECT().Get(gomock.Eq(common.Definitions.Environment.UseXDG)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
+				mock.EXPECT().Get(gomock.Eq(environment)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
+				mock.EXPECT().ReadInConfig().Times(2).DoAndReturn(func() error {
+					return viper.ConfigFileNotFoundError{}
+				})
+				mock.EXPECT().AddConfigPath(gomock.Any()).AnyTimes()
+				mock.EXPECT().ReadInConfig().Times(1).DoAndReturn(func() error {
+					return nil
+				})
+			},
+			assert: func(_ *runnerTE, runner common.ConfigRunner, err error) {
+				Expect(err).Error().To(BeNil())
+				Expect(runner).NotTo(BeNil())
+			},
+		}),
+
+		Entry(nil, &runnerTE{
+			given:  "use XDG, config file completely missing",
+			should: "use default exported config",
+			scope:  &testScope{},
+			arrange: func(_ *runnerTE, _ string) {
+				mock.EXPECT().Get(gomock.Eq(common.Definitions.Environment.UseXDG)).DoAndReturn(func(_ string) string {
+					return "true"
+				}).AnyTimes()
+
+				mock.EXPECT().Get(gomock.Eq(environment)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
+				mock.EXPECT().ReadInConfig().Times(2).DoAndReturn(func() error {
+					return viper.ConfigFileNotFoundError{}
+				})
+				mock.EXPECT().AddConfigPath(gomock.Any()).AnyTimes()
+				mock.EXPECT().ReadInConfig().Times(1).DoAndReturn(func() error {
+					return nil
+				})
+			},
+			assert: func(_ *runnerTE, runner common.ConfigRunner, err error) {
+				Expect(err).Error().To(BeNil())
+				Expect(runner).NotTo(BeNil())
+			},
+		}),
+
+		Entry(nil, &runnerTE{
+			given:  "scope returns error, config file completely missing",
+			should: "use default exported config",
+			scope:  &errorScope{},
+			arrange: func(_ *runnerTE, _ string) {
+				mock.EXPECT().Get(gomock.Eq(common.Definitions.Environment.UseXDG)).DoAndReturn(func(_ string) string {
+					return ""
+				}).AnyTimes()
+
 				mock.EXPECT().Get(gomock.Eq(environment)).DoAndReturn(func(_ string) string {
 					return ""
 				}).AnyTimes()
