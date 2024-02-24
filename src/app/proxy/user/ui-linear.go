@@ -25,15 +25,13 @@ func (ui *linearUI) Traverse(di common.DriverTraverseInfo) (*nav.TraverseResult,
 	// we could simple call Next, then call the principal, but we
 	// could change the meaning of next which automatically calls principal
 	//
-	with := di.RunWith()
-
-	if _, err := ui.navigate(di, clearResumeFromWith(with)); err != nil {
+	if _, err := ui.navigate(di); err != nil {
 		return nil, errors.Wrap(err, "shrink look-ahead phase failed")
 	}
 
 	di.Next()
 
-	return ui.navigate(di, with)
+	return ui.navigate(di)
 }
 
 // Tick allows the model to be updated, as activity occurs during

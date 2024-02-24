@@ -92,6 +92,7 @@ type MsLabelsConfig struct {
 	Trash      string `mapstructure:"trash"`
 	Fake       string `mapstructure:"fake"`
 	Supplement string `mapstructure:"supplement"`
+	Sample     string `mapstructure:"sample"`
 }
 
 type MsExtensionsConfig struct {
@@ -163,6 +164,10 @@ func (c *MsAdvancedConfig) FakeLabel() string {
 
 func (c *MsAdvancedConfig) SupplementLabel() string {
 	return c.LabelsCFG.Supplement
+}
+
+func (c *MsAdvancedConfig) SampleLabel() string {
+	return c.LabelsCFG.Sample
 }
 
 func (c *MsAdvancedConfig) Extensions() common.ExtensionsConfig {

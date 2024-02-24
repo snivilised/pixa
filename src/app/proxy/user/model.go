@@ -68,7 +68,7 @@ func discover(ti common.ClientTraverseInfo, ui walker) tea.Cmd {
 			err    error
 		)
 
-		result, err = ui.navigate(ti, clearResumeFromWith(ti.RunWith())) // peek
+		result, err = ui.navigate(ti) // peek
 
 		return &common.DiscoveredMsg{
 			Result: result,
@@ -84,7 +84,7 @@ func principal(ti common.ClientTraverseInfo, ui walker) tea.Cmd {
 			err    error
 		)
 
-		result, err = ui.navigate(ti, ti.RunWith()) // poke
+		result, err = ui.navigate(ti) // poke
 
 		return &common.FinishedMsg{
 			Result: result,

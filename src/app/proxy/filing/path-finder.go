@@ -34,6 +34,7 @@ func NewFinder(
 			Trash:      advanced.TrashLabel(),
 			Fake:       advanced.FakeLabel(),
 			Supplement: advanced.SupplementLabel(),
+			Sample:     advanced.SampleLabel(),
 		},
 		Ext: &ExtensionTransformation{
 			Transformers: strings.Split(extensions.Transforms(), ","),
@@ -227,7 +228,7 @@ func (f *PathFinder) Scheme() string {
 // determine the destination path for the input.
 func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 	folder = func() string {
-		if info.Cuddle {
+		if info.IsCuddling {
 			return info.Origin
 		}
 
@@ -267,8 +268,10 @@ func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 			return ""
 		}
 
-		if info.Cuddle {
-			supp := fmt.Sprintf("%v.%v", f.Stats.TrashTag(), f.fileProfileSupplement(info.Profile))
+		if info.IsCuddling {
+			supp := fmt.Sprintf("%v.%v", f.Stats.TrashTag(),
+				f.fileSupplement(info.Profile, ""),
+			)
 
 			return SupplementFilename(
 				info.Item.Extension.Name, supp, f.Stats,
@@ -319,7 +322,7 @@ func (f *PathFinder) mutateExtension(file string) string {
 // execution step
 func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 	folder = func() string {
-		return lo.TernaryF(f.transparentInput || info.Cuddle,
+		return lo.TernaryF(f.transparentInput || info.IsCuddling || info.IsSampling,
 			func() string {
 				// The result file has to be in the same folder
 				// as the input
@@ -359,10 +362,15 @@ func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 		// The file name just matches the input file name. The folder name
 		// provides the context.
 		//
-		if info.Cuddle {
+		if info.IsCuddling || info.IsSampling {
 			// decorate the input file to get the result file
 			//
-			supp := f.fileProfileSupplement(info.Profile)
+			withSampling := ""
+			if info.IsSampling {
+				withSampling = f.Stats.Sample
+			}
+
+			supp := f.fileSupplement(info.Profile, withSampling)
 
 			return SupplementFilename(
 				info.Item.Extension.Name, supp, f.Stats,
@@ -387,7 +395,7 @@ func (f *PathFinder) folderProfileSupplement(profile string) string {
 	)
 }
 
-func (f *PathFinder) fileProfileSupplement(profile string) string {
+func (f *PathFinder) fileSupplement(profile, withSampling string) string {
 	var (
 		result string
 	)
@@ -404,6 +412,10 @@ func (f *PathFinder) fileProfileSupplement(profile string) string {
 
 	default:
 		result = f.Stats.Adhoc
+	}
+
+	if withSampling != "" {
+		result = fmt.Sprintf("$%v$.%v", withSampling, result)
 	}
 
 	return result

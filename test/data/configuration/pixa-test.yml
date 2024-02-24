@@ -33,6 +33,7 @@ advanced:
     trash: TRASH
     fake: .FAKE
     supplement: SUPP
+    sample: SAMPLE
   extensions:
     suffixes-csv: "jpg,jpeg,png"
     transforms-csv: lower

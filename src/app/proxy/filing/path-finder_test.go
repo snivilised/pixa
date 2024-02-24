@@ -120,12 +120,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 						Name: "01_Backyard-Worlds-Planet-9_s01.jpg",
 					},
 				},
-				Origin:  origin,
-				Profile: entry.profile,
-				Scheme:  entry.scheme,
-				Cuddle:  entry.cuddle,
-				Output:  entry.output,
-				Trash:   entry.trash,
+				Origin:     origin,
+				Profile:    entry.profile,
+				Scheme:     entry.scheme,
+				IsCuddling: entry.cuddle,
+				Output:     entry.output,
+				Trash:      entry.trash,
 			}
 
 			var (

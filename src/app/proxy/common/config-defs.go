@@ -95,6 +95,7 @@ type (
 		TrashLabel() string
 		FakeLabel() string
 		SupplementLabel() string
+		SampleLabel() string
 		Extensions() ExtensionsConfig
 		Executable() ExecutableConfig
 	}
