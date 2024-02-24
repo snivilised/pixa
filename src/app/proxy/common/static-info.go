@@ -13,6 +13,7 @@ type StaticInfo struct {
 	Trash      string
 	Fake       string
 	Supplement string
+	Sample     string
 }
 
 func (i *StaticInfo) JournalLocation(name, parent string) string {

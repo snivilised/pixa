@@ -16,14 +16,15 @@ type (
 	}
 
 	PathInfo struct {
-		Item    *nav.TraverseItem
-		Origin  string
-		Scheme  string
-		Profile string
-		RunStep RunStepInfo
-		Cuddle  bool
-		Output  string
-		Trash   string
+		Item       *nav.TraverseItem
+		Origin     string
+		Scheme     string
+		Profile    string
+		RunStep    RunStepInfo
+		IsCuddling bool
+		IsSampling bool
+		Output     string
+		Trash      string
 	}
 
 	PathFinder interface {

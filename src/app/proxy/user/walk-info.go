@@ -41,6 +41,10 @@ func (wi *walkInfo) ActiveOptionsFn() nav.TraverseOptionFn {
 }
 
 func (wi *walkInfo) RunWith() nav.CreateNewRunnerWith {
+	if wi.name == common.Definitions.Interaction.Names.Discovery {
+		return 0
+	}
+
 	return wi.with
 }
 

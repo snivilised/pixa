@@ -30,7 +30,6 @@ func randemoji() string {
 
 type walker interface {
 	navigate(ci common.ClientTraverseInfo,
-		with nav.CreateNewRunnerWith,
 		after ...common.AfterFunc,
 	) (result *nav.TraverseResult, err error)
 }
@@ -41,13 +40,23 @@ type interaction struct {
 	arity  uint
 }
 
-func (u *interaction) IfWithPool(with nav.CreateNewRunnerWith) bool {
+func (u *interaction) IfWithPool(with nav.CreateNewRunnerWith, now int, cpu bool) bool {
 	// this should go into nav, alongside IfWithPoolUseContext
-	return with&nav.RunnerWithPool > 0
+	return with&nav.RunnerWithPool > 0 && (now >= 0 || cpu)
+}
+
+func (u *interaction) IfWithPoolUseContext(with nav.CreateNewRunnerWith, now int, cpu bool, args ...any) []any {
+	return lo.TernaryF(u.IfWithPool(with, now, cpu),
+		func() []any {
+			return args
+		},
+		func() []any {
+			return []any{}
+		},
+	)
 }
 
 func (u *interaction) navigate(ci common.ClientTraverseInfo,
-	with nav.CreateNewRunnerWith,
 	after ...common.AfterFunc,
 ) (result *nav.TraverseResult, err error) {
 	wgan := boost.NewAnnotatedWaitGroup("🍂 traversal", u.logger)
@@ -56,6 +65,9 @@ func (u *interaction) navigate(ci common.ClientTraverseInfo,
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	now := u.inputs.Root.WorkerPoolFam.Native.NoWorkers
+	cpu := u.inputs.Root.WorkerPoolFam.Native.CPU
+	with := ci.RunWith()
 	runnerInfo := &nav.RunnerInfo{
 		PrimeInfo: &nav.Prime{
 			Path:      u.inputs.Root.ParamSet.Native.Directory,
@@ -65,16 +77,16 @@ func (u *interaction) navigate(ci common.ClientTraverseInfo,
 		AccelerationInfo: &nav.Acceleration{
 			WgAn:        wgan,
 			RoutineName: navigatorRoutineName,
-			NoW:         u.inputs.Root.WorkerPoolFam.Native.NoWorkers,
+			NoW:         now,
 			JobsChOut:   make(boost.JobStream[nav.TraverseItemInput], DefaultJobsChSize),
 		},
 	}
 
 	result, err = nav.New().With(with, runnerInfo).Run(
-		nav.IfWithPoolUseContext(with, ctx, cancel)...,
+		u.IfWithPoolUseContext(with, now, cpu, ctx, cancel)...,
 	)
 
-	if u.IfWithPool(with) {
+	if u.IfWithPool(with, now, cpu) {
 		wgan.Wait(boost.GoRoutineName(fmt.Sprintf("👾 %v", ci.Name())))
 	}
 

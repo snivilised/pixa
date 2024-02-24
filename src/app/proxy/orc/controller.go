@@ -30,13 +30,13 @@ func (c *Controller) OnNewShrinkItem(item *nav.TraverseItem) error {
 	// to replace the individual properties on the step
 	//
 	pi := &common.PathInfo{
-		Item:    item,
-		Scheme:  c.session.Inputs.Root.ProfileFam.Native.Scheme,
-		Profile: c.session.Inputs.Root.ProfileFam.Native.Profile,
-		Origin:  item.Extension.Parent,
-		Cuddle:  c.session.Inputs.ParamSet.Native.Cuddle,
-		Output:  c.session.Inputs.ParamSet.Native.OutputPath,
-		Trash:   c.session.Inputs.ParamSet.Native.TrashPath,
+		Item:       item,
+		Scheme:     c.session.Inputs.Root.ProfileFam.Native.Scheme,
+		Profile:    c.session.Inputs.Root.ProfileFam.Native.Profile,
+		Origin:     item.Extension.Parent,
+		IsCuddling: c.session.Inputs.ParamSet.Native.Cuddle,
+		Output:     c.session.Inputs.ParamSet.Native.OutputPath,
+		Trash:      c.session.Inputs.ParamSet.Native.TrashPath,
 	}
 
 	var sequence common.Sequence
@@ -144,13 +144,14 @@ func (c *Controller) Run(item *nav.TraverseItem, sequence common.Sequence) error
 	}
 
 	c.private.Pi = common.PathInfo{
-		Item:    item,
-		Origin:  item.Parent.Path,
-		Profile: c.session.Inputs.Root.ProfileFam.Native.Profile,
-		Scheme:  c.session.FileManager.Finder().Scheme(),
-		Cuddle:  c.session.Inputs.ParamSet.Native.Cuddle,
-		Output:  c.session.Inputs.ParamSet.Native.OutputPath,
-		Trash:   c.session.Inputs.ParamSet.Native.TrashPath,
+		Item:       item,
+		Origin:     item.Parent.Path,
+		Profile:    c.session.Inputs.Root.ProfileFam.Native.Profile,
+		Scheme:     c.session.FileManager.Finder().Scheme(),
+		IsCuddling: c.session.Inputs.ParamSet.Native.Cuddle,
+		IsSampling: c.session.Inputs.Root.SamplingFam.Native.IsSampling,
+		Output:     c.session.Inputs.ParamSet.Native.OutputPath,
+		Trash:      c.session.Inputs.ParamSet.Native.TrashPath,
 	}
 
 	// TODO: need to decide a proper policy for cleaning up

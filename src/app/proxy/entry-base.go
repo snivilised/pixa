@@ -55,11 +55,10 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
 			name := item.Name()
 
-			// todo: filter out sample files
-
 			return !strings.HasPrefix(name, ".") &&
 				!strings.Contains(name, jWithoutExt) &&
-				!strings.Contains(name, trash)
+				!strings.Contains(name, trash) &&
+				!strings.Contains(name, statics.Sample)
 		}), nil
 	}
 
