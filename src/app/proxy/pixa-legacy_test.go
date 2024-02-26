@@ -140,8 +140,8 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 			)
 
 			observer := &testPathFinderObserver{
-				transfers: make(observerAssertions),
-				results:   make(observerAssertions),
+				transfers: make(observerAssertions, 6),
+				results:   make(observerAssertions, 6),
 			}
 
 			bootstrap := command.Bootstrap{

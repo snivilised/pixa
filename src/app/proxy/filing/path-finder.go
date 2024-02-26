@@ -27,15 +27,8 @@ func NewFinder(
 	advanced := info.Advanced
 	extensions := advanced.Extensions()
 	finder := &PathFinder{
-		Sch: info.Scheme,
-		Stats: &common.StaticInfo{
-			Adhoc:      advanced.AdhocLabel(),
-			Legacy:     advanced.LegacyLabel(),
-			Trash:      advanced.TrashLabel(),
-			Fake:       advanced.FakeLabel(),
-			Supplement: advanced.SupplementLabel(),
-			Sample:     advanced.SampleLabel(),
-		},
+		Sch:   info.Scheme,
+		Stats: common.NewStaticInfoFromConfig(advanced),
 		Ext: &ExtensionTransformation{
 			Transformers: strings.Split(extensions.Transforms(), ","),
 			Remap:        extensions.Map(),
@@ -182,27 +175,6 @@ func (f *PathFinder) init(info *NewFinderInfo) {
 	// with the --output flag, then the input is no longer transparent, as the user has
 	// to go to the output location to see the result.
 	f.transparentInput = info.OutputPath == "" && info.Arity == 1
-
-	journal := info.Advanced.JournalLabel()
-
-	if !strings.HasSuffix(journal, common.Definitions.Filing.JournalExt) {
-		journal += common.Definitions.Filing.JournalExt
-	}
-
-	if !strings.HasPrefix(journal, common.Definitions.Filing.Discriminator) {
-		journal = common.Definitions.Filing.Discriminator + journal
-	}
-
-	withoutExt := strings.TrimSuffix(journal, common.Definitions.Filing.JournalExt)
-	core := strings.TrimPrefix(withoutExt, common.Definitions.Filing.Discriminator)
-
-	f.Stats.Journal = common.JournalMetaInfo{
-		Core:          core,
-		Actual:        journal,
-		WithoutExt:    withoutExt,
-		Extension:     common.Definitions.Filing.JournalExt,
-		Discriminator: common.Definitions.Filing.Discriminator,
-	}
 }
 
 func (f *PathFinder) JournalFullPath(item *nav.TraverseItem) string {
@@ -228,8 +200,8 @@ func (f *PathFinder) Scheme() string {
 // determine the destination path for the input.
 func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 	folder = func() string {
-		if info.IsCuddling {
-			return info.Origin
+		if info.IsCuddling || info.IsSampling {
+			return ""
 		}
 
 		if info.Output != "" && info.Trash == "" {
@@ -255,12 +227,12 @@ func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 			"${{TRANSFER-DESTINATION}}": to,
 			"${{ITEM-SUB-PATH}}":        info.Item.Extension.SubPath,
 			"${{DEJA-VU}}":              f.Stats.TrashTag(),
-			"${{SUPPLEMENT}}":           f.folderProfileSupplement(info.Profile),
+			"${{SUPPLEMENT}}":           f.FolderSupplement(info.Profile),
 		}, segments...)
 	}()
 
 	file = func() string {
-		if info.Output != "" && info.Trash == "" {
+		if (info.Output != "" && info.Trash == "") || info.IsSampling {
 			// When output folder is specified, then the results will be diverted there.
 			// This means there is no need to transfer the input, unless trash has
 			// also been specified.
@@ -270,7 +242,7 @@ func (f *PathFinder) Transfer(info *common.PathInfo) (folder, file string) {
 
 		if info.IsCuddling {
 			supp := fmt.Sprintf("%v.%v", f.Stats.TrashTag(),
-				f.fileSupplement(info.Profile, ""),
+				f.FileSupplement(info.Profile, ""),
 			)
 
 			return SupplementFilename(
@@ -352,7 +324,7 @@ func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 				return pfTemplates.evaluate(pfFieldValues{
 					"${{OUTPUT-ROOT}}":   to,
 					"${{ITEM-SUB-PATH}}": info.Item.Extension.SubPath,
-					"${{SUPPLEMENT}}":    f.folderProfileSupplement(info.Profile),
+					"${{SUPPLEMENT}}":    f.FolderSupplement(info.Profile),
 				}, segments...)
 			},
 		)
@@ -370,7 +342,14 @@ func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 				withSampling = f.Stats.Sample
 			}
 
-			supp := f.fileSupplement(info.Profile, withSampling)
+			supp := lo.TernaryF(info.IsSampling,
+				func() string {
+					return f.SampleFileSupplement(withSampling)
+				},
+				func() string {
+					return f.FileSupplement(info.Profile, withSampling)
+				},
+			)
 
 			return SupplementFilename(
 				info.Item.Extension.Name, supp, f.Stats,
@@ -383,7 +362,7 @@ func (f *PathFinder) Result(info *common.PathInfo) (folder, file string) {
 	return folder, f.mutateExtension(file)
 }
 
-func (f *PathFinder) folderProfileSupplement(profile string) string {
+func (f *PathFinder) FolderSupplement(profile string) string {
 	return lo.TernaryF(f.Sch == "" && profile == "",
 		func() string {
 			adhocLabel := f.Stats.Adhoc
@@ -395,23 +374,23 @@ func (f *PathFinder) folderProfileSupplement(profile string) string {
 	)
 }
 
-func (f *PathFinder) fileSupplement(profile, withSampling string) string {
+func FileSupplement(scheme, profile, adhoc, withSampling string) string {
 	var (
 		result string
 	)
 
 	switch {
-	case f.Sch != "" && profile != "":
-		result = fmt.Sprintf("%v.%v", f.Sch, profile)
+	case scheme != "" && profile != "":
+		result = fmt.Sprintf("%v.%v", scheme, profile)
 
-	case f.Sch != "":
-		result = f.Sch
+	case scheme != "":
+		result = scheme
 
 	case profile != "":
 		result = profile
 
 	default:
-		result = f.Stats.Adhoc
+		result = adhoc
 	}
 
 	if withSampling != "" {
@@ -419,6 +398,14 @@ func (f *PathFinder) fileSupplement(profile, withSampling string) string {
 	}
 
 	return result
+}
+
+func (f *PathFinder) FileSupplement(profile, withSampling string) string {
+	return FileSupplement(f.Sch, profile, f.Stats.Adhoc, withSampling) // todo: is adhoc ok here?
+}
+
+func (f *PathFinder) SampleFileSupplement(withSampling string) string {
+	return fmt.Sprintf("$%v$", withSampling)
 }
 
 func (f *PathFinder) TransparentInput() bool {

@@ -140,10 +140,11 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 					_, appErr = proxy.EnterShrink(
 						&proxy.ShrinkParams{
-							Inputs: inputs,
-							Viper:  b.OptionsInfo.Config.Viper,
-							Logger: b.Logger,
-							Vfs:    b.Vfs,
+							Inputs:        inputs,
+							Viper:         b.OptionsInfo.Config.Viper,
+							Logger:        b.Logger,
+							Vfs:           b.Vfs,
+							Notifications: &b.Notifications,
 						},
 					)
 				} else {
