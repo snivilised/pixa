@@ -16,6 +16,42 @@ type StaticInfo struct {
 	Sample     string
 }
 
+func NewStaticInfoFromConfig(advanced AdvancedConfig) *StaticInfo {
+	stats := &StaticInfo{
+		Adhoc:      advanced.AdhocLabel(),
+		Legacy:     advanced.LegacyLabel(),
+		Trash:      advanced.TrashLabel(),
+		Fake:       advanced.FakeLabel(),
+		Supplement: advanced.SupplementLabel(),
+		Sample:     advanced.SampleLabel(),
+	}
+
+	stats.initJournal(advanced.JournalLabel())
+
+	return stats
+}
+
+func (i *StaticInfo) initJournal(journalLabel string) {
+	if !strings.HasSuffix(journalLabel, Definitions.Filing.JournalExt) {
+		journalLabel += Definitions.Filing.JournalExt
+	}
+
+	if !strings.HasPrefix(journalLabel, Definitions.Filing.Discriminator) {
+		journalLabel = Definitions.Filing.Discriminator + journalLabel
+	}
+
+	withoutExt := strings.TrimSuffix(journalLabel, Definitions.Filing.JournalExt)
+	core := strings.TrimPrefix(withoutExt, Definitions.Filing.Discriminator)
+
+	i.Journal = JournalMetaInfo{
+		Core:          core,
+		Actual:        journalLabel,
+		WithoutExt:    withoutExt,
+		Extension:     Definitions.Filing.JournalExt,
+		Discriminator: Definitions.Filing.Discriminator,
+	}
+}
+
 func (i *StaticInfo) JournalLocation(name, parent string) string {
 	file := name + i.Journal.Actual
 	journalFile := filepath.Join(parent, file)

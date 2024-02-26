@@ -12,9 +12,7 @@ type fakeAgent struct {
 }
 
 func (a *fakeAgent) IsInstalled() bool {
-	_, err := a.program.Look()
-
-	return err == nil
+	return true
 }
 
 func (a *fakeAgent) Invoke(thirdPartyCL clif.ThirdPartyCommandLine,
@@ -22,9 +20,9 @@ func (a *fakeAgent) Invoke(thirdPartyCL clif.ThirdPartyCommandLine,
 ) error {
 	before := []string{source}
 
-	if err := a.fm.Create(destination, false); err != nil {
-		return err
-	}
+	// >>> if err := a.fm.Create(destination, false); err != nil {
+	// 	return err
+	// }
 
 	return a.program.Execute(
 		clif.Expand(before, thirdPartyCL, destination)...,

@@ -36,6 +36,14 @@ func (fm *FileManager) Finder() common.PathFinder {
 	return fm.finder
 }
 
+func (fm *FileManager) FileExists(pathAt string) bool {
+	return fm.Vfs.FileExists(pathAt)
+}
+
+func (fm *FileManager) DirectoryExists(pathAt string) bool {
+	return fm.Vfs.DirectoryExists(pathAt)
+}
+
 func (fm *FileManager) Create(path string, overwrite bool) error {
 	if fm.Vfs.FileExists(path) && !overwrite {
 		return errors.Wrapf(os.ErrExist, "could not create file at path: '%v'", path)
@@ -57,12 +65,12 @@ func (fm *FileManager) Create(path string, overwrite bool) error {
 func (fm *FileManager) Setup(pi *common.PathInfo) (destination string, err error) {
 	if !fm.finder.TransparentInput() {
 		// Any result file must not clash with the input file, so the input
-		// file must stay in place
+		// file must stay in place.
+		// todo: if --trash is specified, then the input must be moved there
+		//
 		return pi.Item.Path, nil
 	}
 
-	// https://pkg.go.dev/os#Rename LinkError may result
-	//
 	// this might not be right. it may be that we want to leave the
 	// original alone and create other outputs; in this scenario
 	// we don't want to rename/move the source...

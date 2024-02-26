@@ -30,6 +30,9 @@ type (
 	PathFinder interface {
 		Transfer(info *PathInfo) (folder, file string)
 		Result(info *PathInfo) (folder, file string)
+		FolderSupplement(profile string) string
+		FileSupplement(profile, withSampling string) string
+		SampleFileSupplement(withSampling string) string
 		TransparentInput() bool
 		JournalFullPath(item *nav.TraverseItem) string
 		Statics() *StaticInfo
@@ -39,6 +42,8 @@ type (
 
 	FileManager interface {
 		Finder() PathFinder
+		FileExists(pathAt string) bool
+		DirectoryExists(pathAt string) bool
 		Create(path string, overwrite bool) error
 		Setup(pi *PathInfo) (destination string, err error)
 		Tidy(pi *PathInfo) error

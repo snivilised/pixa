@@ -1,8 +1,10 @@
 package orc
 
 import (
+	"fmt"
 	"path/filepath"
 
+	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/clif"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 )
@@ -23,10 +25,30 @@ type controllerStep struct {
 // Run
 func (s *controllerStep) Run(pi *common.PathInfo) error {
 	pi.Profile = s.profile
-	folder, file := s.session.FileManager.Finder().Result(pi)
+	finder := s.session.FileManager.Finder()
+	folder, file := finder.Result(pi)
 	destination := filepath.Join(folder, file)
-	err := s.session.Agent.Invoke(
-		s.thirdPartyCL, pi.RunStep.Source, destination,
+
+	err := lo.TernaryF(s.session.FileManager.FileExists(destination),
+		func() error {
+			return fmt.Errorf("skipping file: '%v'", destination)
+		},
+		func() error {
+			// todo: if sample file exists, rename it to the destination,
+			// then skip the invoke
+			//
+			destination = filepath.Join(folder, file)
+
+			if s.session.FileManager.FileExists(destination) {
+				// todo: rename the sample
+				//
+				return fmt.Errorf("skipping existing sample file: '%v'", destination)
+			}
+
+			return s.session.Agent.Invoke(
+				s.thirdPartyCL, pi.RunStep.Source, destination,
+			)
+		},
 	)
 
 	s.session.Interaction.Tick(&common.ProgressMsg{

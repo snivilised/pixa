@@ -10,8 +10,9 @@ import (
 )
 
 type splitPath struct {
-	file   string
-	folder string
+	file       string
+	folder     string
+	sampleFile string
 }
 type pathAssertion struct {
 	actual splitPath
@@ -115,15 +116,29 @@ func (o *testPathFinderObserver) Transfer(info *common.PathInfo) (folder, file s
 
 func (o *testPathFinderObserver) Result(info *common.PathInfo) (folder, file string) {
 	folder, file = o.target.Result(info)
+	statics := o.Statics()
 	o.results[info.Item.Extension.Name] = &pathAssertion{
 		actual: splitPath{
-			folder: folder,
-			file:   file,
+			folder:     folder,
+			file:       file,
+			sampleFile: o.FileSupplement(info.Profile, statics.Sample),
 		},
 		info: info,
 	}
 
 	return folder, file
+}
+
+func (o *testPathFinderObserver) FolderSupplement(profile string) string {
+	return o.target.FolderSupplement(profile)
+}
+
+func (o *testPathFinderObserver) FileSupplement(profile, withSampling string) string {
+	return o.target.FileSupplement(profile, withSampling)
+}
+
+func (o *testPathFinderObserver) SampleFileSupplement(withSampling string) string {
+	return o.target.SampleFileSupplement(withSampling)
 }
 
 func (o *testPathFinderObserver) TransparentInput() bool {

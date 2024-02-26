@@ -61,13 +61,14 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
 type Bootstrap struct {
-	Container    *assistant.CobraContainer
-	OptionsInfo  ConfigureOptionsInfo
-	Configs      *common.Configs
-	Vfs          storage.VirtualFS
-	Logger       *slog.Logger
-	Presentation common.PresentationOptions
-	Observers    common.Observers
+	Container     *assistant.CobraContainer
+	OptionsInfo   ConfigureOptionsInfo
+	Configs       *common.Configs
+	Vfs           storage.VirtualFS
+	Logger        *slog.Logger
+	Presentation  common.PresentationOptions
+	Observers     common.Observers
+	Notifications common.LifecycleNotifications
 }
 
 type ConfigureOptionsInfo struct {

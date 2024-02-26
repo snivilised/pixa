@@ -57,6 +57,14 @@ func (e *ShrinkEntry) PrincipalOptionsFn(o *nav.TraverseOptions) {
 
 	o.Notify.OnBegin = func(_ *nav.NavigationState) {
 		e.Log.Info("===> 🛡️  beginning traversal ...")
+
+		if e.Notifications.OnBegin != nil {
+			manager := e.FileManager
+			e.Notifications.OnBegin(manager.Finder(),
+				e.Inputs.Root.ProfileFam.Native.Scheme,
+				e.Inputs.Root.ProfileFam.Native.Profile,
+			)
+		}
 	}
 
 	o.Callback = e.EntryBase.Interaction.Decorate(&nav.LabelledTraverseCallback{
@@ -155,10 +163,11 @@ func (e *ShrinkEntry) run() (result *nav.TraverseResult, err error) {
 }
 
 type ShrinkParams struct {
-	Inputs *common.ShrinkCommandInputs
-	Viper  configuration.ViperConfig
-	Logger *slog.Logger
-	Vfs    storage.VirtualFS
+	Inputs        *common.ShrinkCommandInputs
+	Viper         configuration.ViperConfig
+	Logger        *slog.Logger
+	Vfs           storage.VirtualFS
+	Notifications *common.LifecycleNotifications
 }
 
 func EnterShrink(
@@ -242,6 +251,7 @@ func EnterShrink(
 			},
 				params.Inputs.Root.Configs,
 			),
+			Notifications: params.Notifications,
 		},
 		Inputs: params.Inputs,
 	}
