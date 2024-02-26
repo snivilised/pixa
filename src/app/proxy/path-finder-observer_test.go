@@ -10,8 +10,9 @@ import (
 )
 
 type splitPath struct {
-	file   string
-	folder string
+	file       string
+	folder     string
+	sampleFile string
 }
 type pathAssertion struct {
 	actual splitPath
@@ -82,8 +83,8 @@ func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 		fmt.Printf("\n 📂 TRANSFER FOLDER: '%v'\n", o.transfers[first].actual.folder)
 
 		if !entry.dry && entry.asserters.transfer != nil {
-			for name, assertion := range o.transfers {
-				entry.asserters.transfer(name, entry, origin, assertion, vfs)
+			for input, assertion := range o.transfers {
+				entry.asserters.transfer(entry, input, origin, assertion, vfs)
 			}
 		}
 	}
@@ -93,8 +94,11 @@ func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 		fmt.Printf("\n 📂 RESULT FOLDER: '%v'\n", o.results[first].actual.folder)
 
 		if !entry.dry {
-			for name, assertion := range o.results {
-				entry.asserters.result(name, entry, origin, assertion, vfs)
+			for input, assertion := range o.results {
+				assertion := assertion
+				// for loop iteration bug here, assertion is wrong
+				//
+				entry.asserters.result(entry, input, origin, assertion, vfs)
 			}
 		}
 	}
@@ -102,6 +106,7 @@ func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 
 func (o *testPathFinderObserver) Transfer(info *common.PathInfo) (folder, file string) {
 	folder, file = o.target.Transfer(info)
+
 	o.transfers[info.Item.Extension.Name] = &pathAssertion{
 		actual: splitPath{
 			folder: folder,
@@ -114,16 +119,30 @@ func (o *testPathFinderObserver) Transfer(info *common.PathInfo) (folder, file s
 }
 
 func (o *testPathFinderObserver) Result(info *common.PathInfo) (folder, file string) {
-	folder, file = o.target.Result(info)
+	folder, file = o.target.Result(info) // info.Item is wrong
+	statics := o.Statics()
 	o.results[info.Item.Extension.Name] = &pathAssertion{
 		actual: splitPath{
-			folder: folder,
-			file:   file,
+			folder:     folder,
+			file:       file,
+			sampleFile: o.FileSupplement(info.Profile, statics.Sample), // !!! SampleFileSupplement
 		},
 		info: info,
 	}
 
 	return folder, file
+}
+
+func (o *testPathFinderObserver) FolderSupplement(profile string) string {
+	return o.target.FolderSupplement(profile)
+}
+
+func (o *testPathFinderObserver) FileSupplement(profile, withSampling string) string {
+	return o.target.FileSupplement(profile, withSampling)
+}
+
+func (o *testPathFinderObserver) SampleFileSupplement(withSampling string) string {
+	return o.target.SampleFileSupplement(withSampling)
 }
 
 func (o *testPathFinderObserver) TransparentInput() bool {

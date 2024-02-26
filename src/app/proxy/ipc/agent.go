@@ -64,24 +64,21 @@ func Pacify(
 	fm common.FileManager,
 	dummy bool,
 ) common.ExecutionAgent {
+	base := baseAgent{
+		knownBy: knownBy,
+		program: &ProgramExecutor{
+			Name: advanced.Executable().Symbol(),
+		},
+	}
+
 	if dummy {
 		return &magickAgent{
-			baseAgent{
-				knownBy: knownBy,
-				program: &ProgramExecutor{
-					Name: advanced.Executable().Symbol(),
-				},
-			},
+			baseAgent: base,
 		}
 	}
 
 	return &fakeAgent{
-		baseAgent: baseAgent{
-			knownBy: knownBy,
-			program: &ProgramExecutor{
-				Name: advanced.Executable().Symbol(),
-			},
-		},
-		fm: fm,
+		baseAgent: base,
+		fm:        fm,
 	}
 }

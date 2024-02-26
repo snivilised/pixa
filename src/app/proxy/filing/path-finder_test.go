@@ -200,8 +200,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 			actionTransfer: true,
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
-				// Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
+				Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
 					pi.Item.Extension.Name, entry.supplement, statics,
 				)
@@ -289,7 +288,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 			actionTransfer: true,
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
+				Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
 					pi.Item.Extension.Name, entry.supplement, statics,
 				)
@@ -332,7 +331,7 @@ var _ = Describe("PathFinder", Ordered, func() {
 			actionTransfer: true,
 			cuddle:         true,
 			assert: func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE) {
-				Expect(folder).To(Equal(pi.Origin), because(entry.reasons.folder))
+				Expect(folder).To(BeEmpty(), because(entry.reasons.folder))
 				supplemented := filing.SupplementFilename(
 					pi.Item.Extension.Name, entry.supplement, statics,
 				)

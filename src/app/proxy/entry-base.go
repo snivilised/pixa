@@ -23,16 +23,17 @@ type EntryBase struct {
 	// navigation such as Options)
 	// with the rest going into cobrass.clif
 	//
-	Inputs      *common.RootCommandInputs
-	Agent       common.ExecutionAgent
-	Interaction common.UserInteraction
-	Viper       configuration.ViperConfig
-	Options     *nav.TraverseOptions
-	Registry    *orc.ControllerRegistry
-	Log         *slog.Logger
-	Vfs         storage.VirtualFS
-	FileManager common.FileManager
-	FilterSetup *filterSetup
+	Inputs        *common.RootCommandInputs
+	Agent         common.ExecutionAgent
+	Interaction   common.UserInteraction
+	Viper         configuration.ViperConfig
+	Options       *nav.TraverseOptions
+	Registry      *orc.ControllerRegistry
+	Log           *slog.Logger
+	Vfs           storage.VirtualFS
+	FileManager   common.FileManager
+	FilterSetup   *filterSetup
+	Notifications *common.LifecycleNotifications
 }
 
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
@@ -51,6 +52,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		statics := e.FileManager.Finder().Statics()
 		jWithoutExt := statics.Journal.WithoutExt
 		trash := statics.TrashTag()
+		sample := fmt.Sprintf("$%v$", statics.Sample) // PathFinder.FileSupplement
 
 		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
 			name := item.Name()
@@ -58,12 +60,8 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 			return !strings.HasPrefix(name, ".") &&
 				!strings.Contains(name, jWithoutExt) &&
 				!strings.Contains(name, trash) &&
-				!strings.Contains(name, statics.Sample)
+				!strings.Contains(name, sample)
 		}), nil
-	}
-
-	o.Hooks.Extend = func(navi *nav.NavigationInfo, entries *nav.DirectoryContents) {
-		nav.DefaultExtendHookFn(navi, entries)
 	}
 
 	if o.Store.FilterDefs == nil {
