@@ -191,6 +191,7 @@ func (m *model) View() string {
 			if wpf.CPU {
 				return fmt.Sprintf("NumCPUs %v", runtime.NumCPU())
 			}
+
 			return fmt.Sprintf("%v workers", fmt.Sprintf("%v", wpf.NoWorkers))
 		},
 		func() string {

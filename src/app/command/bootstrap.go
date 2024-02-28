@@ -128,7 +128,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 			Short:   xi18n.Text(i18n.RootCmdShortDescTemplData{}),
 			Long:    xi18n.Text(i18n.RootCmdLongDescTemplData{}),
 			Version: fmt.Sprintf("'%v'", Version),
-			RunE: func(cmd *cobra.Command, args []string) error {
+			RunE: func(_ *cobra.Command, args []string) error {
 				inputs := b.getRootInputs()
 
 				if len(args) == 0 {

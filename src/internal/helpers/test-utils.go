@@ -64,16 +64,18 @@ func Root() string {
 
 func Repo(relative string) string {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	if bytes, err := cmd.Output(); err != nil {
-		panic(errors.Wrap(err, "couldn't get repo root"))
-	} else {
-		segments := strings.Split(relative, "/")
-		output := strings.TrimSuffix(string(bytes), "\n")
-		path := []string{output}
-		path = append(path, segments...)
+	bytes, err := cmd.Output()
 
-		return filepath.Join(path...)
+	if err != nil {
+		panic(errors.Wrap(err, "couldn't get repo root"))
 	}
+
+	segments := strings.Split(relative, "/")
+	output := strings.TrimSuffix(string(bytes), "\n")
+	path := []string{output}
+	path = append(path, segments...)
+
+	return filepath.Join(path...)
 }
 
 func Log() string {

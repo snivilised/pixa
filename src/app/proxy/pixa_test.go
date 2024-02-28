@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
+	. "github.com/onsi/gomega"    //nolint:revive // foo
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/storage"
@@ -64,6 +64,7 @@ func assertResultItemFile(pa *pathAssertion,
 	// for an unknown reason
 	// comment: actual := pa.actual.file
 	// comment: Expect(actual).To(Equal(pa.info.Item.Extension.Name), because(actual, "🎁 RESULT"))
+	_ = pa
 }
 
 func assertResultFile(expected string, pa *pathAssertion) {
@@ -222,7 +223,7 @@ func (t *coreTest) run() {
 			PathFinder: observer,
 		},
 		Notifications: common.LifecycleNotifications{
-			OnBegin: func(finder common.PathFinder, scheme, profile string) {
+			OnBegin: func(finder common.PathFinder, _, _ string) {
 				t.entry.finder = finder
 
 				if t.entry.arrange != nil {
@@ -329,7 +330,7 @@ var _ = Describe("pixa", Ordered, func() {
 				},
 				result: func(_ *pixaTE, input, _ string, pa *pathAssertion, _ storage.VirtualFS) {
 					if pa.info.Item.Extension.Name != input {
-						fmt.Printf("===> 🥝 WARNING DISCREPANCY FOUND: name: '%v' // input '%v'\n",
+						fmt.Printf("===> ⛔ WARNING DISCREPANCY FOUND: name: '%v' // input '%v'\n",
 							pa.info.Item.Extension.Name, input,
 						)
 					}
@@ -360,7 +361,7 @@ var _ = Describe("pixa", Ordered, func() {
 				transfer: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
 					assertTransferSupplementedOrigin(input, entry, origin, pa, vfs)
 				},
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(_ *pixaTE, _, _ string, _ *pathAssertion, _ storage.VirtualFS) {
 					// comment: assertResultItemFile(pa)
 				},
 			},
@@ -376,7 +377,7 @@ var _ = Describe("pixa", Ordered, func() {
 				folder: "transparency, result should take place of input",
 				file:   "file should be moved out of the way to specified trash and result not cuddled",
 			},
-			arrange: func(entry *pixaTE, origin string) {
+			arrange: func(entry *pixaTE, _ string) {
 				trash := filepath.Join(entry.trash, entry.supplement)
 				_ = vfs.MkdirAll(trash, common.Permissions.Write.Perm())
 			},
@@ -391,14 +392,14 @@ var _ = Describe("pixa", Ordered, func() {
 			supplement:   filepath.Join("$TRASH$", "blur"),
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
-				transfer: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				transfer: func(entry *pixaTE, _, _ string, pa *pathAssertion, vfs storage.VirtualFS) {
 					folder := filing.SupplementFolder(entry.trash,
 						entry.supplement,
 					)
 
 					assertTransfer(folder, pa, vfs)
 				},
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {},
+				result: func(_ *pixaTE, _, _ string, _ *pathAssertion, _ storage.VirtualFS) {},
 			},
 		}),
 		//
@@ -417,7 +418,7 @@ var _ = Describe("pixa", Ordered, func() {
 				folder: "result should be re-directed, so input can stay in place",
 				file:   "input file remains un modified",
 			},
-			arrange: func(entry *pixaTE, origin string) {
+			arrange: func(entry *pixaTE, _ string) {
 				_ = vfs.MkdirAll(entry.output, common.Permissions.Write.Perm())
 			},
 			profile: "blur",
@@ -431,14 +432,14 @@ var _ = Describe("pixa", Ordered, func() {
 			supplement:   "blur",
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
-				transfer: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				transfer: func(entry *pixaTE, _, _ string, pa *pathAssertion, vfs storage.VirtualFS) {
 					folder := filing.SupplementFolder(entry.output,
 						entry.supplement,
 					)
 
 					assertTransfer(folder, pa, vfs)
 				},
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {},
+				result: func(_ *pixaTE, _, _ string, _ *pathAssertion, _ storage.VirtualFS) {},
 			},
 		}),
 		//
@@ -453,7 +454,7 @@ var _ = Describe("pixa", Ordered, func() {
 				file:   "input file remains un modified",
 			},
 			scheme: "blur-sf",
-			arrange: func(entry *pixaTE, origin string) {
+			arrange: func(entry *pixaTE, _ string) {
 				_ = vfs.MkdirAll(entry.output, common.Permissions.Write.Perm())
 			},
 			output: filepath.Join("foo", "sessions", "scan01", "results"),
@@ -467,7 +468,7 @@ var _ = Describe("pixa", Ordered, func() {
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
 				// transfer: not transparent; no transfer is invoked
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(_ *pixaTE, _, _ string, pa *pathAssertion, _ storage.VirtualFS) {
 					assertResultItemFile(pa)
 				},
 			},
@@ -483,7 +484,7 @@ var _ = Describe("pixa", Ordered, func() {
 				folder: "result should be re-directed, so input can stay in place",
 				file:   "input file remains un modified",
 			},
-			arrange: func(entry *pixaTE, origin string) {
+			arrange: func(entry *pixaTE, _ string) {
 				_ = vfs.MkdirAll(entry.output, common.Permissions.Write.Perm())
 			},
 			output: filepath.Join("foo", "sessions", "scan01", "results"),
@@ -497,7 +498,7 @@ var _ = Describe("pixa", Ordered, func() {
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
 				// transfer: not transparent; no transfer is invoked
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(_ *pixaTE, _, _ string, pa *pathAssertion, _ storage.VirtualFS) {
 					assertResultItemFile(pa)
 				},
 			},
@@ -529,9 +530,9 @@ var _ = Describe("pixa", Ordered, func() {
 			supplement:   filepath.Join("$TRASH$", "blur"),
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
-				transfer: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				transfer: func(_ *pixaTE, _, _ string, _ *pathAssertion, _ storage.VirtualFS) {
 				},
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(_ *pixaTE, _, _ string, _ *pathAssertion, _ storage.VirtualFS) {
 				},
 			},
 		}),
@@ -558,10 +559,10 @@ var _ = Describe("pixa", Ordered, func() {
 			supplement:   filepath.Join("$TRASH$", "blur"),
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
-				transfer: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				transfer: func(_ *pixaTE, _, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
 					assertTransfer(origin, pa, vfs)
 				},
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(entry *pixaTE, input, _ string, pa *pathAssertion, _ storage.VirtualFS) {
 					assertSampleFile(entry, input, pa)
 				},
 			},
@@ -590,7 +591,7 @@ var _ = Describe("pixa", Ordered, func() {
 				transfer: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
 					assertTransferSupplementedOrigin(input, entry, origin, pa, vfs)
 				},
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(_ *pixaTE, _, _ string, pa *pathAssertion, _ storage.VirtualFS) {
 					assertResultItemFile(pa)
 				},
 			},
@@ -621,7 +622,7 @@ var _ = Describe("pixa", Ordered, func() {
 			inputs:       helpers.BackyardWorldsPlanet9Scan01First6,
 			asserters: asserters{
 				// transfer: not transparent; no transfer is invoked
-				result: func(entry *pixaTE, input, origin string, pa *pathAssertion, vfs storage.VirtualFS) {
+				result: func(_ *pixaTE, _, _ string, _ *pathAssertion, _ storage.VirtualFS) {
 					// assertResultItemFile(pa)
 				},
 			},

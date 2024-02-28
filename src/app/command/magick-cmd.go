@@ -36,7 +36,7 @@ func (b *Bootstrap) buildMagickCommand(container *assistant.CobraContainer) *cob
 
 				// optionally invoke cross field validation
 				//
-				if xv := ps.CrossValidate(func(ps *MagickParameterSet) error {
+				if xv := ps.CrossValidate(func(_ *MagickParameterSet) error {
 					return nil
 				}); xv == nil {
 					options := []string{}
