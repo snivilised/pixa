@@ -97,7 +97,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			if validationErr := shrinkPS.Validate(); validationErr == nil {
 				// optionally invoke cross field validation
 				//
-				if xvErr := shrinkPS.CrossValidate(func(ps *common.ShrinkParameterSet) error {
+				if xvErr := shrinkPS.CrossValidate(func(_ *common.ShrinkParameterSet) error {
 					// cross validation not currently required
 					//
 					return nil
@@ -171,14 +171,13 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			xi18n.Text(i18n.ShrinkCmdOutputPathParamUsageTemplData{}),
 			defaultOutputPath,
 		),
-		&paramSet.Native.OutputPath, func(s string, f *pflag.Flag) error {
-			// Instead of doing the commented out check, check that the location
+		&paramSet.Native.OutputPath, func(_ string, _ *pflag.Flag) error {
+			// todo: Instead of doing the commented out check, check that the location
 			// specified has the correct permission to write
 			//
 			// if f.Changed && !b.Vfs.DirectoryExists(s) {
 			// 	return i18n.NewOutputPathDoesNotExistError(s)
 			// }
-
 			return nil
 		},
 	)
@@ -194,14 +193,13 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			xi18n.Text(i18n.ShrinkCmdTrashPathParamUsageTemplData{}),
 			defaultTrashPath,
 		),
-		&paramSet.Native.TrashPath, func(s string, f *pflag.Flag) error {
-			// Instead of doing the commented out check, check that the location
+		&paramSet.Native.TrashPath, func(_ string, _ *pflag.Flag) error {
+			// todo: Instead of doing the commented out check, check that the location
 			// specified has the correct permission to write
 			//
 			// if f.Changed && !b.Vfs.DirectoryExists(s) {
 			// 	return i18n.NewOutputPathDoesNotExistError(s)
 			// }
-
 			return nil
 		},
 	)
@@ -258,6 +256,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 				return i18n.NewInvalidSamplingFactorError(value, acceptableSet)
 			}
+
 			return nil
 		},
 	)

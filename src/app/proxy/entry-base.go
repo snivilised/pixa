@@ -54,7 +54,7 @@ func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 		trash := statics.TrashTag()
 		sample := fmt.Sprintf("$%v$", statics.Sample) // PathFinder.FileSupplement
 
-		return lo.Filter(contents, func(item fs.DirEntry, index int) bool {
+		return lo.Filter(contents, func(item fs.DirEntry, _ int) bool {
 			name := item.Name()
 
 			return !strings.HasPrefix(name, ".") &&

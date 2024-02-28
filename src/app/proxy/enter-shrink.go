@@ -143,7 +143,7 @@ func (e *ShrinkEntry) run() (result *nav.TraverseResult, err error) {
 		// the user can select.
 		//
 		RestorePath: "/json-path-to-come-from-a-flag-option/restore.json",
-		Restorer: func(o *nav.TraverseOptions, active *nav.ActiveState) {
+		Restorer: func(o *nav.TraverseOptions, _ *nav.ActiveState) {
 			o.Callback = &nav.LabelledTraverseCallback{
 				Label: "Resume Shrink Entry Callback",
 				Fn:    e.resumeFn,

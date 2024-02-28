@@ -65,8 +65,9 @@ func (fm *FileManager) Create(path string, overwrite bool) error {
 func (fm *FileManager) Setup(pi *common.PathInfo) (destination string, err error) {
 	if !fm.finder.TransparentInput() {
 		// Any result file must not clash with the input file, so the input
-		// file must stay in place.
-		// todo: if --trash is specified, then the input must be moved there
+		// file can stay in place.
+		// todo: if --trash is specified, then the input must be moved there, escape
+		// out of this condition so that Transfer can be invoked (pi.Trash != "")
 		//
 		return pi.Item.Path, nil
 	}

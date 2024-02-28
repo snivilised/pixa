@@ -76,7 +76,7 @@ func (e *RootEntry) run() (*nav.TraverseResult, error) {
 	//
 	var nilResumption *nav.Resumption
 
-	after := func(result *nav.TraverseResult, _ error) {
+	after := func(_ *nav.TraverseResult, _ error) {
 		for _, file := range e.files {
 			e.Log.Info("📒 candidate file: '%v'",
 				slog.String("file", file),
