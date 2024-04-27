@@ -11,7 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.39.0
 	github.com/snivilised/extendio v0.6.1
-	github.com/snivilised/lorax v0.4.4
+	github.com/snivilised/lorax v0.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	go.uber.org/mock v0.4.0
@@ -45,7 +45,7 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
