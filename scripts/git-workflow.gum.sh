@@ -149,7 +149,7 @@ function _w() { # warning
 # === 🥥 git-operations ========================================================
 
 function get-def-branch() {
-  echo master
+  echo main
 }
 
 function gad() {
@@ -193,7 +193,7 @@ function _do_start-interactive-rebase() {
 
 function start-rebase() {
   feature_branch=$(git branch --show-current)
-  num_commits=$(git log master.."$feature_branch" --pretty=oneline | wc -l)
+  num_commits=$(git log main.."$feature_branch" --pretty=oneline | wc -l)
   minimum=2
   display_commits="$num_commits"
 
@@ -219,7 +219,7 @@ function start-rebase() {
 
 function gcan() {
   feature_branch=$(git branch --show-current)
-  num_commits=$(git log master.."$feature_branch" --pretty=oneline | wc -l)
+  num_commits=$(git log main.."$feature_branch" --pretty=oneline | wc -l)
   minimum=1
   display_commits="$num_commits"
 
