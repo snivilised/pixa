@@ -1,6 +1,6 @@
 
 get-def-branch() {
-  echo master
+  echo main
 }
 
 are-you-sure() {
