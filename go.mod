@@ -13,7 +13,7 @@ require (
 	github.com/snivilised/extendio v0.7.0
 	github.com/snivilised/lorax v0.5.2
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/viper v1.18.2
+	github.com/spf13/viper v1.19.0
 	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.27.0
 	go.uber.org/zap/exp v0.2.0
@@ -61,7 +61,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/snivilised/cobrass v0.4.5
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
