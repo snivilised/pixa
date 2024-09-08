@@ -47,7 +47,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/tools v0.21.0 // indirect
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
@@ -69,7 +69,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.15.0
+	golang.org/x/text v0.18.0
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
