@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.39.0
+	github.com/samber/lo v1.47.0
 	github.com/snivilised/extendio v0.7.0
 	github.com/snivilised/lorax v0.5.2
 	github.com/spf13/cobra v1.8.1
