@@ -1,7 +1,7 @@
-package i18n
+package locale
 
 import (
-	"github.com/snivilised/extendio/i18n"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 // ⚠️ for the usage definitions, make sure that the first token inside the "Other"

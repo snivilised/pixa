@@ -1,6 +1,7 @@
-package i18n
+package locale
 
 import (
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	xi18n "github.com/snivilised/extendio/i18n"
 )
 
@@ -12,8 +13,8 @@ type ShrinkCmdSamplingFactorInvalidTemplData struct {
 	Acceptable string
 }
 
-func (td ShrinkCmdSamplingFactorInvalidTemplData) Message() *xi18n.Message {
-	return &xi18n.Message{
+func (td ShrinkCmdSamplingFactorInvalidTemplData) Message() *i18n.Message {
+	return &i18n.Message{
 		ID:          "shrink-cmd-sampling-factor-invalid.error",
 		Description: "shrink command sampling factor failed validation",
 		Other:       "invalid sampling factor value: {{.Value}}, acceptable: {{.Acceptable}}",
@@ -49,8 +50,8 @@ type ShrinkCmdInterlaceInvalidTemplData struct {
 	Acceptable string
 }
 
-func (td ShrinkCmdInterlaceInvalidTemplData) Message() *xi18n.Message {
-	return &xi18n.Message{
+func (td ShrinkCmdInterlaceInvalidTemplData) Message() *i18n.Message {
+	return &i18n.Message{
 		ID:          "shrink-cmd-interlace-invalid.error",
 		Description: "shrink command interlace failed validation",
 		Other:       "invalid interlace value: {{.Value}}, acceptable: {{.Acceptable}}",
@@ -85,8 +86,8 @@ type ShrinkCmdOutputPathDoesNotExistTemplData struct {
 	Path string
 }
 
-func (td ShrinkCmdOutputPathDoesNotExistTemplData) Message() *xi18n.Message {
-	return &xi18n.Message{
+func (td ShrinkCmdOutputPathDoesNotExistTemplData) Message() *i18n.Message {
+	return &i18n.Message{
 		ID:          "shrink-cmd-output-path-does-not-exist.error",
 		Description: "shrink command mirror path does not exist validation",
 		Other:       "output path: {{.Path}}, does not exist",

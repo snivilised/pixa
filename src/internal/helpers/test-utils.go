@@ -15,8 +15,8 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/i18n"
 	"github.com/snivilised/pixa/src/internal/matchers"
+	"github.com/snivilised/pixa/src/locale"
 
 	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
@@ -122,7 +122,7 @@ func UseI18n(l10nPath string) error {
 		uo.From = xi18n.LoadFrom{
 			Path: l10nPath,
 			Sources: xi18n.TranslationFiles{
-				i18n.PixaSourceID: xi18n.TranslationSource{
+				locale.PixaSourceID: xi18n.TranslationSource{
 					Name: "dummy-cobrass",
 				},
 

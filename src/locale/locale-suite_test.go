@@ -1,4 +1,4 @@
-package i18n_test
+package locale_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func TestI18n(t *testing.T) {
+func TestLocale(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "I18n Suite")
+	ginkgo.RunSpecs(t, "Locale Suite")
 }
