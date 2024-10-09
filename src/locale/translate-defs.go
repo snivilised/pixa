@@ -1,4 +1,4 @@
-package i18n
+package locale
 
 // TODO: Should be updated to use url of the implementing project,
 // so should not be left as arcadia.

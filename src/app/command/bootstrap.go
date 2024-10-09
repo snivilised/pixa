@@ -23,7 +23,7 @@ import (
 	"github.com/snivilised/pixa/src/app/plog"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/i18n"
+	"github.com/snivilised/pixa/src/locale"
 )
 
 type LocaleDetector interface {
@@ -125,8 +125,8 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
 			Use:     "main",
-			Short:   xi18n.Text(i18n.RootCmdShortDescTemplData{}),
-			Long:    xi18n.Text(i18n.RootCmdLongDescTemplData{}),
+			Short:   xi18n.Text(locale.RootCmdShortDescTemplData{}),
+			Long:    xi18n.Text(locale.RootCmdLongDescTemplData{}),
 			Version: fmt.Sprintf("'%v'", Version),
 			RunE: func(_ *cobra.Command, args []string) error {
 				inputs := b.getRootInputs()
@@ -178,7 +178,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 
 func (b *Bootstrap) configure() {
 	if err := b.OptionsInfo.Runner.Run(); err != nil {
-		msg := xi18n.Text(i18n.UsingConfigFileTemplData{
+		msg := xi18n.Text(locale.UsingConfigFileTemplData{
 			ConfigFileName: b.OptionsInfo.Config.Viper.ConfigFileUsed(),
 		})
 

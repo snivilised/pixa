@@ -17,7 +17,7 @@ import (
 
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/app/proxy/common"
-	"github.com/snivilised/pixa/src/i18n"
+	"github.com/snivilised/pixa/src/locale"
 )
 
 // We define all the options here, even the ones inherited from the root
@@ -83,11 +83,11 @@ type shrinkParameterSetPtr = *assistant.ParamSet[common.ShrinkParameterSet]
 func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cobra.Command {
 	shrinkCommand := &cobra.Command{
 		Use: "shrink",
-		Short: i18n.LeadsWith(
+		Short: locale.LeadsWith(
 			"shrink",
-			xi18n.Text(i18n.ShrinkCmdShortDefinitionTemplData{}),
+			xi18n.Text(locale.ShrinkCmdShortDefinitionTemplData{}),
 		),
-		Long: xi18n.Text(i18n.ShrinkLongDefinitionTemplData{}),
+		Long: xi18n.Text(locale.ShrinkLongDefinitionTemplData{}),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var appErr error
@@ -168,7 +168,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindValidatedString(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdOutputPathParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdOutputPathParamUsageTemplData{}),
 			defaultOutputPath,
 		),
 		&paramSet.Native.OutputPath, func(_ string, _ *pflag.Flag) error {
@@ -190,7 +190,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindValidatedString(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdTrashPathParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdTrashPathParamUsageTemplData{}),
 			defaultTrashPath,
 		),
 		&paramSet.Native.TrashPath, func(_ string, _ *pflag.Flag) error {
@@ -212,7 +212,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindBool(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdCuddleParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdCuddleParamUsageTemplData{}),
 			defaultCuddle,
 		),
 		&paramSet.Native.Cuddle,
@@ -228,7 +228,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindValidatedFloat32Within(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdGaussianBlurParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdGaussianBlurParamUsageTemplData{}),
 			defaultBlur,
 		),
 		&paramSet.Native.ThirdPartySet.GaussianBlur,
@@ -246,7 +246,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdSamplingFactorParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdSamplingFactorParamUsageTemplData{}),
 			defaultSamplingFactor,
 		),
 		&paramSet.Native.ThirdPartySet.SamplingFactorEn.Source,
@@ -254,7 +254,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			if f.Changed && !(common.SamplingFactorEnumInfo.IsValid(value)) {
 				acceptableSet := common.SamplingFactorEnumInfo.AcceptablePrimes()
 
-				return i18n.NewInvalidSamplingFactorError(value, acceptableSet)
+				return locale.NewInvalidSamplingFactorError(value, acceptableSet)
 			}
 
 			return nil
@@ -271,7 +271,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindValidatedEnum(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdInterlaceParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdInterlaceParamUsageTemplData{}),
 			defaultInterlace,
 		),
 		&paramSet.Native.ThirdPartySet.InterlaceEn.Source,
@@ -279,7 +279,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 			if f.Changed && !(common.InterlaceEnumInfo.IsValid(value)) {
 				acceptableSet := common.InterlaceEnumInfo.AcceptablePrimes()
 
-				return i18n.NewInterlaceError(value, acceptableSet)
+				return locale.NewInterlaceError(value, acceptableSet)
 			}
 
 			return nil
@@ -294,7 +294,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindBool(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdStripParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdStripParamUsageTemplData{}),
 			defaultStrip,
 		),
 		&paramSet.Native.ThirdPartySet.Strip,
@@ -310,7 +310,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 	paramSet.BindValidatedIntWithin(
 		newShrinkFlagInfoWithShort(
-			xi18n.Text(i18n.ShrinkCmdQualityParamUsageTemplData{}),
+			xi18n.Text(locale.ShrinkCmdQualityParamUsageTemplData{}),
 			defaultQuality,
 		),
 		&paramSet.Native.ThirdPartySet.Quality,
