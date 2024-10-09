@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"    //nolint:revive // foo
 
 	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
@@ -28,6 +29,7 @@ var _ = Describe("RootCmd", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		Expect(li18ngo.Use()).To(Succeed())
 		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")

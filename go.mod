@@ -1,6 +1,6 @@
 module github.com/snivilised/pixa
 
-go 1.22
+go 1.23.0
 
 require (
 	github.com/charmbracelet/bubbletea v1.1.1
@@ -11,6 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.47.0
 	github.com/snivilised/extendio v0.7.0
+	github.com/snivilised/li18ngo v0.1.4
 	github.com/snivilised/lorax v0.5.2
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2

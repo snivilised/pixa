@@ -10,6 +10,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/snivilised/extendio/xfs/nav"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/app/proxy/filing"
@@ -52,6 +53,8 @@ var _ = Describe("PathFinder", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		Expect(li18ngo.Use()).To(Succeed())
+
 		schemes = &cfg.MsSchemesConfig{
 			"blur-sf": &cfg.MsSchemeConfig{
 				ProfilesData: []string{"blur", "sf"},

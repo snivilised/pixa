@@ -1,8 +1,8 @@
 package locale
 
 import (
-	i18n "github.com/nicksnyder/go-i18n/v2/i18n"
-	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/snivilised/li18ngo"
 )
 
 // ❌ FooBar
@@ -35,7 +35,7 @@ type FooBarErrorBehaviourQuery interface {
 }
 
 type FooBarError struct {
-	xi18n.LocalisableError
+	li18ngo.LocalisableError
 }
 
 // FooBar enables the client to check if error is FooBarError
@@ -47,7 +47,7 @@ func (e FooBarError) FooBar() bool {
 // NewFooBarError creates a FooBarError
 func NewFooBarError(path string, reason error) FooBarError {
 	return FooBarError{
-		LocalisableError: xi18n.LocalisableError{
+		LocalisableError: li18ngo.LocalisableError{
 			Data: FooBarTemplData{
 				Path:   path,
 				Reason: reason,

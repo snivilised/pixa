@@ -225,9 +225,37 @@ tasks:
 
   # === coverage =============================================
 
-  cover:
+  cover-clean:
+    cmds:
+      - rm -rf ./coverage
+
+  cover-publish:
     cmds:
       - goveralls -repotoken {{.COVERALLS_TOKEN}}
+
+  cover-setup:
+    cmds:
+      - mkdir -p ./coverage
+
+  cover-ginkgo:
+    cmds:
+      - ginkgo run -r -json-report {{.GINKGO_REPORT}} -coverpkg=./... -coverprofile={{.COVER_FILE}} --output-dir {{.COVER_DIR}}
+
+  cover-show:
+    cmds:
+      - open {{.COVER_HTML_PATH}}
+
+  cover-exclude:
+    cmds:
+      - ./scripts/apply-coverage-exclusions.sh
+
+  cover:
+    cmds:
+      - task: cover-setup
+      - task: cover-ginkgo
+      - task: cover-exclude
+      - go tool cover -html=./coverage.out -o {{.COVER_HTML_PATH}}
+      - open {{.COVER_HTML_PATH}}
 
   # === i18n =================================================
 

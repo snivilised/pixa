@@ -95,7 +95,6 @@ func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 
 		if !entry.dry {
 			for input, assertion := range o.results {
-				assertion := assertion
 				// for loop iteration bug here, assertion is wrong
 				//
 				entry.asserters.result(entry, input, origin, assertion, vfs)

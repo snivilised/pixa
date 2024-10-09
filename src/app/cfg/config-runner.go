@@ -11,8 +11,8 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
 	"github.com/snivilised/extendio/collections"
-	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
@@ -216,18 +216,18 @@ func (c *configRunner) handleLangSetting(config configuration.ViperConfig) {
 			return parsedTag
 		},
 		func() language.Tag {
-			return xi18n.DefaultLanguage.Get()
+			return li18ngo.DefaultLanguage
 		},
 	)
 
-	err := xi18n.Use(func(uo *xi18n.UseOptions) {
+	err := li18ngo.Use(func(uo *li18ngo.UseOptions) {
 		uo.Tag = tag
-		uo.From = xi18n.LoadFrom{
-			Sources: xi18n.TranslationFiles{
-				c.sourceID: xi18n.TranslationSource{
+		uo.From = li18ngo.LoadFrom{
+			Sources: li18ngo.TranslationFiles{
+				c.sourceID: li18ngo.TranslationSource{
 					Name: c.applicationName,
 				},
-				ci18n.CobrassSourceID: xi18n.TranslationSource{
+				ci18n.CobrassSourceID: li18ngo.TranslationSource{
 					Name: "cobrass",
 				},
 			},

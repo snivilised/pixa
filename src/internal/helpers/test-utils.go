@@ -14,12 +14,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
+	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/matchers"
 	"github.com/snivilised/pixa/src/locale"
-
-	xi18n "github.com/snivilised/extendio/i18n"
-	"github.com/snivilised/extendio/xfs/storage"
 	"golang.org/x/text/language"
 )
 
@@ -118,15 +117,15 @@ func SetupTest(
 }
 
 func UseI18n(l10nPath string) error {
-	return xi18n.Use(func(uo *xi18n.UseOptions) {
-		uo.From = xi18n.LoadFrom{
+	return li18ngo.Use(func(uo *li18ngo.UseOptions) {
+		uo.From = li18ngo.LoadFrom{
 			Path: l10nPath,
-			Sources: xi18n.TranslationFiles{
-				locale.PixaSourceID: xi18n.TranslationSource{
+			Sources: li18ngo.TranslationFiles{
+				locale.PixaSourceID: li18ngo.TranslationSource{
 					Name: "dummy-cobrass",
 				},
 
-				ci18n.CobrassSourceID: xi18n.TranslationSource{
+				ci18n.CobrassSourceID: li18ngo.TranslationSource{
 					Name: "dummy-cobrass",
 				},
 			},

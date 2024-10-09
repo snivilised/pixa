@@ -16,9 +16,9 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
-	xi18n "github.com/snivilised/extendio/i18n"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/plog"
 	"github.com/snivilised/pixa/src/app/proxy"
@@ -51,7 +51,7 @@ func validatePositionalArgs(cmd *cobra.Command, args []string) error {
 	directory := utils.ResolvePath(args[0])
 
 	if !utils.Exists(directory) {
-		return xi18n.NewPathNotFoundError("shrink directory", directory)
+		return li18ngo.NewPathNotFoundError("shrink directory", directory)
 	}
 
 	return nil
@@ -125,8 +125,8 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
 			Use:     "main",
-			Short:   xi18n.Text(locale.RootCmdShortDescTemplData{}),
-			Long:    xi18n.Text(locale.RootCmdLongDescTemplData{}),
+			Short:   li18ngo.Text(locale.RootCmdShortDescTemplData{}),
+			Long:    li18ngo.Text(locale.RootCmdLongDescTemplData{}),
 			Version: fmt.Sprintf("'%v'", Version),
 			RunE: func(_ *cobra.Command, args []string) error {
 				inputs := b.getRootInputs()
@@ -178,7 +178,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 
 func (b *Bootstrap) configure() {
 	if err := b.OptionsInfo.Runner.Run(); err != nil {
-		msg := xi18n.Text(locale.UsingConfigFileTemplData{
+		msg := li18ngo.Text(locale.UsingConfigFileTemplData{
 			ConfigFileName: b.OptionsInfo.Config.Viper.ConfigFileUsed(),
 		})
 
@@ -202,18 +202,18 @@ func handleLangSetting(config configuration.ViperConfig) {
 			return parsedTag
 		},
 		func() language.Tag {
-			return xi18n.DefaultLanguage.Get()
+			return li18ngo.DefaultLanguage
 		},
 	)
 
-	err := xi18n.Use(func(uo *xi18n.UseOptions) {
+	err := li18ngo.Use(func(uo *li18ngo.UseOptions) {
 		uo.Tag = tag
-		uo.From = xi18n.LoadFrom{
-			Sources: xi18n.TranslationFiles{
-				common.Definitions.Pixa.SourceID: xi18n.TranslationSource{
+		uo.From = li18ngo.LoadFrom{
+			Sources: li18ngo.TranslationFiles{
+				common.Definitions.Pixa.SourceID: li18ngo.TranslationSource{
 					Name: common.Definitions.Pixa.AppName,
 				},
-				ci18n.CobrassSourceID: xi18n.TranslationSource{
+				ci18n.CobrassSourceID: li18ngo.TranslationSource{
 					Name: "cobrass",
 				},
 			},

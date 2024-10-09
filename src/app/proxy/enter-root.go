@@ -58,7 +58,7 @@ func (e *RootEntry) ConfigureOptions(o *nav.TraverseOptions) {
 	}
 	o.Notify.OnEnd = func(result *nav.TraverseResult) {
 		e.Log.Info("===> 🚩 finished traversal - folders",
-			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))),
+			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))), //nolint:gosec // ok
 		)
 	}
 	o.Callback = &nav.LabelledTraverseCallback{

@@ -11,6 +11,7 @@ import (
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/extendio/xfs/utils"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 
@@ -108,6 +109,8 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		Expect(li18ngo.Use()).To(Succeed())
+
 		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")

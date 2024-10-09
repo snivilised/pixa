@@ -12,6 +12,7 @@ import (
 
 	"github.com/snivilised/cobrass/src/assistant/mocks"
 	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
@@ -58,7 +59,7 @@ type runnerTE struct {
 	assert  func(entry *runnerTE, runner common.ConfigRunner, err error)
 }
 
-var _ = Describe("ConfigRunner", func() {
+var _ = Describe("ConfigRunner", Ordered, func() {
 	var (
 		repo       string
 		configPath string
@@ -66,6 +67,10 @@ var _ = Describe("ConfigRunner", func() {
 		ctrl       *gomock.Controller
 		mock       *mocks.MockViperConfig
 	)
+
+	BeforeAll(func() {
+		Expect(li18ngo.Use()).To(Succeed())
+	})
 
 	BeforeEach(func() {
 		viper.Reset()

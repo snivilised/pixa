@@ -51,9 +51,9 @@ func New(lc common.LoggingConfig,
 
 	sync := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   logPath,
-		MaxSize:    int(lc.MaxSizeInMb()),
-		MaxBackups: int(lc.MaxNoOfBackups()),
-		MaxAge:     int(lc.MaxAgeInDays()),
+		MaxSize:    int(lc.MaxSizeInMb()),    //nolint:gosec // ok
+		MaxBackups: int(lc.MaxNoOfBackups()), //nolint:gosec // ok
+		MaxAge:     int(lc.MaxAgeInDays()),   //nolint:gosec // ok
 	})
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.TimeEncoderOfLayout(lc.TimeFormat())

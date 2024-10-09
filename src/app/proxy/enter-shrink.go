@@ -98,8 +98,8 @@ func (e *ShrinkEntry) ConfigureOptions(o *nav.TraverseOptions) {
 
 	o.Notify.OnEnd = func(result *nav.TraverseResult) {
 		e.Log.Info("finished traversal",
-			slog.Int("files", int(result.Metrics.Count(nav.MetricNoFilesInvokedEn))),
-			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))),
+			slog.Int("files", int(result.Metrics.Count(nav.MetricNoFilesInvokedEn))),     //nolint:gosec // ok
+			slog.Int("folders", int(result.Metrics.Count(nav.MetricNoFoldersInvokedEn))), //nolint:gosec // ok
 		)
 	}
 	o.Store.Subscription = nav.SubscribeFiles

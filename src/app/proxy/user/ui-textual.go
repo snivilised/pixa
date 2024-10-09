@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -63,7 +64,7 @@ func (ui *textualUI) Traverse(di common.DriverTraverseInfo,
 	ui.m.program = tea.NewProgram(ui.m, options...)
 
 	if _, err := ui.m.program.Run(); err != nil {
-		ui.logger.Error("could not start: '%v'", err)
+		ui.logger.Error(fmt.Sprintf("could not start: '%v'", err)) // make this i18n error
 
 		return nil, err
 	}

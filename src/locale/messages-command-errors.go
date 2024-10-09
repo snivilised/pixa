@@ -2,7 +2,7 @@ package locale
 
 import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	xi18n "github.com/snivilised/extendio/i18n"
+	"github.com/snivilised/li18ngo"
 )
 
 // ShrinkCmdSamplingFactorInvalidTemplData
@@ -28,12 +28,12 @@ type InvalidSamplingFactorErrorBehaviourQuery interface {
 }
 
 type InvalidSamplingFactorError struct {
-	xi18n.LocalisableError
+	li18ngo.LocalisableError
 }
 
 func NewInvalidSamplingFactorError(value, acceptable string) InvalidSamplingFactorError {
 	return InvalidSamplingFactorError{
-		LocalisableError: xi18n.LocalisableError{
+		LocalisableError: li18ngo.LocalisableError{
 			Data: ShrinkCmdSamplingFactorInvalidTemplData{
 				Value:      value,
 				Acceptable: acceptable,
@@ -65,12 +65,12 @@ type InvalidInterlaceErrorBehaviourQuery interface {
 }
 
 type InvalidInterlaceError struct {
-	xi18n.LocalisableError
+	li18ngo.LocalisableError
 }
 
 func NewInterlaceError(value, acceptable string) InvalidInterlaceError {
 	return InvalidInterlaceError{
-		LocalisableError: xi18n.LocalisableError{
+		LocalisableError: li18ngo.LocalisableError{
 			Data: ShrinkCmdInterlaceInvalidTemplData{
 				Value:      value,
 				Acceptable: acceptable,
@@ -101,12 +101,12 @@ type OutputPathDoesNotExistBehaviourQuery interface {
 }
 
 type OutputPathDoesNotExistError struct {
-	xi18n.LocalisableError
+	li18ngo.LocalisableError
 }
 
 func NewOutputPathDoesNotExistError(path string) OutputPathDoesNotExistError {
 	return OutputPathDoesNotExistError{
-		LocalisableError: xi18n.LocalisableError{
+		LocalisableError: li18ngo.LocalisableError{
 			Data: ShrinkCmdOutputPathDoesNotExistTemplData{
 				Path: path,
 			},

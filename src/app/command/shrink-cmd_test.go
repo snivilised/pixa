@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
 	. "github.com/onsi/gomega"    //nolint:revive // foo
 	"github.com/snivilised/cobrass/src/assistant/configuration"
+	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
@@ -92,6 +93,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		Expect(li18ngo.Use()).To(Succeed())
 		repo = helpers.Repo("")
 		l10nPath = helpers.Path(repo, "test/data/l10n")
 		configPath = helpers.Path(repo, "test/data/configuration")
