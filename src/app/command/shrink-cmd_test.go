@@ -6,13 +6,12 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
 	. "github.com/onsi/gomega"    //nolint:revive // foo
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
-
-	"github.com/snivilised/extendio/xfs/storage"
+	lab "github.com/snivilised/pixa/src/internal/laboratory"
+	"github.com/snivilised/traverse/lfs"
 )
 
 var (
@@ -40,30 +39,35 @@ type shrinkTE struct {
 	directory string
 }
 
-func assertShrinkCmdInvocation(vfs storage.VirtualFS, entry *shrinkTE, root string) {
+func assertShrinkCmdInvocation(tfs lfs.TraverseFS,
+	entry *shrinkTE, root string,
+) {
+	if tfs == nil {
+		panic("FS not created")
+	}
 	bootstrap := command.Bootstrap{
-		Vfs: vfs,
+		FS: tfs,
 	}
 
-	directory := helpers.Path(root, entry.directory)
+	directory := lab.Path(root, entry.directory)
 	args := append([]string{common.Definitions.Commands.Shrink, directory}, []string{
 		"--dry-run", "--no-tui",
 	}...)
 
 	if entry.outputFlag != "" && entry.outputValue != "" {
-		output := helpers.Path(root, entry.outputValue)
+		output := lab.Path(root, entry.outputValue)
 		args = append(args, entry.outputFlag, output)
 	}
 
 	if entry.trashFlag != "" && entry.trashValue != "" {
-		trash := helpers.Path(root, entry.trashValue)
+		trash := lab.Path(root, entry.trashValue)
 		args = append(args, entry.trashFlag, trash)
 	}
 
-	tester := helpers.CommandTester{
+	tester := lab.CommandTester{
 		Args: append(args, entry.args...),
 		Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
-			co.Detector = &DetectorStub{}
+			co.Detector = &lab.DetectorStub{}
 			co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 			co.Config.ConfigPath = entry.configPath
 			co.Config.Viper = &configuration.GlobalViperConfig{}
@@ -89,18 +93,19 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 		l10nPath   string
 		configPath string
 		root       string
-		vfs        storage.VirtualFS
+		FS         lfs.TraverseFS
 	)
 
 	BeforeAll(func() {
-		Expect(li18ngo.Use()).To(Succeed())
+		Expect(lab.UseI18n(l10nPath)).To(Succeed())
+
 		repo = helpers.Repo("")
-		l10nPath = helpers.Path(repo, "test/data/l10n")
-		configPath = helpers.Path(repo, "test/data/configuration")
+		l10nPath = lab.Path(repo, "test/data/l10n")
+		configPath = lab.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
-		vfs, root = helpers.SetupTest(
+		FS, root = lab.SetupTest(
 			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
 		)
 	})
@@ -110,7 +115,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 			entry.directory = BackyardWorldsPlanet9Scan01
 			entry.configPath = configPath
 
-			assertShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(FS, entry, root)
 		},
 		func(entry *shrinkTE) string {
 			return fmt.Sprintf("🧪 ===> given: '%v'", entry.message)
@@ -291,7 +296,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			assertShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(FS, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
@@ -306,7 +311,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			assertShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(FS, entry, root)
 		})
 	})
 
@@ -323,7 +328,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			assertShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(FS, entry, root)
 		})
 
 		It("🧪 should: execute successfully", func() {
@@ -338,7 +343,7 @@ var _ = Describe("ShrinkCmd", Ordered, func() {
 				},
 			}
 
-			assertShrinkCmdInvocation(vfs, entry, root)
+			assertShrinkCmdInvocation(FS, entry, root)
 		})
 	})
 })

@@ -16,14 +16,13 @@ import (
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
-	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/plog"
 	"github.com/snivilised/pixa/src/app/proxy"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/locale"
+	"github.com/snivilised/traverse/lfs"
 )
 
 type LocaleDetector interface {
@@ -40,23 +39,6 @@ func (j *Jabber) Scan() language.Tag {
 	return language.MustParse(lang)
 }
 
-func validatePositionalArgs(cmd *cobra.Command, args []string) error {
-	// TODO: actually, it would be better if we can somehow access the vfs
-	// instead of using the util.Exist function
-	//
-	if err := cobra.ExactArgs(1)(cmd, args); err != nil {
-		return err
-	}
-
-	directory := utils.ResolvePath(args[0])
-
-	if !utils.Exists(directory) {
-		return li18ngo.NewPathNotFoundError("shrink directory", directory)
-	}
-
-	return nil
-}
-
 // Bootstrap represents construct that performs start up of the cli
 // without resorting to the use of Go's init() mechanism and minimal
 // use of package global variables.
@@ -64,7 +46,7 @@ type Bootstrap struct {
 	Container     *assistant.CobraContainer
 	OptionsInfo   ConfigureOptionsInfo
 	Configs       *common.Configs
-	Vfs           storage.VirtualFS
+	FS            lfs.TraverseFS
 	Logger        *slog.Logger
 	Presentation  common.PresentationOptions
 	Observers     common.Observers
@@ -105,7 +87,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 		ci,
 		common.Definitions.Pixa.SourceID,
 		common.Definitions.Pixa.AppName,
-		b.Vfs,
+		b.FS,
 	)
 
 	if err != nil {
@@ -120,7 +102,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 
 	b.configure()
 	b.viper()
-	b.Logger = plog.New(b.Configs.Logging, b.Vfs, ci.Scope, vc)
+	b.Logger = plog.New(b.Configs.Logging, b.FS, ci.Scope, vc)
 
 	b.Container = assistant.NewCobraContainer(
 		&cobra.Command{
@@ -135,7 +117,7 @@ func (b *Bootstrap) Root(options ...ConfigureOptionFn) *cobra.Command {
 					return errors.New("missing directory arg")
 				}
 
-				inputs.ParamSet.Native.Directory = utils.ResolvePath(args[0])
+				inputs.ParamSet.Native.Directory = lfs.ResolvePath(args[0])
 
 				if inputs.WorkerPoolFam.Native.CPU {
 					inputs.WorkerPoolFam.Native.NoWorkers = 0

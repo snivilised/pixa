@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/onsi/gomega/types"
-	"github.com/snivilised/extendio/xfs/storage"
+	"github.com/snivilised/traverse/lfs"
 )
 
 type PathExistsMatcher struct {
-	vfs interface{}
+	FS interface{}
 }
 
 type AsDirectory string
@@ -16,22 +16,22 @@ type AsFile string
 
 func ExistInFS(fs interface{}) types.GomegaMatcher {
 	return &PathExistsMatcher{
-		vfs: fs,
+		FS: fs,
 	}
 }
 
 func (m *PathExistsMatcher) Match(actual interface{}) (bool, error) {
-	vfs, fileSystemOK := m.vfs.(storage.VirtualFS)
+	FS, fileSystemOK := m.FS.(lfs.MkDirAllFS)
 	if !fileSystemOK {
-		return false, fmt.Errorf("❌ matcher expected a VirtualFS instance (%T)", vfs)
+		return false, fmt.Errorf("❌ matcher expected a VirtualFS instance (%T)", FS)
 	}
 
 	if actualPath, dirOK := actual.(AsDirectory); dirOK {
-		return vfs.DirectoryExists(string(actualPath)), nil
+		return FS.DirectoryExists(string(actualPath)), nil
 	}
 
 	if actualPath, fileOK := actual.(AsFile); fileOK {
-		return vfs.FileExists(string(actualPath)), nil
+		return FS.FileExists(string(actualPath)), nil
 	}
 
 	return false, fmt.Errorf("❌ matcher expected an AsDirectory or AsFile instance (%T)", actual)

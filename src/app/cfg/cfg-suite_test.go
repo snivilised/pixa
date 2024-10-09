@@ -11,3 +11,8 @@ func TestCfg(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "Cfg Suite")
 }
+
+const (
+	NoOverwrite = false
+	home        = "/home"
+)

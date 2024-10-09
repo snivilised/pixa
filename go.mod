@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.1.1
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/muesli/go-app-paths v0.2.2
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
 	github.com/pkg/errors v0.9.1
@@ -13,12 +14,14 @@ require (
 	github.com/snivilised/extendio v0.7.0
 	github.com/snivilised/li18ngo v0.1.4
 	github.com/snivilised/lorax v0.5.2
+	github.com/snivilised/pants v0.1.2
+	github.com/snivilised/traverse v0.1.2
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.27.0
 	go.uber.org/zap/exp v0.2.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
 )
 
 require (
@@ -41,7 +44,7 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
@@ -50,6 +53,7 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
 
 require (

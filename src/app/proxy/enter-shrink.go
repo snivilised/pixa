@@ -9,12 +9,12 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/app/proxy/filing"
 	"github.com/snivilised/pixa/src/app/proxy/ipc"
 	"github.com/snivilised/pixa/src/app/proxy/orc"
 	"github.com/snivilised/pixa/src/app/proxy/user"
+	"github.com/snivilised/traverse/lfs"
 )
 
 type ShrinkEntry struct {
@@ -166,7 +166,7 @@ type ShrinkParams struct {
 	Inputs        *common.ShrinkCommandInputs
 	Viper         configuration.ViperConfig
 	Logger        *slog.Logger
-	Vfs           storage.VirtualFS
+	FS            lfs.TraverseFS
 	Notifications *common.LifecycleNotifications
 }
 
@@ -198,7 +198,7 @@ func EnterShrink(
 		Observer:   params.Inputs.Root.Observers.PathFinder,
 		Arity:      arity,
 	})
-	fileManager := filing.NewManager(params.Vfs, finder,
+	fileManager := filing.NewManager(params.FS, finder,
 		params.Inputs.Root.PreviewFam.Native.DryRun,
 	)
 
@@ -238,7 +238,7 @@ func EnterShrink(
 			Interaction: interaction,
 			Viper:       params.Viper,
 			Log:         params.Logger,
-			Vfs:         params.Vfs,
+			FS:          params.FS,
 			FileManager: fileManager,
 			FilterSetup: &filterSetup{
 				inputs: params.Inputs,

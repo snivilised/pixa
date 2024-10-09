@@ -9,8 +9,8 @@ import (
 	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
-	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/li18ngo"
+	"github.com/snivilised/traverse/lfs"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -122,7 +122,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 
 					inputs := b.getShrinkInputs()
 
-					inputs.Root.ParamSet.Native.Directory = utils.ResolvePath(args[0])
+					inputs.Root.ParamSet.Native.Directory = lfs.ResolvePath(args[0])
 
 					// Apply fallbacks, ie user didn't specify flag on command line
 					// so fallback to one defined in config. This is supposed to
@@ -143,7 +143,7 @@ func (b *Bootstrap) buildShrinkCommand(container *assistant.CobraContainer) *cob
 							Inputs:        inputs,
 							Viper:         b.OptionsInfo.Config.Viper,
 							Logger:        b.Logger,
-							Vfs:           b.Vfs,
+							FS:            b.FS,
 							Notifications: &b.Notifications,
 						},
 					)

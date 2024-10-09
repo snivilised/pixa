@@ -4,10 +4,12 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package command
 
 import (
+	"os"
+
 	"github.com/snivilised/cobrass/src/assistant"
 	"github.com/snivilised/cobrass/src/store"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/lfs"
 )
 
 const (
@@ -22,8 +24,14 @@ const (
 )
 
 func Execute() error {
+	wd, _ := os.Getwd()
+
 	return (&Bootstrap{
-		Vfs: storage.UseNativeFS(),
+		// TODO: this needs to be resolved; ie, we can't really create the FS
+		// until we know what the root path is specified by the user, which
+		// is not available until we have access to the navigation path
+		//
+		FS: lfs.NewTraverseFS(wd, false),
 	}).Root().Execute()
 }
 

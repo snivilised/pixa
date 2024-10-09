@@ -3,19 +3,21 @@ package cfg_test
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+	"testing/fstest"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
 	. "github.com/onsi/gomega"    //nolint:revive // foo
-	"github.com/spf13/viper"
-	"go.uber.org/mock/gomock"
-
 	"github.com/snivilised/cobrass/src/assistant/mocks"
-	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/li18ngo"
+	_ "github.com/snivilised/pants"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
+	lab "github.com/snivilised/pixa/src/internal/laboratory"
+	"github.com/snivilised/traverse/lfs"
+	"github.com/spf13/viper"
+	"go.uber.org/mock/gomock"
 )
 
 var (
@@ -63,22 +65,30 @@ var _ = Describe("ConfigRunner", Ordered, func() {
 	var (
 		repo       string
 		configPath string
-		vfs        storage.VirtualFS
+		FS         lfs.TraverseFS
 		ctrl       *gomock.Controller
 		mock       *mocks.MockViperConfig
 	)
 
 	BeforeAll(func() {
-		Expect(li18ngo.Use()).To(Succeed())
+		repo = helpers.Repo("")
+		Expect(lab.UseI18n(lab.Path(repo, "test/data/l10n"))).To(Succeed())
+		_ = FS
 	})
 
 	BeforeEach(func() {
 		viper.Reset()
-		vfs = storage.UseMemFS()
+		FS = &lab.TestTraverseFS{
+			MapFS: fstest.MapFS{
+				home: &fstest.MapFile{
+					Mode: os.ModeDir,
+				},
+			},
+		}
 		ctrl = gomock.NewController(GinkgoT())
 		mock = mocks.NewMockViperConfig(ctrl)
-		repo = helpers.Repo("")
-		configPath = helpers.Path(repo, "test/data/configuration")
+
+		configPath = lab.Path(repo, "test/data/configuration")
 	})
 
 	AfterEach(func() {
@@ -107,7 +117,7 @@ var _ = Describe("ConfigRunner", Ordered, func() {
 			mock.EXPECT().InConfig(gomock.Any()).AnyTimes()
 			mock.EXPECT().GetString(gomock.Any()).AnyTimes()
 
-			runner, err := cfg.New(&ci, sourceID, common.Definitions.Pixa.AppName, vfs)
+			runner, err := cfg.New(&ci, sourceID, common.Definitions.Pixa.AppName, FS)
 			if entry.created != nil {
 				entry.created(entry, runner)
 			}
@@ -192,7 +202,7 @@ var _ = Describe("ConfigRunner", Ordered, func() {
 				path := filepath.Join(runner.DefaultPath(), name)
 				content := []byte(cfg.GetDefaultConfigContent())
 
-				_ = vfs.WriteFile(path, content, common.Permissions.Write)
+				_ = FS.WriteFile(path, content, common.Permissions.Write)
 			},
 			assert: func(_ *runnerTE, runner common.ConfigRunner, err error) {
 				Expect(err).Error().To(BeNil())

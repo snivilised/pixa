@@ -5,8 +5,8 @@ import (
 
 	"github.com/samber/lo"
 	"github.com/snivilised/extendio/xfs/nav"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/lfs"
 )
 
 type splitPath struct {
@@ -76,7 +76,7 @@ type testPathFinderObserver struct {
 // assertL
 
 func (o *testPathFinderObserver) assertAll(entry *pixaTE,
-	origin string, vfs storage.VirtualFS,
+	origin string, tfs lfs.TraverseFS,
 ) {
 	if len(o.transfers) > 0 {
 		first := lo.Keys(o.transfers)[0]
@@ -84,7 +84,7 @@ func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 
 		if !entry.dry && entry.asserters.transfer != nil {
 			for input, assertion := range o.transfers {
-				entry.asserters.transfer(entry, input, origin, assertion, vfs)
+				entry.asserters.transfer(entry, input, origin, assertion, tfs)
 			}
 		}
 	}
@@ -97,7 +97,7 @@ func (o *testPathFinderObserver) assertAll(entry *pixaTE,
 			for input, assertion := range o.results {
 				// for loop iteration bug here, assertion is wrong
 				//
-				entry.asserters.result(entry, input, origin, assertion, vfs)
+				entry.asserters.result(entry, input, origin, assertion, tfs)
 			}
 		}
 	}

@@ -11,10 +11,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	"github.com/snivilised/extendio/xfs/nav"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/lorax/boost"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/app/proxy/orc"
+	"github.com/snivilised/traverse/lfs"
 )
 
 // EntryBase is the base entry for all commands in pixa
@@ -30,7 +30,7 @@ type EntryBase struct {
 	Options       *nav.TraverseOptions
 	Registry      *orc.ControllerRegistry
 	Log           *slog.Logger
-	Vfs           storage.VirtualFS
+	FS            lfs.TraverseFS
 	FileManager   common.FileManager
 	FilterSetup   *filterSetup
 	Notifications *common.LifecycleNotifications
@@ -39,12 +39,14 @@ type EntryBase struct {
 func (e *EntryBase) ConfigureOptions(o *nav.TraverseOptions) {
 	e.Options = o
 	o.Hooks.QueryStatus = func(path string) (os.FileInfo, error) {
-		fi, err := e.Vfs.Lstat(path)
+		// TODO: check the difference between Lstat & Stat
+		// ths was originally Lstat, but TraverseFS doesn't have an Lstat
+		fi, err := e.FS.Stat(path)
 
 		return fi, err
 	}
 	o.Hooks.ReadDirectory = func(dirname string) ([]fs.DirEntry, error) {
-		contents, err := e.Vfs.ReadDir(dirname)
+		contents, err := e.FS.ReadDir(dirname)
 		if err != nil {
 			return nil, err
 		}

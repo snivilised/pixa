@@ -8,12 +8,11 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
 	. "github.com/onsi/gomega"    //nolint:revive // foo
 	"github.com/samber/lo"
-
 	"github.com/snivilised/extendio/xfs/nav"
-	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/cfg"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/app/proxy/filing"
+	lab "github.com/snivilised/pixa/src/internal/laboratory"
 )
 
 type reasons struct {
@@ -21,7 +20,9 @@ type reasons struct {
 	file   string
 }
 
-type asserter func(folder, file string, pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE)
+type asserter func(folder, file string,
+	pi *common.PathInfo, statics *common.StaticInfo, entry *pfTE,
+)
 
 type pfTE struct {
 	given          string
@@ -50,10 +51,12 @@ var _ = Describe("PathFinder", Ordered, func() {
 	var (
 		advanced *cfg.MsAdvancedConfig
 		schemes  *cfg.MsSchemesConfig
+		repo     string
 	)
 
 	BeforeAll(func() {
-		Expect(li18ngo.Use()).To(Succeed())
+		repo = lab.Repo("")
+		Expect(lab.UseI18n(lab.Path(repo, "test/data/l10n"))).To(Succeed())
 
 		schemes = &cfg.MsSchemesConfig{
 			"blur-sf": &cfg.MsSchemeConfig{

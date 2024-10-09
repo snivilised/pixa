@@ -3,9 +3,9 @@ package orc
 import (
 	"github.com/snivilised/cobrass"
 	"github.com/snivilised/cobrass/src/clif"
-	"github.com/snivilised/extendio/collections"
 	"github.com/snivilised/extendio/xfs/nav"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/collections"
 )
 
 type Controller struct {

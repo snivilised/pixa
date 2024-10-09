@@ -7,16 +7,15 @@ import (
 	"github.com/natefinch/lumberjack"
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/extendio/xfs/utils"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/lfs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/exp/zapslog"
 	"go.uber.org/zap/zapcore"
 )
 
 func New(lc common.LoggingConfig,
-	vfs storage.VirtualFS,
+	tfs lfs.TraverseFS,
 	scope common.ConfigScope,
 	vc configuration.ViperConfig,
 ) *slog.Logger {
@@ -24,7 +23,7 @@ func New(lc common.LoggingConfig,
 		func() string {
 			// manual XDG: ~/.local/share/app/filename.log
 			//
-			return utils.ResolvePath(filepath.Join(
+			return lfs.ResolvePath(filepath.Join(
 				"~", ".local", "share",
 				common.Definitions.Pixa.AppName,
 				common.Definitions.Defaults.Logging.LogFilename,
@@ -33,7 +32,7 @@ func New(lc common.LoggingConfig,
 		func() string {
 			lp := lc.Path()
 			if lp != "" {
-				return utils.ResolvePath(lp)
+				return lfs.ResolvePath(lp)
 			}
 
 			dir, _ := scope.LogPath(common.Definitions.Defaults.Logging.LogFilename)
@@ -42,11 +41,11 @@ func New(lc common.LoggingConfig,
 		},
 	)
 
-	logPath, _ = utils.EnsurePathAt(
+	logPath, _ = lfs.EnsurePathAt(
 		logPath,
 		common.Definitions.Defaults.Logging.LogFilename,
-		int(common.Permissions.Write),
-		vfs,
+		common.Permissions.Write, // TODO: check this is correct (file 666, or dir 777?)
+		tfs,
 	)
 
 	sync := zapcore.AddSync(&lumberjack.Logger{

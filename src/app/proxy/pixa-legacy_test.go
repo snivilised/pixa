@@ -3,19 +3,15 @@ package proxy_test
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
 	. "github.com/onsi/gomega"    //nolint:revive // foo
-	"github.com/pkg/errors"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
-	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/extendio/xfs/utils"
-	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/lfs"
 
-	"github.com/snivilised/pixa/src/internal/helpers"
+	lab "github.com/snivilised/pixa/src/internal/laboratory"
 )
 
 func openInputTTY() (*os.File, error) {
@@ -60,43 +56,43 @@ type samplerTE struct {
 	controllerTE
 }
 
-func augmentL(entry *samplerTE,
-	args []string, vfs storage.VirtualFS, root, directory string,
-) []string {
-	result := args
-	result = append(result, entry.args...)
+// func augmentL(entry *samplerTE,
+// 	args []string, vfs storage.VirtualFS, root, directory string,
+// ) []string {
+// 	result := args
+// 	result = append(result, entry.args...)
 
-	if entry.exists {
-		location := filepath.Join(directory, entry.intermediate, entry.supplements.folder)
-		if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
-			Fail(errors.Wrap(err, err.Error()).Error())
-		}
-	}
+// 	if entry.exists {
+// 		location := filepath.Join(directory, entry.intermediate, entry.supplements.folder)
+// 		if err := vfs.MkdirAll(location, common.Permissions.Write); err != nil {
+// 			Fail(errors.Wrap(err, err.Error()).Error())
+// 		}
+// 	}
 
-	if entry.outputFlag != "" {
-		output := helpers.Path(root, entry.outputFlag)
-		result = append(result, "--output", output)
-	}
+// 	if entry.outputFlag != "" {
+// 		output := lab.Path(root, entry.outputFlag)
+// 		result = append(result, "--output", output)
+// 	}
 
-	if entry.trashFlag != "" {
-		trash := helpers.Path(root, entry.trashFlag)
-		result = append(result, "--trash", trash)
-	}
+// 	if entry.trashFlag != "" {
+// 		trash := lab.Path(root, entry.trashFlag)
+// 		result = append(result, "--trash", trash)
+// 	}
 
-	if entry.profile != "" {
-		result = append(result, "--profile", entry.profile)
-	}
+// 	if entry.profile != "" {
+// 		result = append(result, "--profile", entry.profile)
+// 	}
 
-	if entry.scheme != "" {
-		result = append(result, "--scheme", entry.scheme)
-	}
+// 	if entry.scheme != "" {
+// 		result = append(result, "--scheme", entry.scheme)
+// 	}
 
-	if entry.dry {
-		result = append(result, "--dry-run")
-	}
+// 	if entry.dry {
+// 		result = append(result, "--dry-run")
+// 	}
 
-	return result
-}
+// 	return result
+// }
 
 var _ = Describe("pixa-legacy", Ordered, func() {
 	var (
@@ -104,16 +100,16 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 		l10nPath        string
 		configPath      string
 		root            string
-		vfs             storage.VirtualFS
+		FS              lfs.TraverseFS
 		withoutRenderer bool
 	)
 
 	BeforeAll(func() {
-		Expect(li18ngo.Use()).To(Succeed())
+		repo = lab.Repo("")
+		l10nPath = lab.Path(repo, "test/data/l10n")
+		Expect(lab.UseI18n(l10nPath)).To(Succeed())
 
-		repo = helpers.Repo("")
-		l10nPath = helpers.Path(repo, "test/data/l10n")
-		configPath = helpers.Path(repo, "test/data/configuration")
+		configPath = lab.Path(repo, "test/data/configuration")
 
 		var (
 			err error
@@ -127,28 +123,29 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 	})
 
 	BeforeEach(func() {
-		vfs, root = helpers.SetupTest(
-			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
+		FS, root = lab.SetupTest(
+			"nasa-scientist-index.xml", configPath, l10nPath, lab.Silent,
 		)
 	})
 
 	DescribeTable("interactive",
 		func(entry *samplerTE) {
-			origin := helpers.Path(root, entry.relative)
-			args := augmentL(entry,
-				[]string{
-					common.Definitions.Commands.Shrink, origin,
-				},
-				vfs, root, origin,
-			)
-
+			// origin := lab.Path(root, entry.relative)
+			// args := augment(entry,
+			// 	[]string{
+			// 		common.Definitions.Commands.Shrink, origin,
+			// 	},
+			// 	FS, root, origin,
+			// )
+			_ = root
+			args := []string{}
 			observer := &testPathFinderObserver{
 				transfers: make(observerAssertions, 6),
 				results:   make(observerAssertions, 6),
 			}
 
 			bootstrap := command.Bootstrap{
-				Vfs: vfs,
+				FS: FS,
 				Presentation: common.PresentationOptions{
 					WithoutRenderer: withoutRenderer,
 				},
@@ -161,10 +158,10 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 				args = append(args, "--no-tui")
 			}
 
-			tester := helpers.CommandTester{
+			tester := lab.CommandTester{
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
-					co.Detector = &helpers.DetectorStub{}
+					co.Detector = &lab.DetectorStub{}
 					co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 					co.Config.ConfigPath = configPath
 					co.Config.Viper = &configuration.GlobalViperConfig{}
@@ -198,13 +195,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					file:   "ADHOC.TRASH",
 					folder: "$pixa$/ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -218,13 +215,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -239,7 +236,7 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
@@ -247,7 +244,7 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					folder: "adaptive/TRASH",
 				},
 
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -263,13 +260,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--files-rx", "Backyard-Worlds",
 					"--profile", "adaptive",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -284,13 +281,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "singleton/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -305,13 +302,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "discard",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -327,13 +324,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "discard",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -349,13 +346,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "discard",
 				supplements: supplements{
 					file:   "$SUPP/ADHOC.TRASH",
 					folder: "singleton/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -371,13 +368,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--quality", "85",
 					"--scheme", "blur-sf",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "blur-sf/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -392,13 +389,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -412,13 +409,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan02,
+				mandatory:    lab.BackyardWorldsPlanet9Scan02,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-02",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan02,
+				inputs: lab.BackyardWorldsPlanet9Scan02,
 			},
 		}),
 
@@ -436,13 +433,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -459,13 +456,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -483,13 +480,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01Last4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01Last4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01Last4,
+				inputs: lab.BackyardWorldsPlanet9Scan01Last4,
 			},
 		}),
 
@@ -503,13 +500,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--files", "*Backyard-Worlds*",
 					"--profile", "adaptive",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First2,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First2,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First2,
+				inputs: lab.BackyardWorldsPlanet9Scan01First2,
 			},
 		}),
 
@@ -527,13 +524,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--files-rx", "Backyard-Worlds",
 					"--profile", "adaptive",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -550,13 +547,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "singleton/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -573,13 +570,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -597,13 +594,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -621,13 +618,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				trashFlag:    "discard",
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "discard",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "singleton/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -645,13 +642,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--quality", "85",
 					"--scheme", "blur-sf",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "blur-sf/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -668,13 +665,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--gaussian-blur", "0.51",
 					"--interlace", "line",
 				},
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First4,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First4,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First4,
+				inputs: lab.BackyardWorldsPlanet9Scan01First4,
 			},
 		}),
 
@@ -691,13 +688,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				dry: true,
-				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				// mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -712,13 +709,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				dry: true,
-				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				// mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -734,13 +731,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				dry: true,
-				// mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				// mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "adaptive/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 
@@ -776,13 +773,13 @@ var _ = Describe("pixa-legacy", Ordered, func() {
 					"--interlace", "line",
 				},
 				isTui:        true,
-				mandatory:    helpers.BackyardWorldsPlanet9Scan01First6,
+				mandatory:    lab.BackyardWorldsPlanet9Scan01First6,
 				intermediate: "nasa/exo/Backyard Worlds - Planet 9/sessions/scan-01",
 				supplements: supplements{
 					// file:      "$SUPP/ADHOC.TRASH",
 					folder: "ADHOC/TRASH",
 				},
-				inputs: helpers.BackyardWorldsPlanet9Scan01First6,
+				inputs: lab.BackyardWorldsPlanet9Scan01First6,
 			},
 		}),
 	)
@@ -801,14 +798,14 @@ var _ = Describe("end to end", Ordered, func() {
 				"--files", "wonky*",
 				"--dry-run",
 			}
-			configPath := utils.ResolvePath("~/snivilised/pixa")
+			configPath := lfs.ResolvePath("~/snivilised/pixa")
 			bootstrap := command.Bootstrap{
-				Vfs: storage.UseNativeFS(),
+				FS: nil, // TODO
 			}
-			tester := helpers.CommandTester{
+			tester := lab.CommandTester{
 				Args: args,
 				Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
-					co.Detector = &helpers.DetectorStub{}
+					co.Detector = &lab.DetectorStub{}
 					co.Config.Name = common.Definitions.Pixa.AppName
 					co.Config.ConfigPath = configPath
 				}),

@@ -6,11 +6,11 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // foo
 	. "github.com/onsi/gomega"    //nolint:revive // foo
 
-	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/command"
 	"github.com/snivilised/pixa/src/app/proxy/common"
 	"github.com/snivilised/pixa/src/internal/helpers"
+	lab "github.com/snivilised/pixa/src/internal/laboratory"
+	"github.com/snivilised/traverse/lfs"
 )
 
 type rootTE struct {
@@ -23,29 +23,30 @@ var _ = Describe("RootCmd", Ordered, func() {
 		repo       string
 		l10nPath   string
 		configPath string
-		vfs        storage.VirtualFS
+		FS         lfs.TraverseFS
 
-		tester helpers.CommandTester
+		tester lab.CommandTester
 	)
 
 	BeforeAll(func() {
-		Expect(li18ngo.Use()).To(Succeed())
+		Expect(lab.UseI18n(l10nPath)).To(Succeed())
+
 		repo = helpers.Repo("")
-		l10nPath = helpers.Path(repo, "test/data/l10n")
-		configPath = helpers.Path(repo, "test/data/configuration")
+		l10nPath = lab.Path(repo, "test/data/l10n")
+		configPath = lab.Path(repo, "test/data/configuration")
 	})
 
 	BeforeEach(func() {
-		vfs, _ = helpers.SetupTest(
+		FS, _ = lab.SetupTest(
 			"nasa-scientist-index.xml", configPath, l10nPath, helpers.Silent,
 		)
 
 		bootstrap := command.Bootstrap{
-			Vfs: vfs,
+			FS: FS,
 		}
-		tester = helpers.CommandTester{
+		tester = lab.CommandTester{
 			Root: bootstrap.Root(func(co *command.ConfigureOptionsInfo) {
-				co.Detector = &DetectorStub{}
+				co.Detector = &lab.DetectorStub{}
 				co.Config.Name = common.Definitions.Pixa.ConfigTestFilename
 				co.Config.ConfigPath = configPath
 			}),

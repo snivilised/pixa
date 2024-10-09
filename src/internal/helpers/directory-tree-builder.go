@@ -8,14 +8,25 @@ import (
 	"path/filepath"
 
 	"github.com/samber/lo"
-	"github.com/snivilised/extendio/collections"
+	"github.com/snivilised/traverse/collections"
+	"github.com/snivilised/traverse/lfs"
 
 	"github.com/snivilised/extendio/xfs/storage"
-	"github.com/snivilised/extendio/xfs/utils"
 )
 
 const offset = 2
 const tabSize = 2
+
+// Exists provides a simple way to determine whether the item identified by a
+// path actually exists either as a file or a folder
+func Exists(path string) bool {
+	result := false
+	if _, err := os.Stat(path); err == nil {
+		result = true
+	}
+
+	return result
+}
 
 type DirectoryTreeBuilder struct {
 	vfs       storage.VirtualFS
@@ -47,7 +58,7 @@ func (r *DirectoryTreeBuilder) read() (*Directory, error) {
 }
 
 func (r *DirectoryTreeBuilder) status(path string) string {
-	return lo.Ternary(utils.Exists(path), "✅", "❌")
+	return lo.Ternary(Exists(path), "✅", "❌")
 }
 
 func (r *DirectoryTreeBuilder) pad() string {
@@ -101,7 +112,7 @@ func (r *DirectoryTreeBuilder) walk() error {
 func (r *DirectoryTreeBuilder) dir(dir Directory) error { //nolint:gocritic // performance is not an issue
 	r.inc(dir.Name)
 
-	_, dn := utils.SplitParent(dir.Name)
+	_, dn := lfs.SplitParent(dir.Name)
 
 	if r.write {
 		err := r.vfs.MkdirAll(r.full, os.ModePerm)
@@ -163,7 +174,7 @@ func Scientist(vfs storage.VirtualFS, index string, silent bool) string {
 	research := filepath.Join(repo, "test", "data", "research")
 	scientist := filepath.Join(research, "scientist")
 	indexPath := filepath.Join(research, index)
-	utils.Must(ensure(scientist, indexPath, vfs, silent))
+	_ = ensure(scientist, indexPath, vfs, silent)
 
 	return scientist
 }
@@ -173,7 +184,7 @@ func ensure(root, indexPath string, vfs storage.VirtualFS, silent bool) error {
 		return nil
 	}
 
-	parent, _ := utils.SplitParent(root)
+	parent, _ := lfs.SplitParent(root)
 	builder := DirectoryTreeBuilder{
 		vfs:       vfs,
 		root:      root,

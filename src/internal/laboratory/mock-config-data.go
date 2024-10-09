@@ -1,4 +1,4 @@
-package helpers
+package lab
 
 import (
 	"github.com/snivilised/cobrass/src/clif"

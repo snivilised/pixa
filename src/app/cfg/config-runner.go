@@ -10,10 +10,10 @@ import (
 	"github.com/samber/lo"
 	"github.com/snivilised/cobrass/src/assistant/configuration"
 	ci18n "github.com/snivilised/cobrass/src/assistant/i18n"
-	"github.com/snivilised/extendio/collections"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/li18ngo"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/collections"
+	"github.com/snivilised/traverse/lfs"
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 )
@@ -35,7 +35,7 @@ func New(
 	ci *common.ConfigInfo,
 	sourceID string,
 	applicationName string,
-	vfs storage.VirtualFS,
+	tfs lfs.TraverseFS,
 ) (common.ConfigRunner, error) {
 	home, err := os.UserHomeDir()
 
@@ -45,7 +45,7 @@ func New(
 		sourceID:        sourceID,
 		applicationName: applicationName,
 		home:            home,
-		vfs:             vfs,
+		tfs:             tfs,
 		useXDG:          common.IsUsingXDG(ci.Viper),
 	}, err
 }
@@ -56,7 +56,7 @@ type configRunner struct {
 	sourceID        string
 	applicationName string
 	home            string
-	vfs             storage.VirtualFS
+	tfs             lfs.TraverseFS
 	useXDG          bool
 }
 
@@ -191,12 +191,12 @@ func (c *configRunner) export() error {
 	file := filepath.Join(path, common.Definitions.Pixa.ConfigType)
 	content := []byte(defaultConfig)
 
-	if !c.vfs.FileExists(file) {
-		if err := c.vfs.MkdirAll(path, common.Permissions.Write); err != nil {
+	if c.tfs.FileExists(file) {
+		if err := c.tfs.MkDirAll(path, common.Permissions.Write); err != nil {
 			return err
 		}
 
-		return c.vfs.WriteFile(file, content, common.Permissions.Write)
+		return c.tfs.WriteFile(file, content, common.Permissions.Write)
 	}
 
 	return nil

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/snivilised/extendio/xfs/storage"
 	"github.com/snivilised/pixa/src/app/proxy/common"
+	"github.com/snivilised/traverse/lfs"
 )
 
 const (
@@ -16,9 +16,9 @@ const (
 	errorDestination = ""
 )
 
-func NewManager(vfs storage.VirtualFS, finder common.PathFinder, dryRun bool) common.FileManager {
+func NewManager(tfs lfs.TraverseFS, finder common.PathFinder, dryRun bool) common.FileManager {
 	return &FileManager{
-		Vfs:    vfs,
+		FS:     tfs,
 		finder: finder,
 		dryRun: dryRun,
 	}
@@ -27,7 +27,7 @@ func NewManager(vfs storage.VirtualFS, finder common.PathFinder, dryRun bool) co
 // FileManager knows how to translate requests into invocations on the file
 // system and nothing else.
 type FileManager struct {
-	Vfs    storage.VirtualFS
+	FS     lfs.TraverseFS
 	finder common.PathFinder
 	dryRun bool
 }
@@ -37,19 +37,19 @@ func (fm *FileManager) Finder() common.PathFinder {
 }
 
 func (fm *FileManager) FileExists(pathAt string) bool {
-	return fm.Vfs.FileExists(pathAt)
+	return fm.FS.FileExists(pathAt)
 }
 
 func (fm *FileManager) DirectoryExists(pathAt string) bool {
-	return fm.Vfs.DirectoryExists(pathAt)
+	return fm.FS.DirectoryExists(pathAt)
 }
 
 func (fm *FileManager) Create(path string, overwrite bool) error {
-	if fm.Vfs.FileExists(path) && !overwrite {
+	if fm.FS.FileExists(path) && !overwrite {
 		return errors.Wrapf(os.ErrExist, "could not create file at path: '%v'", path)
 	}
 
-	file, err := fm.Vfs.Create(path)
+	file, err := fm.FS.Create(path)
 
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (fm *FileManager) Setup(pi *common.PathInfo) (destination string, err error
 	//
 	if folder, file := fm.finder.Transfer(pi); folder != "" {
 		if !fm.dryRun {
-			if err = fm.Vfs.MkdirAll(folder, perm); err != nil {
+			if err = fm.FS.MkDirAll(folder, perm); err != nil {
 				return errorDestination, errors.Wrapf(
 					err, "could not create parent setup for '%v'", pi.Item.Path,
 				)
@@ -88,24 +88,25 @@ func (fm *FileManager) Setup(pi *common.PathInfo) (destination string, err error
 		destination = filepath.Join(folder, file)
 
 		if !fm.dryRun {
-			if !fm.Vfs.FileExists(pi.Item.Path) {
+			if !fm.FS.FileExists(pi.Item.Path) {
 				return errorDestination, fmt.Errorf(
 					"source file: '%v' does not exist", pi.Item.Path,
 				)
 			}
 
 			if pi.Item.Path != destination {
-				if fm.Vfs.FileExists(destination) {
+				if fm.FS.FileExists(destination) {
 					return errorDestination, fmt.Errorf(
 						"destination file: '%v' already exists", destination,
 					)
 				}
 
-				if err := fm.Vfs.Rename(pi.Item.Path, destination); err != nil {
-					return errorDestination, errors.Wrapf(
-						err, "could not complete setup for '%v'", pi.Item.Path,
-					)
-				}
+				// if err := fm.FS.Rename(pi.Item.Path, destination); err != nil {
+				// 	return errorDestination, errors.Wrapf(
+				// 		err, "could not complete setup for '%v'", pi.Item.Path,
+				// 	)
+				// }
+				panic("we can't rename yet until we get a UniversalFS")
 			}
 		}
 	}
@@ -120,11 +121,12 @@ func (fm *FileManager) Tidy(pi *common.PathInfo) error {
 
 	journalFile := fm.finder.JournalFullPath(pi.Item)
 
-	if !fm.Vfs.FileExists(journalFile) {
+	if !fm.FS.FileExists(journalFile) {
 		return fmt.Errorf("journal file '%v' not found", journalFile)
 	}
 
-	return fm.Vfs.Remove(journalFile)
+	// return fm.FS.Remove(journalFile)
+	panic("we can't remove yet until we get a UniversalFS")
 }
 
 // transparent=true should be the default scenario. This means
