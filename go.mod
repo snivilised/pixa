@@ -49,6 +49,7 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 
 require (
@@ -60,7 +61,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/natefinch/lumberjack v2.0.0+incompatible
-	github.com/nicksnyder/go-i18n/v2 v2.4.0
+	github.com/nicksnyder/go-i18n/v2 v2.4.1
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/snivilised/cobrass v0.4.5
 	github.com/spf13/afero v1.11.0 // indirect
